@@ -22,7 +22,6 @@ Subject: [PATCH] Add CNG crypto backend
  src/crypto/rsa/notboring.go                   |   2 +-
  src/crypto/rsa/pss.go                         |   2 +-
  src/crypto/rsa/pss_test.go                    |   2 +-
- src/crypto/rsa/rsa_test.go                    |   8 +-
  src/crypto/tls/boring.go                      |   2 +-
  src/crypto/tls/boring_test.go                 |   2 +-
  src/crypto/tls/fipsonly/fipsonly.go           |   2 +-
@@ -41,7 +40,7 @@ Subject: [PATCH] Add CNG crypto backend
  .../goexperiment/exp_cngcrypto_off.go         |   9 +
  src/internal/goexperiment/exp_cngcrypto_on.go |   9 +
  src/internal/goexperiment/flags.go            |   1 +
- 37 files changed, 394 insertions(+), 26 deletions(-)
+ 36 files changed, 387 insertions(+), 25 deletions(-)
  create mode 100644 src/crypto/ecdsa/badlinkname.go
  create mode 100644 src/crypto/internal/backend/bbig/big_cng.go
  create mode 100644 src/crypto/internal/backend/cng_windows.go
@@ -587,39 +586,6 @@ index 637d07e18cff2e..21435b86b52dad 100644
  	if err != nil {
  		t.Fatal(err)
  	}
-diff --git a/src/crypto/rsa/rsa_test.go b/src/crypto/rsa/rsa_test.go
-index dbcc1bec58bd46..b1e9d8e94c2c9e 100644
---- a/src/crypto/rsa/rsa_test.go
-+++ b/src/crypto/rsa/rsa_test.go
-@@ -17,6 +17,7 @@ import (
- 	"encoding/pem"
- 	"flag"
- 	"fmt"
-+	"internal/goexperiment"
- 	"internal/testenv"
- 	"math/big"
- 	"strings"
-@@ -113,6 +114,9 @@ func testKeyBasics(t *testing.T, priv *PrivateKey) {
- 	if priv.D.Cmp(priv.N) > 0 {
- 		t.Errorf("private exponent too large")
- 	}
-+	if goexperiment.CNGCrypto && priv.N.BitLen() < 512 {
-+		t.Skip("CNGCrypto does not support key sizes lower than 512 and intentionally fails rather than fall back to Go crypto")
-+	}
- 
- 	msg := []byte("hi!")
- 	enc, err := EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
-@@ -187,7 +191,9 @@ func testEverything(t *testing.T, priv *PrivateKey) {
- 	if err := priv.Validate(); err != nil {
- 		t.Errorf("Validate() failed: %s", err)
- 	}
--
-+	if goexperiment.CNGCrypto && priv.N.BitLen() < 512 {
-+		t.Skip("CNGCrypto does not support key sizes lower than 512 and intentionally fails rather than fall back to Go crypto")
-+	}
- 	msg := []byte("test")
- 	enc, err := EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
- 	if err == ErrMessageTooLong {
 diff --git a/src/crypto/tls/boring.go b/src/crypto/tls/boring.go
 index 698efc6751e12c..575d51b02298c8 100644
 --- a/src/crypto/tls/boring.go

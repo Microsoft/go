@@ -39,7 +39,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/crypto/rsa/pkcs1v15_test.go              |   5 +
  src/crypto/rsa/pss.go                        |   8 +-
  src/crypto/rsa/rsa.go                        |  21 +-
- src/crypto/rsa/rsa_test.go                   |   2 +-
+ src/crypto/rsa/rsa_test.go                   |   8 +-
  src/crypto/sha1/sha1.go                      |   2 +-
  src/crypto/sha1/sha1_test.go                 |  12 +-
  src/crypto/sha256/sha256.go                  |   6 +-
@@ -57,7 +57,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/go/build/deps_test.go                    |   4 +
  src/net/smtp/smtp_test.go                    |  72 ++++---
  src/runtime/runtime_boring.go                |   5 +
- 53 files changed, 862 insertions(+), 106 deletions(-)
+ 53 files changed, 868 insertions(+), 106 deletions(-)
  create mode 100644 src/crypto/ed25519/boring.go
  create mode 100644 src/crypto/ed25519/notboring.go
  create mode 100644 src/crypto/internal/backend/backend_test.go
@@ -1277,7 +1277,7 @@ index 4d78d1eaaa6be0..a016c4f8362cf5 100644
  		if err != nil {
  			return nil, err
 diff --git a/src/crypto/rsa/rsa_test.go b/src/crypto/rsa/rsa_test.go
-index 2afa045a3a0bd2..86466e67e87eeb 100644
+index 2afa045a3a0bd2..ed276ca54552cf 100644
 --- a/src/crypto/rsa/rsa_test.go
 +++ b/src/crypto/rsa/rsa_test.go
 @@ -8,7 +8,7 @@ import (
@@ -1289,6 +1289,26 @@ index 2afa045a3a0bd2..86466e67e87eeb 100644
  	"crypto/rand"
  	. "crypto/rsa"
  	"crypto/sha1"
+@@ -113,6 +113,9 @@ func testKeyBasics(t *testing.T, priv *PrivateKey) {
+ 	if priv.D.Cmp(priv.N) > 0 {
+ 		t.Errorf("private exponent too large")
+ 	}
++	if boring.Enabled && priv.N.BitLen() < 512 {
++		t.Skip("Some crypto backends don't support key sizes lower than 512 and intentionally fails rather than fall back to Go crypto")
++	}
+ 
+ 	msg := []byte("hi!")
+ 	enc, err := EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
+@@ -187,6 +190,9 @@ func testEverything(t *testing.T, priv *PrivateKey) {
+ 	if err := priv.Validate(); err != nil {
+ 		t.Errorf("Validate() failed: %s", err)
+ 	}
++	if boring.Enabled && priv.N.BitLen() < 512 {
++		t.Skip("Some crypto backends don't support key sizes lower than 512 and intentionally fails rather than fall back to Go crypto")
++	}
+ 
+ 	msg := []byte("test")
+ 	enc, err := EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
 diff --git a/src/crypto/sha1/sha1.go b/src/crypto/sha1/sha1.go
 index 8189d1946d8ea5..8f5f7f27f26fea 100644
 --- a/src/crypto/sha1/sha1.go
