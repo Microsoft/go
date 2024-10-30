@@ -1106,7 +1106,7 @@ index 2abc0436405f8a..34c22c8fbba7da 100644
  func boringPublicKey(*PublicKey) (*boring.PublicKeyRSA, error) {
  	panic("boringcrypto: not available")
 diff --git a/src/crypto/rsa/pkcs1v15.go b/src/crypto/rsa/pkcs1v15.go
-index 2f958022f98584..790d9cef5d3563 100644
+index 2f958022f98584..0ca8a5c915a0d5 100644
 --- a/src/crypto/rsa/pkcs1v15.go
 +++ b/src/crypto/rsa/pkcs1v15.go
 @@ -7,7 +7,7 @@ package rsa
@@ -1141,7 +1141,7 @@ index 2f958022f98584..790d9cef5d3563 100644
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) && (hash == 0 || boring.SupportsHash(hash)) {
++	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) && hash != 0 && boring.SupportsHash(hash) {
  		bkey, err := boringPrivateKey(priv)
  		if err != nil {
  			return nil, err
@@ -1150,7 +1150,7 @@ index 2f958022f98584..790d9cef5d3563 100644
  // channels, or if an attacker has control of part of the inputs.
  func VerifyPKCS1v15(pub *PublicKey, hash crypto.Hash, hashed []byte, sig []byte) error {
 -	if boring.Enabled {
-+	if boring.Enabled && (hash == 0 || boring.SupportsHash(hash)) {
++	if boring.Enabled && hash != 0 && boring.SupportsHash(hash) {
  		bkey, err := boringPublicKey(pub)
  		if err != nil {
  			return err
