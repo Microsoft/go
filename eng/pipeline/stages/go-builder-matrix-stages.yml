@@ -84,8 +84,8 @@ stages:
           - { experiment: opensslcrypto, os: linux, arch: amd64, config: test, distro: ubuntu }
           - { experiment: opensslcrypto, os: linux, arch: amd64, config: test, distro: mariner2 }
           - { experiment: opensslcrypto, os: linux, arch: amd64, config: test, distro: mariner2, fips: true }
-          - { experiment: opensslcrypto, os: linux, arch: amd64, config: test, distro: azurelinux3, broken: true }
-          - { experiment: opensslcrypto, os: linux, arch: amd64, config: test, distro: azurelinux3, fips: true, broken: true }
+          - { experiment: opensslcrypto, os: linux, arch: amd64, config: test, distro: azurelinux3 }
+          - { experiment: opensslcrypto, os: linux, arch: amd64, config: test, distro: azurelinux3, fips: true }
           - { experiment: boringcrypto, os: linux, arch: amd64, config: test }
           - { experiment: boringcrypto, os: linux, arch: amd64, config: test, distro: ubuntu }
           - { os: windows, arch: amd64, config: devscript }
