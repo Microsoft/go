@@ -50,6 +50,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/crypto/tls/cipher_suites.go              |   2 +-
  src/crypto/tls/handshake_client.go           |  25 ++-
  src/crypto/tls/handshake_server.go           |  25 ++-
+ src/crypto/tls/handshake_server_tls13.go     |   7 +
  src/crypto/tls/key_schedule.go               |  18 +-
  src/crypto/tls/prf.go                        |  77 +++++---
  src/crypto/tls/prf_test.go                   |  12 +-
@@ -57,7 +58,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/go/build/deps_test.go                    |   4 +
  src/net/smtp/smtp_test.go                    |  72 ++++---
  src/runtime/runtime_boring.go                |   5 +
- 53 files changed, 868 insertions(+), 106 deletions(-)
+ 54 files changed, 875 insertions(+), 106 deletions(-)
  create mode 100644 src/crypto/ed25519/boring.go
  create mode 100644 src/crypto/ed25519/notboring.go
  create mode 100644 src/crypto/internal/backend/backend_test.go
@@ -1499,7 +1500,7 @@ index fdad37b1863ae8..e627fbacb35836 100644
  
  		h := New()
 +		if boring.Enabled {
-+			if _, ok := h.(encoding.BinaryMarshaler); !ok {
++			if _, ok := h.(encoding.BinaryMarshaler); ok {
 +				t.Skip("BinaryMarshaler not implemented")
 +			}
 +		}
@@ -1659,6 +1660,24 @@ index bc4e51ba364cf1..8b4fc36e49fdf8 100644
  	if _, err := hs.c.writeHandshakeRecord(finished, &hs.finishedHash); err != nil {
  		return err
  	}
+diff --git a/src/crypto/tls/handshake_server_tls13.go b/src/crypto/tls/handshake_server_tls13.go
+index b8cf4c3fa50b24..2997b538bee9ba 100644
+--- a/src/crypto/tls/handshake_server_tls13.go
++++ b/src/crypto/tls/handshake_server_tls13.go
+@@ -441,6 +441,13 @@ func cloneHash(in hash.Hash, h crypto.Hash) hash.Hash {
+ 	}
+ 	marshaler, ok := in.(binaryMarshaler)
+ 	if !ok {
++		// CNGCrypto and SCOSSL hashes do not implement the binaryMarshaler interface,
++		// but do implement the Clone method.
++		if cloner, ok := in.(interface{ Clone() (hash.Hash, error) }); ok {
++			if out, err := cloner.Clone(); err == nil {
++				return out
++			}
++		}
+ 		return nil
+ 	}
+ 	state, err := marshaler.MarshalBinary()
 diff --git a/src/crypto/tls/key_schedule.go b/src/crypto/tls/key_schedule.go
 index 1636baf79e7288..c9a5877d3d504f 100644
 --- a/src/crypto/tls/key_schedule.go
