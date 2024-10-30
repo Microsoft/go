@@ -17,16 +17,12 @@ Subject: [PATCH] Add CNG crypto backend
  src/crypto/internal/backend/common.go         |  13 +-
  src/crypto/internal/boring/fipstls/stub.s     |   2 +-
  src/crypto/internal/boring/fipstls/tls.go     |   2 +-
- src/crypto/md5/md5_test.go                    |   7 +
  src/crypto/rsa/boring.go                      |   2 +-
  src/crypto/rsa/boring_test.go                 |   2 +-
  src/crypto/rsa/notboring.go                   |   2 +-
  src/crypto/rsa/pss.go                         |   2 +-
  src/crypto/rsa/pss_test.go                    |   2 +-
  src/crypto/rsa/rsa_test.go                    |   8 +-
- src/crypto/sha1/sha1_test.go                  |   7 +
- src/crypto/sha256/sha256_test.go              |  10 +
- src/crypto/sha512/sha512_test.go              |  10 +
  src/crypto/tls/boring.go                      |   2 +-
  src/crypto/tls/boring_test.go                 |   2 +-
  src/crypto/tls/fipsonly/fipsonly.go           |   2 +-
@@ -45,7 +41,7 @@ Subject: [PATCH] Add CNG crypto backend
  .../goexperiment/exp_cngcrypto_off.go         |   9 +
  src/internal/goexperiment/exp_cngcrypto_on.go |   9 +
  src/internal/goexperiment/flags.go            |   1 +
- 41 files changed, 428 insertions(+), 26 deletions(-)
+ 37 files changed, 394 insertions(+), 26 deletions(-)
  create mode 100644 src/crypto/ecdsa/badlinkname.go
  create mode 100644 src/crypto/internal/backend/bbig/big_cng.go
  create mode 100644 src/crypto/internal/backend/cng_windows.go
@@ -526,38 +522,6 @@ index f5b4827c688f3b..12df96069f6b83 100644
  
  // Package fipstls allows control over whether crypto/tls requires FIPS-approved settings.
  // This package only exists with GOEXPERIMENT=boringcrypto, but the effects are independent
-diff --git a/src/crypto/md5/md5_test.go b/src/crypto/md5/md5_test.go
-index 3a973eebd284a4..5e24e07e2787e2 100644
---- a/src/crypto/md5/md5_test.go
-+++ b/src/crypto/md5/md5_test.go
-@@ -12,6 +12,7 @@ import (
- 	"encoding"
- 	"fmt"
- 	"hash"
-+	"internal/goexperiment"
- 	"io"
- 	"testing"
- 	"unsafe"
-@@ -89,6 +90,9 @@ func TestGolden(t *testing.T) {
- }
- 
- func TestGoldenMarshal(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshalling")
-+	}
- 	for _, g := range golden {
- 		h := New()
- 		h2 := New()
-@@ -208,6 +212,9 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
- }
- 
- func TestLargeHashes(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshalling")
-+	}
- 	for i, test := range largeUnmarshalTests {
- 
- 		h := New()
 diff --git a/src/crypto/rsa/boring.go b/src/crypto/rsa/boring.go
 index 220f8c05c3d94b..dd20b4af2e0472 100644
 --- a/src/crypto/rsa/boring.go
@@ -656,122 +620,6 @@ index dbcc1bec58bd46..b1e9d8e94c2c9e 100644
  	msg := []byte("test")
  	enc, err := EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
  	if err == ErrMessageTooLong {
-diff --git a/src/crypto/sha1/sha1_test.go b/src/crypto/sha1/sha1_test.go
-index d44f70b92661b4..76726556f80fbd 100644
---- a/src/crypto/sha1/sha1_test.go
-+++ b/src/crypto/sha1/sha1_test.go
-@@ -14,6 +14,7 @@ import (
- 	"encoding"
- 	"fmt"
- 	"hash"
-+	"internal/goexperiment"
- 	"io"
- 	"testing"
- )
-@@ -97,6 +98,9 @@ func TestGolden(t *testing.T) {
- }
- 
- func TestGoldenMarshal(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshalling")
-+	}
- 	h := New()
- 	h2 := New()
- 	for _, g := range golden {
-@@ -210,6 +214,9 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
- }
- 
- func TestLargeHashes(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshalling")
-+	}
- 	for i, test := range largeUnmarshalTests {
- 
- 		h := New()
-diff --git a/src/crypto/sha256/sha256_test.go b/src/crypto/sha256/sha256_test.go
-index d2fa4369d068bf..027b705e96113f 100644
---- a/src/crypto/sha256/sha256_test.go
-+++ b/src/crypto/sha256/sha256_test.go
-@@ -13,6 +13,7 @@ import (
- 	"encoding"
- 	"fmt"
- 	"hash"
-+	"internal/goexperiment"
- 	"internal/testenv"
- 	"io"
- 	"testing"
-@@ -142,6 +143,9 @@ func testGolden(t *testing.T) {
- }
- 
- func TestGoldenMarshal(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshalling")
-+	}
- 	cryptotest.TestAllImplementations(t, "crypto/sha256", testGoldenMarshal)
- }
- 
-@@ -203,6 +207,9 @@ func testGoldenMarshal(t *testing.T) {
- }
- 
- func TestMarshalTypeMismatch(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshalling")
-+	}
- 	h1 := New()
- 	h2 := New224()
- 
-@@ -277,6 +284,9 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
- 	return h.Sum(nil), nil
- }
- func TestLargeHashes(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshalling")
-+	}
- 	for i, test := range largeUnmarshalTests {
- 
- 		h := New()
-diff --git a/src/crypto/sha512/sha512_test.go b/src/crypto/sha512/sha512_test.go
-index 736504b8fc85a5..582ed2ae870e23 100644
---- a/src/crypto/sha512/sha512_test.go
-+++ b/src/crypto/sha512/sha512_test.go
-@@ -14,6 +14,7 @@ import (
- 	"encoding/hex"
- 	"fmt"
- 	"hash"
-+	"internal/goexperiment"
- 	"internal/testenv"
- 	"io"
- 	"testing"
-@@ -726,6 +727,9 @@ func testGolden(t *testing.T) {
- }
- 
- func TestGoldenMarshal(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshalling")
-+	}
- 	cryptotest.TestAllImplementations(t, "crypto/sha512", func(t *testing.T) {
- 		testGoldenMarshal(t)
- 	})
-@@ -791,6 +795,9 @@ func testGoldenMarshal(t *testing.T) {
- }
- 
- func TestMarshalMismatch(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshaling")
-+	}
- 	h := []func() hash.Hash{
- 		New,
- 		New384,
-@@ -882,6 +889,9 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
- }
- 
- func TestLargeHashes(t *testing.T) {
-+	if goexperiment.CNGCrypto {
-+		t.Skip("CNGCrypto does not support hash marshalling")
-+	}
- 	for i, test := range largeUnmarshalTests {
- 
- 		h := New()
 diff --git a/src/crypto/tls/boring.go b/src/crypto/tls/boring.go
 index 698efc6751e12c..575d51b02298c8 100644
 --- a/src/crypto/tls/boring.go
