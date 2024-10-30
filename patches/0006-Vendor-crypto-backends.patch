@@ -5,41 +5,45 @@ Subject: [PATCH] Vendor crypto backends
 
 To reproduce, run 'go mod vendor' in 'go/src'.
 ---
+ .../golang-fips/openssl/v2/.gitignore         |    1 +
  .../golang-fips/openssl/v2/.gitleaks.toml     |    9 +
  .../github.com/golang-fips/openssl/v2/LICENSE |   20 +
  .../golang-fips/openssl/v2/README.md          |   66 ++
- .../github.com/golang-fips/openssl/v2/aes.go  |  100 ++
+ .../github.com/golang-fips/openssl/v2/aes.go  |  147 +++
  .../golang-fips/openssl/v2/bbig/big.go        |   37 +
  .../github.com/golang-fips/openssl/v2/big.go  |   11 +
+ .../golang-fips/openssl/v2/cgo_go124.go       |   18 +
  .../golang-fips/openssl/v2/cipher.go          |  569 +++++++++
  .../github.com/golang-fips/openssl/v2/des.go  |  114 ++
- .../github.com/golang-fips/openssl/v2/dsa.go  |  348 ++++++
- .../github.com/golang-fips/openssl/v2/ec.go   |   59 +
- .../github.com/golang-fips/openssl/v2/ecdh.go |  321 +++++
- .../golang-fips/openssl/v2/ecdsa.go           |  215 ++++
- .../golang-fips/openssl/v2/ed25519.go         |  218 ++++
- .../github.com/golang-fips/openssl/v2/evp.go  |  471 ++++++++
- .../golang-fips/openssl/v2/goopenssl.c        |  218 ++++
+ .../github.com/golang-fips/openssl/v2/dsa.go  |  324 +++++
+ .../github.com/golang-fips/openssl/v2/ec.go   |   51 +
+ .../github.com/golang-fips/openssl/v2/ecdh.go |  313 +++++
+ .../golang-fips/openssl/v2/ecdsa.go           |  211 ++++
+ .../golang-fips/openssl/v2/ed25519.go         |  221 ++++
+ .../github.com/golang-fips/openssl/v2/evp.go  |  519 ++++++++
+ .../golang-fips/openssl/v2/goopenssl.c        |  240 ++++
  .../golang-fips/openssl/v2/goopenssl.h        |  259 ++++
  .../github.com/golang-fips/openssl/v2/hash.go | 1041 +++++++++++++++++
- .../github.com/golang-fips/openssl/v2/hkdf.go |  190 +++
- .../github.com/golang-fips/openssl/v2/hmac.go |  276 +++++
+ .../github.com/golang-fips/openssl/v2/hkdf.go |  285 +++++
+ .../github.com/golang-fips/openssl/v2/hmac.go |  274 +++++
  .../github.com/golang-fips/openssl/v2/init.go |   64 +
  .../golang-fips/openssl/v2/init_unix.go       |   31 +
  .../golang-fips/openssl/v2/init_windows.go    |   36 +
- .../golang-fips/openssl/v2/openssl.go         |  434 +++++++
- .../golang-fips/openssl/v2/pbkdf2.go          |   28 +
+ .../golang-fips/openssl/v2/openssl.go         |  462 ++++++++
+ .../golang-fips/openssl/v2/params.go          |  210 ++++
+ .../golang-fips/openssl/v2/pbkdf2.go          |   62 +
  .../golang-fips/openssl/v2/port_dsa.c         |   85 ++
  .../openssl/v2/port_evp_md5_sha1.c            |  126 ++
  .../github.com/golang-fips/openssl/v2/rand.go |   20 +
  .../github.com/golang-fips/openssl/v2/rc4.go  |   66 ++
- .../github.com/golang-fips/openssl/v2/rsa.go  |  443 +++++++
- .../github.com/golang-fips/openssl/v2/shims.h |  392 +++++++
+ .../github.com/golang-fips/openssl/v2/rsa.go  |  408 +++++++
+ .../github.com/golang-fips/openssl/v2/shims.h |  401 +++++++
  .../golang-fips/openssl/v2/thread_setup.go    |   14 +
  .../golang-fips/openssl/v2/thread_setup.h     |    4 +
  .../openssl/v2/thread_setup_unix.c            |   64 +
  .../openssl/v2/thread_setup_windows.c         |   64 +
- .../golang-fips/openssl/v2/tls1prf.go         |  104 ++
+ .../golang-fips/openssl/v2/tls1prf.go         |  160 +++
+ .../github.com/golang-fips/openssl/v2/zaes.go |   86 ++
  .../microsoft/go-crypto-winnative/LICENSE     |   21 +
  .../microsoft/go-crypto-winnative/cng/aes.go  |  393 +++++++
  .../go-crypto-winnative/cng/bbig/big.go       |   31 +
@@ -64,13 +68,15 @@ To reproduce, run 'go mod vendor' in 'go/src'.
  .../internal/subtle/aliasing.go               |   32 +
  .../internal/sysdll/sys_windows.go            |   55 +
  src/vendor/modules.txt                        |   11 +
- 59 files changed, 10388 insertions(+)
+ 63 files changed, 10964 insertions(+)
+ create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitignore
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitleaks.toml
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/LICENSE
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/README.md
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/aes.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/bbig/big.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/big.go
+ create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/cgo_go124.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/cipher.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/des.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/dsa.go
@@ -88,6 +94,7 @@ To reproduce, run 'go mod vendor' in 'go/src'.
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/init_unix.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/init_windows.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/openssl.go
+ create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/params.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/pbkdf2.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/port_dsa.c
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/port_evp_md5_sha1.c
@@ -100,6 +107,7 @@ To reproduce, run 'go mod vendor' in 'go/src'.
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/thread_setup_unix.c
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/thread_setup_windows.c
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/tls1prf.go
+ create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/zaes.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/LICENSE
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/cng/aes.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/cng/bbig/big.go
@@ -124,6 +132,13 @@ To reproduce, run 'go mod vendor' in 'go/src'.
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/internal/subtle/aliasing.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/internal/sysdll/sys_windows.go
 
+diff --git a/src/vendor/github.com/golang-fips/openssl/v2/.gitignore b/src/vendor/github.com/golang-fips/openssl/v2/.gitignore
+new file mode 100644
+index 00000000000000..79b5594df7fa29
+--- /dev/null
++++ b/src/vendor/github.com/golang-fips/openssl/v2/.gitignore
+@@ -0,0 +1 @@
++**/.DS_Store
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/.gitleaks.toml b/src/vendor/github.com/golang-fips/openssl/v2/.gitleaks.toml
 new file mode 100644
 index 00000000000000..aed2e22df2d555
@@ -240,10 +255,10 @@ index 00000000000000..1bfbaf60f4dd58
 +This project adopts the Go code of conduct: https://go.dev/conduct.
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/aes.go b/src/vendor/github.com/golang-fips/openssl/v2/aes.go
 new file mode 100644
-index 00000000000000..231b75e2adbc39
+index 00000000000000..18bb070a2e5bda
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/aes.go
-@@ -0,0 +1,100 @@
+@@ -0,0 +1,147 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -255,19 +270,19 @@ index 00000000000000..231b75e2adbc39
 +	"errors"
 +)
 +
-+type extraModes interface {
-+	// Copied out of crypto/aes/modes.go.
-+	NewCBCEncrypter(iv []byte) cipher.BlockMode
-+	NewCBCDecrypter(iv []byte) cipher.BlockMode
-+	NewCTR(iv []byte) cipher.Stream
-+	NewGCM(nonceSize, tagSize int) (cipher.AEAD, error)
++//go:generate go run github.com/golang-fips/openssl/v2/cmd/genaesmodes -in aes.go -modes CBC,CTR,GCM -out zaes.go
++//go:generate go run github.com/golang-fips/openssl/v2/cmd/gentestvectors -out vectors_test.go
 +
-+	// Invented for BoringCrypto.
-+	NewGCMTLS() (cipher.AEAD, error)
-+}
++// Steps to support a new AES mode, e.g. `FOO`:
++// 1. Add `FOO` to the list of modes in the `genaesmodes` command.
++// 2. Run `go generate` to update the generated code.
++// 3. Implement the necessary interfaces for the new struct, which will be named `cipherWithFOO`.
 +
-+var _ extraModes = (*aesCipher)(nil)
-+
++// NewAESCipher creates and returns a new AES cipher.Block.
++// The key argument should be the AES key, either 16, 24, or 32 bytes to select
++// AES-128, AES-192, or AES-256.
++// The returned cipher.Block implements the CBC, CTR, and/or GCM modes if
++// the underlying OpenSSL library supports them.
 +func NewAESCipher(key []byte) (cipher.Block, error) {
 +	var kind cipherKind
 +	switch len(key) * 8 {
@@ -284,66 +299,113 @@ index 00000000000000..231b75e2adbc39
 +	if err != nil {
 +		return nil, err
 +	}
-+	return &aesCipher{c}, nil
++	return newAESBlock(c, kind), nil
 +}
 +
 +// NewGCMTLS returns a GCM cipher specific to TLS
 +// and should not be used for non-TLS purposes.
 +func NewGCMTLS(c cipher.Block) (cipher.AEAD, error) {
-+	return c.(*aesCipher).NewGCMTLS()
++	if c, ok := c.(interface {
++		NewGCMTLS() (cipher.AEAD, error)
++	}); ok {
++		return c.NewGCMTLS()
++	}
++	return nil, errors.New("GCM not supported")
 +}
 +
 +// NewGCMTLS13 returns a GCM cipher specific to TLS 1.3 and should not be used
 +// for non-TLS purposes.
 +func NewGCMTLS13(c cipher.Block) (cipher.AEAD, error) {
-+	return c.(*aesCipher).NewGCMTLS13()
++	if c, ok := c.(interface {
++		NewGCMTLS13() (cipher.AEAD, error)
++	}); ok {
++		return c.NewGCMTLS13()
++	}
++	return nil, errors.New("GCM not supported")
 +}
 +
++// aesCipher implements the cipher.Block interface.
 +type aesCipher struct {
-+	*evpCipher
++	cipher *evpCipher
 +}
 +
-+func (c *aesCipher) BlockSize() int {
-+	return c.blockSize
++func (c aesCipher) BlockSize() int {
++	return c.cipher.blockSize
 +}
 +
-+func (c *aesCipher) Encrypt(dst, src []byte) {
-+	if err := c.encrypt(dst, src); err != nil {
++func (c aesCipher) Encrypt(dst, src []byte) {
++	if err := c.cipher.encrypt(dst, src); err != nil {
 +		// crypto/aes expects that the panic message starts with "crypto/aes: ".
 +		panic("crypto/aes: " + err.Error())
 +	}
 +}
 +
-+func (c *aesCipher) Decrypt(dst, src []byte) {
-+	if err := c.decrypt(dst, src); err != nil {
++func (c aesCipher) Decrypt(dst, src []byte) {
++	if err := c.cipher.decrypt(dst, src); err != nil {
 +		// crypto/aes expects that the panic message starts with "crypto/aes: ".
 +		panic("crypto/aes: " + err.Error())
 +	}
 +}
 +
-+func (c *aesCipher) NewCBCEncrypter(iv []byte) cipher.BlockMode {
-+	return c.newCBC(iv, cipherOpEncrypt)
++// Implement optional interfaces for AES modes.
++
++func (c cipherWithCBC) NewCBCEncrypter(iv []byte) cipher.BlockMode {
++	return c.cipher.newCBC(iv, cipherOpEncrypt)
 +}
 +
-+func (c *aesCipher) NewCBCDecrypter(iv []byte) cipher.BlockMode {
-+	return c.newCBC(iv, cipherOpDecrypt)
++func (c cipherWithCBC) NewCBCDecrypter(iv []byte) cipher.BlockMode {
++	return c.cipher.newCBC(iv, cipherOpDecrypt)
 +}
 +
-+func (c *aesCipher) NewCTR(iv []byte) cipher.Stream {
-+	return c.newCTR(iv)
++func (c cipherWithCTR) NewCTR(iv []byte) cipher.Stream {
++	return c.cipher.newCTR(iv)
 +}
 +
-+func (c *aesCipher) NewGCM(nonceSize, tagSize int) (cipher.AEAD, error) {
-+	return c.newGCMChecked(nonceSize, tagSize)
++func (c cipherWithGCM) NewGCM(nonceSize, tagSize int) (cipher.AEAD, error) {
++	return c.cipher.newGCMChecked(nonceSize, tagSize)
 +}
 +
-+func (c *aesCipher) NewGCMTLS() (cipher.AEAD, error) {
-+	return c.newGCM(cipherGCMTLS12)
++func (c cipherWithGCM) NewGCMTLS() (cipher.AEAD, error) {
++	return c.cipher.newGCM(cipherGCMTLS12)
 +}
 +
-+func (c *aesCipher) NewGCMTLS13() (cipher.AEAD, error) {
-+	return c.newGCM(cipherGCMTLS13)
++func (c cipherWithGCM) NewGCMTLS13() (cipher.AEAD, error) {
++	return c.cipher.newGCM(cipherGCMTLS13)
 +}
++
++// The following interfaces have been copied out of crypto/aes/modes.go.
++
++type gcmAble interface {
++	NewGCM(nonceSize, tagSize int) (cipher.AEAD, error)
++}
++
++type cbcEncAble interface {
++	NewCBCEncrypter(iv []byte) cipher.BlockMode
++}
++
++type cbcDecAble interface {
++	NewCBCDecrypter(iv []byte) cipher.BlockMode
++}
++
++type ctrAble interface {
++	NewCTR(iv []byte) cipher.Stream
++}
++
++// Test that the interfaces are implemented.
++
++var (
++	_ cipher.Block = (*aesCipher)(nil)
++
++	_ cipher.Block = (*cipherWithCBC)(nil)
++	_ cbcEncAble   = (*cipherWithCBC)(nil)
++	_ cbcDecAble   = (*cipherWithCBC)(nil)
++
++	_ cipher.Block = (*cipherWithCTR)(nil)
++	_ ctrAble      = (*cipherWithCTR)(nil)
++
++	_ cipher.Block = (*cipherWithGCM)(nil)
++	_ gcmAble      = (*cipherWithGCM)(nil)
++)
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/bbig/big.go b/src/vendor/github.com/golang-fips/openssl/v2/bbig/big.go
 new file mode 100644
 index 00000000000000..a81cbdbef93148
@@ -404,6 +466,30 @@ index 00000000000000..6461f241f863fc
 +// This definition allows us to avoid importing math/big.
 +// Conversion between BigInt and *big.Int is in openssl/bbig.
 +type BigInt []uint
+diff --git a/src/vendor/github.com/golang-fips/openssl/v2/cgo_go124.go b/src/vendor/github.com/golang-fips/openssl/v2/cgo_go124.go
+new file mode 100644
+index 00000000000000..933a751873dd05
+--- /dev/null
++++ b/src/vendor/github.com/golang-fips/openssl/v2/cgo_go124.go
+@@ -0,0 +1,18 @@
++//go:build go1.24 && !cmd_go_bootstrap
++
++package openssl
++
++// The following noescape and nocallback directives are used to prevent the Go
++// compiler from allocating function parameters on the heap. See
++// https://github.com/golang/go/blob/0733682e5ff4cd294f5eccb31cbe87a543147bc6/src/cmd/cgo/doc.go#L439-L461
++//
++// If possible, write a C wrapper function to optimize a call rather than using
++// this feature so the optimization will work for all supported Go versions.
++//
++// This is just a performance optimization. Only add functions that have been
++// observed to benefit from these directives, not every function that is merely
++// expected to meet the noescape/nocallback criteria.
++
++// #cgo noescape go_openssl_RAND_bytes
++// #cgo nocallback go_openssl_RAND_bytes
++import "C"
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/cipher.go b/src/vendor/github.com/golang-fips/openssl/v2/cipher.go
 new file mode 100644
 index 00000000000000..72f7aebfc130e7
@@ -981,7 +1067,7 @@ index 00000000000000..72f7aebfc130e7
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/des.go b/src/vendor/github.com/golang-fips/openssl/v2/des.go
 new file mode 100644
-index 00000000000000..c98a276ec33fb0
+index 00000000000000..cd006544b5111b
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/des.go
 @@ -0,0 +1,114 @@
@@ -1003,7 +1089,7 @@ index 00000000000000..c98a276ec33fb0
 +func SupportsDESCipher() bool {
 +	// True for stock OpenSSL 1 w/o FIPS.
 +	// False for stock OpenSSL 3 unless the legacy provider is available.
-+	return (versionAtOrAbove(1, 1, 0) || !FIPS()) && loadCipher(cipherDES, cipherModeECB) != nil
++	return (versionAtOrAbove(3, 0, 0) || !FIPS()) && loadCipher(cipherDES, cipherModeECB) != nil
 +}
 +
 +// SupportsTripleDESCipher returns true if NewTripleDESCipher is supported,
@@ -1101,10 +1187,10 @@ index 00000000000000..c98a276ec33fb0
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/dsa.go b/src/vendor/github.com/golang-fips/openssl/v2/dsa.go
 new file mode 100644
-index 00000000000000..875533a50fbac5
+index 00000000000000..c56071f577f4f2
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/dsa.go
-@@ -0,0 +1,348 @@
+@@ -0,0 +1,324 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -1114,14 +1200,6 @@ index 00000000000000..875533a50fbac5
 +import (
 +	"runtime"
 +	"unsafe"
-+)
-+
-+var (
-+	OSSL_PKEY_PARAM_FFC_PBITS = C.CString("pbits")
-+	OSSL_PKEY_PARAM_FFC_QBITS = C.CString("qbits")
-+	OSSL_PKEY_PARAM_FFC_P     = C.CString("p")
-+	OSSL_PKEY_PARAM_FFC_Q     = C.CString("q")
-+	OSSL_PKEY_PARAM_FFC_G     = C.CString("g")
 +)
 +
 +// SupportsDSA returns true if the OpenSSL library supports DSA.
@@ -1217,9 +1295,9 @@ index 00000000000000..875533a50fbac5
 +			C.go_openssl_BN_free(q)
 +			C.go_openssl_BN_free(g)
 +		}()
-+		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_P, &p) != 1 ||
-+			C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_Q, &q) != 1 ||
-+			C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_FFC_G, &g) != 1 {
++		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_FFC_P, &p) != 1 ||
++			C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_FFC_Q, &q) != 1 ||
++			C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_FFC_G, &g) != 1 {
 +			return DSAParameters{}, newOpenSSLError("EVP_PKEY_get_bn_param")
 +		}
 +	default:
@@ -1281,8 +1359,8 @@ index 00000000000000..875533a50fbac5
 +			C.go_openssl_BN_clear_free(x)
 +			C.go_openssl_BN_free(y)
 +		}()
-+		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PUB_KEY, &y) != 1 ||
-+			C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &x) != 1 {
++		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_PUB_KEY, &y) != 1 ||
++			C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_PRIV_KEY, &x) != 1 {
 +			return nil, newOpenSSLError("EVP_PKEY_get_bn_param")
 +		}
 +	default:
@@ -1371,44 +1449,28 @@ index 00000000000000..875533a50fbac5
 +func newDSA3(params DSAParameters, x, y BigInt) (C.GO_EVP_PKEY_PTR, error) {
 +	checkMajorVersion(3)
 +
-+	bld := C.go_openssl_OSSL_PARAM_BLD_new()
-+	if bld == nil {
-+		return nil, newOpenSSLError("OSSL_PARAM_BLD_new")
++	bld, err := newParamBuilder()
++	if err != nil {
++		return nil, err
 +	}
-+	defer C.go_openssl_OSSL_PARAM_BLD_free(bld)
-+	p, q, g := bigToBN(params.P), bigToBN(params.Q), bigToBN(params.G)
-+	defer func() {
-+		C.go_openssl_BN_free(p)
-+		C.go_openssl_BN_free(q)
-+		C.go_openssl_BN_free(g)
-+	}()
-+	if C.go_openssl_OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p) != 1 ||
-+		C.go_openssl_OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q) != 1 ||
-+		C.go_openssl_OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g) != 1 {
++	defer bld.finalize()
 +
-+		return nil, newOpenSSLError("OSSL_PARAM_BLD_push_BN")
-+	}
++	bld.addBigInt(_OSSL_PKEY_PARAM_FFC_P, params.P, false)
++	bld.addBigInt(_OSSL_PKEY_PARAM_FFC_Q, params.Q, false)
++	bld.addBigInt(_OSSL_PKEY_PARAM_FFC_G, params.G, false)
 +	selection := C.int(C.GO_EVP_PKEY_KEYPAIR)
 +	if y != nil {
-+		pub := bigToBN(y)
-+		defer C.go_openssl_BN_free(pub)
-+		if C.go_openssl_OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub) != 1 {
-+			return nil, newOpenSSLError("OSSL_PARAM_BLD_push_BN")
-+		}
++		bld.addBigInt(_OSSL_PKEY_PARAM_PUB_KEY, y, false)
 +		if x == nil {
 +			selection = C.int(C.GO_EVP_PKEY_PUBLIC_KEY)
 +		}
 +	}
 +	if x != nil {
-+		priv := bigToBN(x)
-+		defer C.go_openssl_BN_clear_free(priv)
-+		if C.go_openssl_OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv) != 1 {
-+			return nil, newOpenSSLError("OSSL_PARAM_BLD_push_BN")
-+		}
++		bld.addBigInt(_OSSL_PKEY_PARAM_PRIV_KEY, x, true)
 +	}
-+	bldparams := C.go_openssl_OSSL_PARAM_BLD_to_param(bld)
-+	if bldparams == nil {
-+		return nil, newOpenSSLError("OSSL_PARAM_BLD_to_param")
++	bldparams, err := bld.build()
++	if err != nil {
++		return nil, err
 +	}
 +	defer C.go_openssl_OSSL_PARAM_free(bldparams)
 +	pkey, err := newEvpFromParams(C.GO_EVP_PKEY_DSA, selection, bldparams)
@@ -1455,24 +1517,16 @@ index 00000000000000..875533a50fbac5
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/ec.go b/src/vendor/github.com/golang-fips/openssl/v2/ec.go
 new file mode 100644
-index 00000000000000..5c253f7eec5358
+index 00000000000000..03c51e5a74cf1a
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/ec.go
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,51 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
 +
 +// #include "goopenssl.h"
 +import "C"
-+
-+var (
-+	OSSL_PKEY_PARAM_PUB_KEY    = C.CString("pub")
-+	OSSL_PKEY_PARAM_PRIV_KEY   = C.CString("priv")
-+	OSSL_PKEY_PARAM_GROUP_NAME = C.CString("group")
-+	OSSL_PKEY_PARAM_EC_PUB_X   = C.CString("qx")
-+	OSSL_PKEY_PARAM_EC_PUB_Y   = C.CString("qy")
-+)
 +
 +func curveNID(curve string) (C.int, error) {
 +	switch curve {
@@ -1520,10 +1574,10 @@ index 00000000000000..5c253f7eec5358
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/ecdh.go b/src/vendor/github.com/golang-fips/openssl/v2/ecdh.go
 new file mode 100644
-index 00000000000000..de5f712f22158f
+index 00000000000000..5b146749350bf5
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/ecdh.go
-@@ -0,0 +1,321 @@
+@@ -0,0 +1,313 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -1693,32 +1747,24 @@ index 00000000000000..de5f712f22158f
 +func newECDHPkey3(nid C.int, bytes []byte, isPrivate bool) (C.GO_EVP_PKEY_PTR, error) {
 +	checkMajorVersion(3)
 +
-+	bld := C.go_openssl_OSSL_PARAM_BLD_new()
-+	if bld == nil {
-+		return nil, newOpenSSLError("OSSL_PARAM_BLD_new")
++	bld, err := newParamBuilder()
++	if err != nil {
++		return nil, err
 +	}
-+	defer C.go_openssl_OSSL_PARAM_BLD_free(bld)
-+	C.go_openssl_OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME, C.go_openssl_OBJ_nid2sn(nid), 0)
++	defer bld.finalize()
++	bld.addUTF8String(_OSSL_PKEY_PARAM_GROUP_NAME, C.go_openssl_OBJ_nid2sn(nid), 0)
 +	var selection C.int
 +	if isPrivate {
-+		priv := C.go_openssl_BN_bin2bn(base(bytes), C.int(len(bytes)), nil)
-+		if priv == nil {
-+			return nil, newOpenSSLError("BN_bin2bn")
-+		}
-+		defer C.go_openssl_BN_clear_free(priv)
-+		if C.go_openssl_OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv) != 1 {
-+			return nil, newOpenSSLError("OSSL_PARAM_BLD_push_BN")
-+		}
++		bld.addBin(_OSSL_PKEY_PARAM_PRIV_KEY, bytes, true)
 +		selection = C.GO_EVP_PKEY_KEYPAIR
 +	} else {
-+		cbytes := C.CBytes(bytes)
-+		defer C.free(cbytes)
-+		C.go_openssl_OSSL_PARAM_BLD_push_octet_string(bld, OSSL_PKEY_PARAM_PUB_KEY, cbytes, C.size_t(len(bytes)))
++		bld.addOctetString(_OSSL_PKEY_PARAM_PUB_KEY, bytes)
 +		selection = C.GO_EVP_PKEY_PUBLIC_KEY
 +	}
-+	params := C.go_openssl_OSSL_PARAM_BLD_to_param(bld)
-+	if params == nil {
-+		return nil, newOpenSSLError("OSSL_PARAM_BLD_to_param")
++
++	params, err := bld.build()
++	if err != nil {
++		return nil, err
 +	}
 +	defer C.go_openssl_OSSL_PARAM_free(params)
 +	return newEvpFromParams(C.GO_EVP_PKEY_EC, selection, params)
@@ -1759,7 +1805,7 @@ index 00000000000000..de5f712f22158f
 +		}
 +	case 3:
 +		var priv C.GO_BIGNUM_PTR
-+		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv) != 1 {
++		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_PRIV_KEY, &priv) != 1 {
 +			return newOpenSSLError("EVP_PKEY_get_bn_param")
 +		}
 +		defer C.go_openssl_BN_clear_free(priv)
@@ -1824,7 +1870,7 @@ index 00000000000000..de5f712f22158f
 +			return nil, nil, newOpenSSLError("EC_KEY_get0_private_key")
 +		}
 +	case 3:
-+		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv) != 1 {
++		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_PRIV_KEY, &priv) != 1 {
 +			return nil, nil, newOpenSSLError("EVP_PKEY_get_bn_param")
 +		}
 +		defer C.go_openssl_BN_clear_free(priv)
@@ -1847,10 +1893,10 @@ index 00000000000000..de5f712f22158f
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/ecdsa.go b/src/vendor/github.com/golang-fips/openssl/v2/ecdsa.go
 new file mode 100644
-index 00000000000000..be7e9455f49d47
+index 00000000000000..f85782a6e92268
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/ecdsa.go
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,211 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -1944,9 +1990,9 @@ index 00000000000000..be7e9455f49d47
 +		// Get Z. We don't need to free it, get0 does not increase the reference count.
 +		bd = C.go_openssl_EC_KEY_get0_private_key(key)
 +	case 3:
-+		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_EC_PUB_X, &bx) != 1 ||
-+			C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_EC_PUB_Y, &by) != 1 ||
-+			C.go_openssl_EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &bd) != 1 {
++		if C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_EC_PUB_X, &bx) != 1 ||
++			C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_EC_PUB_Y, &by) != 1 ||
++			C.go_openssl_EVP_PKEY_get_bn_param(pkey, _OSSL_PKEY_PARAM_PRIV_KEY, &bd) != 1 {
 +			return nil, nil, nil, newOpenSSLError("EVP_PKEY_get_bn_param")
 +		}
 +		defer C.go_openssl_BN_clear_free(bd)
@@ -2041,37 +2087,33 @@ index 00000000000000..be7e9455f49d47
 +		return nil, err
 +	}
 +	// Construct the parameters.
-+	bld := C.go_openssl_OSSL_PARAM_BLD_new()
-+	if bld == nil {
-+		return nil, newOpenSSLError("OSSL_PARAM_BLD_new")
++	bld, err := newParamBuilder()
++	if err != nil {
++		return nil, err
 +	}
-+	defer C.go_openssl_OSSL_PARAM_BLD_free(bld)
-+	C.go_openssl_OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME, C.go_openssl_OBJ_nid2sn(nid), 0)
-+	cbytes := C.CBytes(pubBytes)
-+	defer C.free(cbytes)
-+	C.go_openssl_OSSL_PARAM_BLD_push_octet_string(bld, OSSL_PKEY_PARAM_PUB_KEY, cbytes, C.size_t(len(pubBytes)))
++	defer bld.finalize()
++	bld.addUTF8String(_OSSL_PKEY_PARAM_GROUP_NAME, C.go_openssl_OBJ_nid2sn(nid), 0)
++	bld.addOctetString(_OSSL_PKEY_PARAM_PUB_KEY, pubBytes)
 +	var selection C.int
 +	if bd != nil {
-+		if C.go_openssl_OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, bd) != 1 {
-+			return nil, newOpenSSLError("OSSL_PARAM_BLD_push_BN")
-+		}
++		bld.addBN(_OSSL_PKEY_PARAM_PRIV_KEY, bd)
 +		selection = C.GO_EVP_PKEY_KEYPAIR
 +	} else {
 +		selection = C.GO_EVP_PKEY_PUBLIC_KEY
 +	}
-+	params := C.go_openssl_OSSL_PARAM_BLD_to_param(bld)
-+	if params == nil {
-+		return nil, newOpenSSLError("OSSL_PARAM_BLD_to_param")
++	params, err := bld.build()
++	if err != nil {
++		return nil, err
 +	}
 +	defer C.go_openssl_OSSL_PARAM_free(params)
 +	return newEvpFromParams(C.GO_EVP_PKEY_EC, selection, params)
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/ed25519.go b/src/vendor/github.com/golang-fips/openssl/v2/ed25519.go
 new file mode 100644
-index 00000000000000..f74bd8f8d7a993
+index 00000000000000..77ccbf590d87b5
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/ed25519.go
-@@ -0,0 +1,218 @@
+@@ -0,0 +1,221 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -2100,29 +2142,32 @@ index 00000000000000..f74bd8f8d7a993
 +// TODO: Add support for Ed25519ph and Ed25519ctx when OpenSSL supports them,
 +// which will probably be in 3.2.0 (https://github.com/openssl/openssl/issues/20418).
 +
-+var (
-+	onceSupportsEd25519 sync.Once
-+	supportsEd25519     bool
-+)
++var supportsEd25519 = sync.OnceValue(func() bool {
++	switch vMajor {
++	case 1:
++		if versionAtOrAbove(1, 1, 1) {
++			ctx := C.go_openssl_EVP_PKEY_CTX_new_id(C.GO_EVP_PKEY_ED25519, nil)
++			if ctx != nil {
++				C.go_openssl_EVP_PKEY_CTX_free(ctx)
++				return true
++			}
++		}
++	case 3:
++		name := C.CString("ED25519")
++		defer C.free(unsafe.Pointer(name))
++		sig := C.go_openssl_EVP_SIGNATURE_fetch(nil, name, nil)
++		if sig != nil {
++			C.go_openssl_EVP_SIGNATURE_free(sig)
++			return true
++		}
++	}
++	return false
++})
 +
 +// SupportsEd25519 returns true if the current OpenSSL version supports
 +// GenerateKeyEd25519, NewKeyFromSeedEd25519, SignEd25519 and VerifyEd25519.
 +func SupportsEd25519() bool {
-+	onceSupportsEd25519.Do(func() {
-+		switch vMajor {
-+		case 1:
-+			supportsEd25519 = versionAtOrAbove(1, 1, 1)
-+		case 3:
-+			name := C.CString("ED25519")
-+			defer C.free(unsafe.Pointer(name))
-+			sig := C.go_openssl_EVP_SIGNATURE_fetch(nil, name, nil)
-+			if sig != nil {
-+				C.go_openssl_EVP_SIGNATURE_free(sig)
-+				supportsEd25519 = true
-+			}
-+		}
-+	})
-+	return supportsEd25519
++	return supportsEd25519()
 +}
 +
 +type PublicKeyEd25519 struct {
@@ -2292,10 +2337,10 @@ index 00000000000000..f74bd8f8d7a993
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/evp.go b/src/vendor/github.com/golang-fips/openssl/v2/evp.go
 new file mode 100644
-index 00000000000000..fa557d86be71c5
+index 00000000000000..91296a93f72d55
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/evp.go
-@@ -0,0 +1,471 @@
+@@ -0,0 +1,519 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -2313,6 +2358,30 @@ index 00000000000000..fa557d86be71c5
 +
 +// cacheMD is a cache of crypto.Hash to GO_EVP_MD_PTR.
 +var cacheMD sync.Map
++
++// hashFuncHash calls fn() and returns its result.
++// If fn() panics, the panic is recovered and returned as an error.
++// This is used to avoid aborting the program when calling
++// an unsupported hash function. It is the caller's responsibility
++// to check the returned value.
++func hashFuncHash(fn func() hash.Hash) (h hash.Hash, err error) {
++	defer func() {
++		r := recover()
++		if r == nil {
++			return
++		}
++		h = nil
++		switch e := r.(type) {
++		case error:
++			err = e
++		case string:
++			err = errors.New(e)
++		default:
++			err = errors.New("unsupported panic")
++		}
++	}()
++	return fn(), nil
++}
 +
 +// hashToMD converts a hash.Hash implementation from this package to a GO_EVP_MD_PTR.
 +func hashToMD(h hash.Hash) C.GO_EVP_MD_PTR {
@@ -2343,18 +2412,46 @@ index 00000000000000..fa557d86be71c5
 +	return nil
 +}
 +
++// hashFuncToMD converts a hash.Hash function to a GO_EVP_MD_PTR.
++// See [hashFuncHash] for details on error handling.
++func hashFuncToMD(fn func() hash.Hash) (C.GO_EVP_MD_PTR, error) {
++	h, err := hashFuncHash(fn)
++	if err != nil {
++		return nil, err
++	}
++	md := hashToMD(h)
++	if md == nil {
++		return nil, errors.New("unsupported hash function")
++	}
++	return md, nil
++}
++
 +// cryptoHashToMD converts a crypto.Hash to a GO_EVP_MD_PTR.
 +func cryptoHashToMD(ch crypto.Hash) (md C.GO_EVP_MD_PTR) {
 +	if v, ok := cacheMD.Load(ch); ok {
 +		return v.(C.GO_EVP_MD_PTR)
 +	}
 +	defer func() {
-+		if md != nil && vMajor == 3 {
-+			// On OpenSSL 3, directly operating on a EVP_MD object
-+			// not created by EVP_MD_fetch has negative performance
-+			// implications, as digest operations will have
-+			// to fetch it on every call. Better to just fetch it once here.
-+			md = C.go_openssl_EVP_MD_fetch(nil, C.go_openssl_EVP_MD_get0_name(md), nil)
++		if md != nil {
++			switch vMajor {
++			case 1:
++				// On OpenSSL 1 EVP_MD objects can be not-nil even
++				// when they are not supported. We need to pass the md
++				// to a EVP_MD_CTX to really know if they can be used.
++				ctx := C.go_openssl_EVP_MD_CTX_new()
++				if C.go_openssl_EVP_DigestInit_ex(ctx, md, nil) != 1 {
++					md = nil
++				}
++				C.go_openssl_EVP_MD_CTX_free(ctx)
++			case 3:
++				// On OpenSSL 3, directly operating on a EVP_MD object
++				// not created by EVP_MD_fetch has negative performance
++				// implications, as digest operations will have
++				// to fetch it on every call. Better to just fetch it once here.
++				md = C.go_openssl_EVP_MD_fetch(nil, C.go_openssl_EVP_MD_get0_name(md), nil)
++			default:
++				panic(errUnsupportedVersion())
++			}
 +		}
 +		cacheMD.Store(ch, md)
 +	}()
@@ -2370,13 +2467,9 @@ index 00000000000000..fa557d86be71c5
 +	}
 +	switch ch {
 +	case crypto.MD4:
-+		if versionAtOrAbove(1, 1, 0) || !FIPS() {
-+			return C.go_openssl_EVP_md4()
-+		}
++		return C.go_openssl_EVP_md4()
 +	case crypto.MD5:
-+		if versionAtOrAbove(1, 1, 0) || !FIPS() {
-+			return C.go_openssl_EVP_md5()
-+		}
++		return C.go_openssl_EVP_md5()
 +	case crypto.SHA1:
 +		return C.go_openssl_EVP_sha1()
 +	case crypto.SHA224:
@@ -2769,10 +2862,10 @@ index 00000000000000..fa557d86be71c5
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/goopenssl.c b/src/vendor/github.com/golang-fips/openssl/v2/goopenssl.c
 new file mode 100644
-index 00000000000000..1e428d5269f997
+index 00000000000000..c3385b9d0186c6
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/goopenssl.c
-@@ -0,0 +1,218 @@
+@@ -0,0 +1,240 @@
 +//go:build unix || windows
 +
 +#include "goopenssl.h"
@@ -2810,6 +2903,19 @@ index 00000000000000..1e428d5269f997
 +#undef DEFINEFUNC_RENAMED_1_1
 +#undef DEFINEFUNC_RENAMED_3_0
 +
++// go_openssl_fips_enabled returns 1 if FIPS mode is enabled, 0 otherwise.
++// As a special case, it returns -1 if it cannot determine if FIPS mode is enabled.
++// See openssl.FIPS for details about its implementation.
++//
++// This function is reimplemented here because openssl.FIPS assumes that
++// all the OpenSSL bindings are loaded, that is, go_openssl_load_functions has
++// already been called. On the other hand, go_openssl_fips_enabled is called from
++// openssl.CheckVersion, which is used to check if a given OpenSSL shared library
++// exists and is FIPS compliant. That shared library might not be the one that
++// was passed to go_openssl_load_functions, or it might not even have been called at all.
++//
++// It is written in C because it is not possible to directly call C function pointers
++// retrieved using dlsym from Go.
 +int
 +go_openssl_fips_enabled(void* handle)
 +{
@@ -2820,15 +2926,24 @@ index 00000000000000..1e428d5269f997
 +        return FIPS_mode();
 +
 +    // For OpenSSL 3.x.
-+    int (*EVP_default_properties_is_fips_enabled)(void*);
-+    int (*OSSL_PROVIDER_available)(void*, const char*);
-+    EVP_default_properties_is_fips_enabled = (int (*)(void*))dlsym(handle, "EVP_default_properties_is_fips_enabled"); 
-+    OSSL_PROVIDER_available = (int (*)(void*, const char*))dlsym(handle, "OSSL_PROVIDER_available"); 
-+    if (EVP_default_properties_is_fips_enabled != NULL && OSSL_PROVIDER_available != NULL &&
-+        EVP_default_properties_is_fips_enabled(NULL) == 1 && OSSL_PROVIDER_available(NULL, "fips") == 1)
-+            return 1;
++    int (*EVP_default_properties_is_fips_enabled)(void*) = (int (*)(void*))dlsym(handle, "EVP_default_properties_is_fips_enabled");
++    void *(*EVP_MD_fetch)(void*, const char*, const char*) = (void* (*)(void*, const char*, const char*))dlsym(handle, "EVP_MD_fetch");
++    void (*EVP_MD_free)(void*) = (void (*)(void*))dlsym(handle, "EVP_MD_free");
 +
-+    return 0;
++    if (EVP_default_properties_is_fips_enabled == NULL || EVP_MD_fetch == NULL || EVP_MD_free == NULL) {
++        // Shouldn't happen, but if it does, we can't determine if FIPS mode is enabled.
++        return -1;
++    }
++
++    if (EVP_default_properties_is_fips_enabled(NULL) != 1)
++        return 0;
++
++    void *md = EVP_MD_fetch(NULL, "SHA2-256", NULL);
++    if (md == NULL)
++        return 0;
++
++    EVP_MD_free(md);
++    return 1;
 +}
 +
 +// Load all the functions stored in FOR_ALL_OPENSSL_FUNCTIONS
@@ -4306,10 +4421,10 @@ index 00000000000000..6fd3a518906004
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/hkdf.go b/src/vendor/github.com/golang-fips/openssl/v2/hkdf.go
 new file mode 100644
-index 00000000000000..2e4323cc247a78
+index 00000000000000..f2ff598de65b2d
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/hkdf.go
-@@ -0,0 +1,190 @@
+@@ -0,0 +1,285 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -4321,6 +4436,7 @@ index 00000000000000..2e4323cc247a78
 +	"hash"
 +	"io"
 +	"runtime"
++	"sync"
 +	"unsafe"
 +)
 +
@@ -4330,85 +4446,72 @@ index 00000000000000..2e4323cc247a78
 +	case 1:
 +		return versionAtOrAbove(1, 1, 1)
 +	case 3:
-+		// Some OpenSSL 3 providers don't support HKDF or don't support it via
-+		// the EVP_PKEY API, which is the one we use.
-+		// See https://github.com/golang-fips/openssl/issues/189.
-+		ctx := C.go_openssl_EVP_PKEY_CTX_new_id(C.GO_EVP_PKEY_HKDF, nil)
-+		if ctx == nil {
-+			return false
-+		}
-+		C.go_openssl_EVP_PKEY_CTX_free(ctx)
-+		return true
++		_, err := fetchHKDF3()
++		return err == nil
 +	default:
 +		panic(errUnsupportedVersion())
 +	}
 +}
 +
-+func newHKDF(h func() hash.Hash, mode C.int) (*hkdf, error) {
-+	if !SupportsHKDF() {
-+		return nil, errUnsupportedVersion()
-+	}
++func newHKDFCtx1(md C.GO_EVP_MD_PTR, mode C.int, secret, salt, pseudorandomKey, info []byte) (ctx C.GO_EVP_PKEY_CTX_PTR, err error) {
++	checkMajorVersion(1)
 +
-+	ch := h()
-+	md := hashToMD(ch)
-+	if md == nil {
-+		return nil, errors.New("unsupported hash function")
-+	}
-+
-+	ctx := C.go_openssl_EVP_PKEY_CTX_new_id(C.GO_EVP_PKEY_HKDF, nil)
++	ctx = C.go_openssl_EVP_PKEY_CTX_new_id(C.GO_EVP_PKEY_HKDF, nil)
 +	if ctx == nil {
 +		return nil, newOpenSSLError("EVP_PKEY_CTX_new_id")
 +	}
 +	defer func() {
-+		C.go_openssl_EVP_PKEY_CTX_free(ctx)
++		if err != nil {
++			C.go_openssl_EVP_PKEY_CTX_free(ctx)
++		}
 +	}()
 +
 +	if C.go_openssl_EVP_PKEY_derive_init(ctx) != 1 {
-+		return nil, newOpenSSLError("EVP_PKEY_derive_init")
-+	}
-+	switch vMajor {
-+	case 3:
-+		if C.go_openssl_EVP_PKEY_CTX_set_hkdf_mode(ctx, mode) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set_hkdf_mode")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_set_hkdf_md(ctx, md) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set_hkdf_md")
-+		}
-+	case 1:
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1, C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_HKDF_MODE,
-+			C.int(mode), nil) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set_hkdf_mode")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1, C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_HKDF_MD,
-+			0, unsafe.Pointer(md)) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set_hkdf_md")
-+		}
++		return ctx, newOpenSSLError("EVP_PKEY_derive_init")
 +	}
 +
-+	c := &hkdf{ctx: ctx, hashLen: ch.Size()}
-+	ctx = nil
++	ctrlSlice := func(ctrl int, data []byte) C.int {
++		if len(data) == 0 {
++			return 1 // No data to set.
++		}
++		return C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1, C.GO1_EVP_PKEY_OP_DERIVE, C.int(ctrl), C.int(len(data)), unsafe.Pointer(base(data)))
++	}
 +
-+	runtime.SetFinalizer(c, (*hkdf).finalize)
-+
-+	return c, nil
++	if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1, C.GO1_EVP_PKEY_OP_DERIVE, C.GO_EVP_PKEY_CTRL_HKDF_MODE, mode, nil) != 1 {
++		return ctx, newOpenSSLError("EVP_PKEY_CTX_set_hkdf_mode")
++	}
++	if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1, C.GO1_EVP_PKEY_OP_DERIVE, C.GO_EVP_PKEY_CTRL_HKDF_MD, 0, unsafe.Pointer(md)) != 1 {
++		return ctx, newOpenSSLError("EVP_PKEY_CTX_set_hkdf_md")
++	}
++	if ctrlSlice(C.GO_EVP_PKEY_CTRL_HKDF_KEY, secret) != 1 {
++		return ctx, newOpenSSLError("EVP_PKEY_CTX_set1_hkdf_key")
++	}
++	if ctrlSlice(C.GO_EVP_PKEY_CTRL_HKDF_SALT, salt) != 1 {
++		return ctx, newOpenSSLError("EVP_PKEY_CTX_set1_hkdf_salt")
++	}
++	if ctrlSlice(C.GO_EVP_PKEY_CTRL_HKDF_KEY, pseudorandomKey) != 1 {
++		return ctx, newOpenSSLError("EVP_PKEY_CTX_set1_hkdf_key")
++	}
++	if ctrlSlice(C.GO_EVP_PKEY_CTRL_HKDF_INFO, info) != 1 {
++		return ctx, newOpenSSLError("EVP_PKEY_CTX_add1_hkdf_info")
++	}
++	return ctx, nil
 +}
 +
-+type hkdf struct {
++type hkdf1 struct {
 +	ctx C.GO_EVP_PKEY_CTX_PTR
 +
 +	hashLen int
 +	buf     []byte
 +}
 +
-+func (c *hkdf) finalize() {
++func (c *hkdf1) finalize() {
 +	if c.ctx != nil {
 +		C.go_openssl_EVP_PKEY_CTX_free(c.ctx)
 +	}
 +}
 +
-+func (c *hkdf) Read(p []byte) (int, error) {
++func (c *hkdf1) Read(p []byte) (int, error) {
 +	defer runtime.KeepAlive(c)
 +
 +	// EVP_PKEY_derive doesn't support incremental output, each call
@@ -4434,78 +4537,185 @@ index 00000000000000..2e4323cc247a78
 +}
 +
 +func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
-+	c, err := newHKDF(h, C.GO_EVP_KDF_HKDF_MODE_EXTRACT_ONLY)
++	if !SupportsHKDF() {
++		return nil, errUnsupportedVersion()
++	}
++
++	md, err := hashFuncToMD(h)
 +	if err != nil {
 +		return nil, err
 +	}
++
 +	switch vMajor {
-+	case 3:
-+		if C.go_openssl_EVP_PKEY_CTX_set1_hkdf_key(c.ctx,
-+			base(secret), C.int(len(secret))) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set1_hkdf_key")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_set1_hkdf_salt(c.ctx,
-+			base(salt), C.int(len(salt))) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set1_hkdf_salt")
-+		}
 +	case 1:
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(c.ctx, -1, C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_HKDF_KEY,
-+			C.int(len(secret)), unsafe.Pointer(base(secret))) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set1_hkdf_key")
++		ctx, err := newHKDFCtx1(md, C.GO_EVP_KDF_HKDF_MODE_EXTRACT_ONLY, secret, salt, nil, nil)
++		if err != nil {
++			return nil, err
 +		}
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(c.ctx, -1, C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_HKDF_SALT,
-+			C.int(len(salt)), unsafe.Pointer(base(salt))) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set1_hkdf_salt")
++		defer C.go_openssl_EVP_PKEY_CTX_free(ctx)
++		r := C.go_openssl_EVP_PKEY_derive_wrapper(ctx, nil, 0)
++		if r.result != 1 {
++			return nil, newOpenSSLError("EVP_PKEY_derive_init")
 +		}
++		out := make([]byte, r.keylen)
++		if C.go_openssl_EVP_PKEY_derive_wrapper(ctx, base(out), r.keylen).result != 1 {
++			return nil, newOpenSSLError("EVP_PKEY_derive")
++		}
++		return out[:r.keylen], nil
++	case 3:
++		ctx, err := newHKDFCtx3(md, C.GO_EVP_KDF_HKDF_MODE_EXTRACT_ONLY, secret, salt, nil, nil)
++		if err != nil {
++			return nil, err
++		}
++		defer C.go_openssl_EVP_KDF_CTX_free(ctx)
++		out := make([]byte, C.go_openssl_EVP_KDF_CTX_get_kdf_size(ctx))
++		if C.go_openssl_EVP_KDF_derive(ctx, base(out), C.size_t(len(out)), nil) != 1 {
++			return nil, newOpenSSLError("EVP_KDF_derive")
++		}
++		return out, nil
++	default:
++		panic(errUnsupportedVersion())
 +	}
-+	r := C.go_openssl_EVP_PKEY_derive_wrapper(c.ctx, nil, 0)
-+	if r.result != 1 {
-+		return nil, newOpenSSLError("EVP_PKEY_derive_init")
-+	}
-+	out := make([]byte, r.keylen)
-+	if C.go_openssl_EVP_PKEY_derive_wrapper(c.ctx, base(out), r.keylen).result != 1 {
-+		return nil, newOpenSSLError("EVP_PKEY_derive")
-+	}
-+	return out[:r.keylen], nil
 +}
 +
 +func ExpandHKDF(h func() hash.Hash, pseudorandomKey, info []byte) (io.Reader, error) {
-+	c, err := newHKDF(h, C.GO_EVP_KDF_HKDF_MODE_EXPAND_ONLY)
++	if !SupportsHKDF() {
++		return nil, errUnsupportedVersion()
++	}
++
++	md, err := hashFuncToMD(h)
 +	if err != nil {
 +		return nil, err
 +	}
++
 +	switch vMajor {
-+	case 3:
-+		if C.go_openssl_EVP_PKEY_CTX_set1_hkdf_key(c.ctx,
-+			base(pseudorandomKey), C.int(len(pseudorandomKey))) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set1_hkdf_key")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_add1_hkdf_info(c.ctx,
-+			base(info), C.int(len(info))) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_add1_hkdf_info")
-+		}
 +	case 1:
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(c.ctx, -1, C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_HKDF_KEY,
-+			C.int(len(pseudorandomKey)), unsafe.Pointer(base(pseudorandomKey))) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_set1_hkdf_key")
++		ctx, err := newHKDFCtx1(md, C.GO_EVP_KDF_HKDF_MODE_EXPAND_ONLY, nil, nil, pseudorandomKey, info)
++		if err != nil {
++			return nil, err
 +		}
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(c.ctx, -1, C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_HKDF_INFO,
-+			C.int(len(info)), unsafe.Pointer(base(info))) != 1 {
-+			return nil, newOpenSSLError("EVP_PKEY_CTX_add1_hkdf_info")
++		c := &hkdf1{ctx: ctx, hashLen: int(C.go_openssl_EVP_MD_get_size(md))}
++		runtime.SetFinalizer(c, (*hkdf1).finalize)
++		return c, nil
++	case 3:
++		ctx, err := newHKDFCtx3(md, C.GO_EVP_KDF_HKDF_MODE_EXPAND_ONLY, nil, nil, pseudorandomKey, info)
++		if err != nil {
++			return nil, err
 +		}
++		c := &hkdf3{ctx: ctx, hashLen: int(C.go_openssl_EVP_MD_get_size(md))}
++		runtime.SetFinalizer(c, (*hkdf3).finalize)
++		return c, nil
++	default:
++		panic(errUnsupportedVersion())
 +	}
-+	return c, nil
++}
++
++type hkdf3 struct {
++	ctx C.GO_EVP_KDF_CTX_PTR
++
++	hashLen int
++	buf     []byte
++}
++
++func (c *hkdf3) finalize() {
++	if c.ctx != nil {
++		C.go_openssl_EVP_KDF_CTX_free(c.ctx)
++	}
++}
++
++// fetchHKDF3 fetches the HKDF algorithm.
++// It is safe to call this function concurrently.
++// The returned EVP_KDF_PTR shouldn't be freed.
++var fetchHKDF3 = sync.OnceValues(func() (C.GO_EVP_KDF_PTR, error) {
++	checkMajorVersion(3)
++
++	name := C.CString("HKDF")
++	kdf := C.go_openssl_EVP_KDF_fetch(nil, name, nil)
++	C.free(unsafe.Pointer(name))
++	if kdf == nil {
++		return nil, newOpenSSLError("EVP_KDF_fetch")
++	}
++	return kdf, nil
++})
++
++// newHKDFCtx3 implements HKDF for OpenSSL 3 using the EVP_KDF API.
++func newHKDFCtx3(md C.GO_EVP_MD_PTR, mode C.int, secret, salt, pseudorandomKey, info []byte) (_ C.GO_EVP_KDF_CTX_PTR, err error) {
++	checkMajorVersion(3)
++
++	kdf, err := fetchHKDF3()
++	if err != nil {
++		return nil, err
++	}
++	ctx := C.go_openssl_EVP_KDF_CTX_new(kdf)
++	if ctx == nil {
++		return nil, newOpenSSLError("EVP_KDF_CTX_new")
++	}
++	defer func() {
++		if err != nil {
++			C.go_openssl_EVP_KDF_CTX_free(ctx)
++		}
++	}()
++
++	bld, err := newParamBuilder()
++	if err != nil {
++		return ctx, err
++	}
++	bld.addUTF8String(_OSSL_KDF_PARAM_DIGEST, C.go_openssl_EVP_MD_get0_name(md), 0)
++	bld.addInt32(_OSSL_KDF_PARAM_MODE, int32(mode))
++	if len(secret) > 0 {
++		bld.addOctetString(_OSSL_KDF_PARAM_KEY, secret)
++	}
++	if len(salt) > 0 {
++		bld.addOctetString(_OSSL_KDF_PARAM_SALT, salt)
++	}
++	if len(pseudorandomKey) > 0 {
++		bld.addOctetString(_OSSL_KDF_PARAM_KEY, pseudorandomKey)
++	}
++	if len(info) > 0 {
++		bld.addOctetString(_OSSL_KDF_PARAM_INFO, info)
++	}
++	params, err := bld.build()
++	if err != nil {
++		return ctx, err
++	}
++	defer C.go_openssl_OSSL_PARAM_free(params)
++
++	if C.go_openssl_EVP_KDF_CTX_set_params(ctx, params) != 1 {
++		return ctx, newOpenSSLError("EVP_KDF_CTX_set_params")
++	}
++	return ctx, nil
++}
++
++func (c *hkdf3) Read(p []byte) (int, error) {
++	defer runtime.KeepAlive(c)
++
++	// EVP_KDF_derive doesn't support incremental output, each call
++	// derives the key from scratch and returns the requested bytes.
++	// To implement io.Reader, we need to ask for len(c.buf) + len(p)
++	// bytes and copy the last derived len(p) bytes to p.
++	// We use c.buf to know how many bytes we've already derived and
++	// to avoid allocating the whole output buffer on each call.
++	prevLen := len(c.buf)
++	needLen := len(p)
++	remains := 255*c.hashLen - prevLen
++	// Check whether enough data can be generated.
++	if remains < needLen {
++		return 0, errors.New("hkdf: entropy limit reached")
++	}
++	c.buf = append(c.buf, make([]byte, needLen)...)
++	outLen := C.size_t(prevLen + needLen)
++	if C.go_openssl_EVP_KDF_derive(c.ctx, base(c.buf), outLen, nil) != 1 {
++		return 0, newOpenSSLError("EVP_KDF_derive")
++	}
++	n := copy(p, c.buf[prevLen:outLen])
++	return n, nil
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/hmac.go b/src/vendor/github.com/golang-fips/openssl/v2/hmac.go
 new file mode 100644
-index 00000000000000..02d0d3732b9b61
+index 00000000000000..b519ba3111dcc3
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/hmac.go
-@@ -0,0 +1,276 @@
+@@ -0,0 +1,274 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -4519,15 +4729,13 @@ index 00000000000000..02d0d3732b9b61
 +	"unsafe"
 +)
 +
-+var OSSL_MAC_PARAM_DIGEST = C.CString("digest")
-+
 +// NewHMAC returns a new HMAC using OpenSSL.
 +// The function h must return a hash implemented by
 +// OpenSSL (for example, h could be openssl.NewSHA256).
 +// If h is not recognized, NewHMAC returns nil.
-+func NewHMAC(h func() hash.Hash, key []byte) hash.Hash {
-+	ch := h()
-+	md := hashToMD(ch)
++func NewHMAC(fh func() hash.Hash, key []byte) hash.Hash {
++	h, _ := hashFuncHash(fh)
++	md := hashToMD(h)
 +	if md == nil {
 +		return nil
 +	}
@@ -4542,8 +4750,8 @@ index 00000000000000..02d0d3732b9b61
 +	}
 +
 +	hmac := &opensslHMAC{
-+		size:      ch.Size(),
-+		blockSize: ch.BlockSize(),
++		size:      h.Size(),
++		blockSize: h.BlockSize(),
 +	}
 +
 +	switch vMajor {
@@ -4607,14 +4815,14 @@ index 00000000000000..02d0d3732b9b61
 +	return mac
 +})
 +
-+func buildHMAC3Params(digest *C.char) C.GO_OSSL_PARAM_PTR {
-+	bld := C.go_openssl_OSSL_PARAM_BLD_new()
-+	if bld == nil {
-+		panic(newOpenSSLError("OSSL_PARAM_BLD_new"))
++func buildHMAC3Params(digest *C.char) (C.GO_OSSL_PARAM_PTR, error) {
++	bld, err := newParamBuilder()
++	if err != nil {
++		return nil, err
 +	}
-+	defer C.go_openssl_OSSL_PARAM_BLD_free(bld)
-+	C.go_openssl_OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_MAC_PARAM_DIGEST, digest, 0)
-+	return C.go_openssl_OSSL_PARAM_BLD_to_param(bld)
++	defer bld.finalize()
++	bld.addUTF8String(_OSSL_MAC_PARAM_DIGEST, digest, 0)
++	return bld.build()
 +}
 +
 +func isHMAC3DigestSupported(digest string) bool {
@@ -4629,9 +4837,9 @@ index 00000000000000..02d0d3732b9b61
 +
 +	cdigest := C.CString(digest)
 +	defer C.free(unsafe.Pointer(cdigest))
-+	params := buildHMAC3Params(cdigest)
-+	if params == nil {
-+		panic(newOpenSSLError("OSSL_PARAM_BLD_to_param"))
++	params, err := buildHMAC3Params(cdigest)
++	if err != nil {
++		panic(err)
 +	}
 +	defer C.go_openssl_OSSL_PARAM_free(params)
 +
@@ -4649,9 +4857,9 @@ index 00000000000000..02d0d3732b9b61
 +		// See https://github.com/golang-fips/openssl/issues/153.
 +		return hmacCtx3{}
 +	}
-+	params := buildHMAC3Params(digest)
-+	if params == nil {
-+		panic(newOpenSSLError("OSSL_PARAM_BLD_to_param"))
++	params, err := buildHMAC3Params(digest)
++	if err != nil {
++		panic(err)
 +	}
 +	defer C.go_openssl_OSSL_PARAM_free(params)
 +
@@ -4933,10 +5141,10 @@ index 00000000000000..3778e21227abb9
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/openssl.go b/src/vendor/github.com/golang-fips/openssl/v2/openssl.go
 new file mode 100644
-index 00000000000000..1562cee2685bc8
+index 00000000000000..f8b3f6ee140ace
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/openssl.go
-@@ -0,0 +1,434 @@
+@@ -0,0 +1,462 @@
 +//go:build !cmd_go_bootstrap
 +
 +// Package openssl provides access to OpenSSL cryptographic functions.
@@ -4977,8 +5185,14 @@ index 00000000000000..1562cee2685bc8
 +		return false, false
 +	}
 +	defer dlclose(handle)
-+	fips = C.go_openssl_fips_enabled(handle) == 1
-+	return true, fips
++	enabled := C.go_openssl_fips_enabled(handle)
++	fips = enabled == 1
++	// If go_openssl_fips_enabled returns -1, it means that all or some of the necessary
++	// functions are not available. This can be due to the version of OpenSSL being too old,
++	// too incompatible, or the shared library not being an OpenSSL library. In any case,
++	// we shouldn't consider this library to be valid for our purposes.
++	exists = enabled != -1
++	return
 +}
 +
 +// Init loads and initializes OpenSSL from the shared library at path.
@@ -5035,23 +5249,37 @@ index 00000000000000..1562cee2685bc8
 +var (
 +	providerNameFips    = C.CString("fips")
 +	providerNameDefault = C.CString("default")
++	propFIPS            = C.CString("fips=yes")
++
++	algorithmSHA256 = C.CString("SHA2-256")
 +)
 +
-+// FIPS returns true if OpenSSL is running in FIPS mode, else returns false.
++// FIPS returns true if OpenSSL is running in FIPS mode and there is
++// a provider available that supports FIPS. It returns false otherwise.
 +func FIPS() bool {
 +	switch vMajor {
 +	case 1:
 +		return C.go_openssl_FIPS_mode() == 1
 +	case 3:
-+		// If FIPS is not enabled via default properties, then we are sure FIPS is not used.
-+		if C.go_openssl_EVP_default_properties_is_fips_enabled(nil) == 0 {
++		// Check if the default properties contain `fips=1`.
++		if C.go_openssl_EVP_default_properties_is_fips_enabled(nil) != 1 {
++			// Note that it is still possible that the provider used by default is FIPS-compliant,
++			// but that wouldn't be a system or user requirement.
 +			return false
 +		}
-+		// EVP_default_properties_is_fips_enabled can return true even if the FIPS provider isn't loaded,
-+		// it is only based on the default properties.
-+		// We can be sure that the FIPS provider is available if we can fetch an algorithm, e.g., SHA2-256,
-+		// explicitly setting `fips=yes`.
-+		return C.go_openssl_OSSL_PROVIDER_available(nil, providerNameFips) == 1
++		// Check if the SHA-256 algorithm is available. If it is, then we can be sure that there is a provider available that matches
++		// the `fips=1` query. Most notably, this works for the common case of using the built-in FIPS provider.
++		//
++		// Note that this approach has a small chance of false negative if the FIPS provider doesn't provide the SHA-256 algorithm,
++		// but that is highly unlikely because SHA-256 is one of the most common algorithms and fundamental to many cryptographic operations.
++		// It also has a small chance of false positive if the FIPS provider implements the SHA-256 algorithm but not the other algorithms
++		// used by the caller application, but that is also unlikely because the FIPS provider should provide all common algorithms.
++		md := C.go_openssl_EVP_MD_fetch(nil, algorithmSHA256, nil)
++		if md == nil {
++			return false
++		}
++		C.go_openssl_EVP_MD_free(md)
++		return true
 +	default:
 +		panic(errUnsupportedVersion())
 +	}
@@ -5089,19 +5317,27 @@ index 00000000000000..1562cee2685bc8
 +		} else {
 +			provName = providerNameDefault
 +		}
-+		// Check if there is any provider that matches props.
-+		if C.go_openssl_OSSL_PROVIDER_available(nil, provName) != 1 {
-+			// If not, fallback to provName provider.
-+			if C.go_openssl_OSSL_PROVIDER_load(nil, provName) == nil {
-+				return newOpenSSLError("OSSL_PROVIDER_try_load")
-+			}
-+			// Make sure we now have a provider available.
-+			if C.go_openssl_OSSL_PROVIDER_available(nil, provName) != 1 {
-+				return fail("SetFIPS(" + strconv.FormatBool(enabled) + ") not supported")
-+			}
++		// Try to load the provider, but don't fail if it's not loaded.
++		// The built-in provider might not be present in the system.
++		// We don't need the built-in provider if third-party providers are being used: they are already loaded.
++		// If the system is not well-configured and has no FIPS capability, this will be detected by the next steps.
++		C.go_openssl_OSSL_PROVIDER_try_load(nil, provName, 1)
++		C.go_openssl_ERR_clear_error()
++
++		// See FIPS() for the rationale behind this check.
++		md := C.go_openssl_EVP_MD_fetch(nil, algorithmSHA256, propFIPS)
++		if md == nil {
++			// Don't enable FIPS mode if there is no provider that supports it.
++			// This makes it easier for callers to call SetFIPS(true) to do a
++			// best-effort attempt to enable FIPS mode, but not fail if it's not possible.
++			C.go_openssl_ERR_clear_error()
++			return errors.New("openssl: FIPS mode not supported by any provider")
 +		}
++		C.go_openssl_EVP_MD_free(md)
++
++		// Enable FIPS mode in the default properties.
 +		if C.go_openssl_EVP_default_properties_enable_fips(nil, mode) != 1 {
-+			return newOpenSSLError("openssl: EVP_default_properties_enable_fips")
++			return newOpenSSLError("EVP_default_properties_enable_fips")
 +		}
 +		return nil
 +	default:
@@ -5371,12 +5607,228 @@ index 00000000000000..1562cee2685bc8
 +func versionAtOrAbove(major, minor, patch uint) bool {
 +	return vMajor > major || (vMajor == major && vMinor > minor) || (vMajor == major && vMinor == minor && vPatch >= patch)
 +}
+diff --git a/src/vendor/github.com/golang-fips/openssl/v2/params.go b/src/vendor/github.com/golang-fips/openssl/v2/params.go
+new file mode 100644
+index 00000000000000..fa24a8cd673ed0
+--- /dev/null
++++ b/src/vendor/github.com/golang-fips/openssl/v2/params.go
+@@ -0,0 +1,210 @@
++//go:build !cmd_go_bootstrap
++
++package openssl
++
++// #include "goopenssl.h"
++import "C"
++import (
++	"runtime"
++	"unsafe"
++)
++
++var (
++	// KDF parameters
++	_OSSL_KDF_PARAM_DIGEST = C.CString("digest")
++	_OSSL_KDF_PARAM_SECRET = C.CString("secret")
++	_OSSL_KDF_PARAM_SEED   = C.CString("seed")
++	_OSSL_KDF_PARAM_KEY    = C.CString("key")
++	_OSSL_KDF_PARAM_INFO   = C.CString("info")
++	_OSSL_KDF_PARAM_SALT   = C.CString("salt")
++	_OSSL_KDF_PARAM_MODE   = C.CString("mode")
++
++	// PKEY parameters
++	_OSSL_PKEY_PARAM_PUB_KEY          = C.CString("pub")
++	_OSSL_PKEY_PARAM_PRIV_KEY         = C.CString("priv")
++	_OSSL_PKEY_PARAM_GROUP_NAME       = C.CString("group")
++	_OSSL_PKEY_PARAM_EC_PUB_X         = C.CString("qx")
++	_OSSL_PKEY_PARAM_EC_PUB_Y         = C.CString("qy")
++	_OSSL_PKEY_PARAM_FFC_PBITS        = C.CString("pbits")
++	_OSSL_PKEY_PARAM_FFC_QBITS        = C.CString("qbits")
++	_OSSL_PKEY_PARAM_RSA_N            = C.CString("n")
++	_OSSL_PKEY_PARAM_RSA_E            = C.CString("e")
++	_OSSL_PKEY_PARAM_RSA_D            = C.CString("d")
++	_OSSL_PKEY_PARAM_FFC_P            = C.CString("p")
++	_OSSL_PKEY_PARAM_FFC_Q            = C.CString("q")
++	_OSSL_PKEY_PARAM_FFC_G            = C.CString("g")
++	_OSSL_PKEY_PARAM_RSA_FACTOR1      = C.CString("rsa-factor1")
++	_OSSL_PKEY_PARAM_RSA_FACTOR2      = C.CString("rsa-factor2")
++	_OSSL_PKEY_PARAM_RSA_EXPONENT1    = C.CString("rsa-exponent1")
++	_OSSL_PKEY_PARAM_RSA_EXPONENT2    = C.CString("rsa-exponent2")
++	_OSSL_PKEY_PARAM_RSA_COEFFICIENT1 = C.CString("rsa-coefficient1")
++
++	// MAC parameters
++	_OSSL_MAC_PARAM_DIGEST = C.CString("digest")
++)
++
++type bnParam struct {
++	value   C.GO_BIGNUM_PTR
++	private bool
++}
++
++// paramBuilder is a helper for building OSSL_PARAMs.
++// If an error occurs when adding a new parameter,
++// subsequent calls to add parameters are ignored
++// and build() will return the error.
++type paramBuilder struct {
++	bld      C.GO_OSSL_PARAM_BLD_PTR
++	pinner   runtime.Pinner
++	bnToFree []bnParam
++
++	err error
++}
++
++// newParamBuilder creates a new paramBuilder.
++func newParamBuilder() (*paramBuilder, error) {
++	bld := C.go_openssl_OSSL_PARAM_BLD_new()
++	if bld == nil {
++		return nil, newOpenSSLError("OSSL_PARAM_BLD_new")
++	}
++	pb := &paramBuilder{
++		bld:      bld,
++		bnToFree: make([]bnParam, 0, 8), // the maximum known number of BIGNUMs to free are 8 for RSA
++	}
++	runtime.SetFinalizer(pb, (*paramBuilder).finalize)
++	return pb, nil
++}
++
++// finalize frees the builder.
++func (b *paramBuilder) finalize() {
++	if b.bld != nil {
++		b.pinner.Unpin()
++		for _, bn := range b.bnToFree {
++			if bn.private {
++				C.go_openssl_BN_clear_free(bn.value)
++			} else {
++				C.go_openssl_BN_free(bn.value)
++			}
++		}
++		C.go_openssl_OSSL_PARAM_BLD_free(b.bld)
++		b.bld = nil
++	}
++}
++
++// check is used internally to enforce invariants and should not be called by users of paramBuilder.
++// Returns true if it's ok to add parameters to the builder or build it.
++// Returns false if there has been an error while adding a parameter.
++// Panics if the paramBuilder has been freed, e.g. if it has already been built.
++func (b *paramBuilder) check() bool {
++	if b.err != nil {
++		return false
++	}
++	if b.bld == nil {
++		panic("openssl: paramBuilder has been freed")
++	}
++	return true
++}
++
++// build creates an OSSL_PARAM from the builder.
++// The returned OSSL_PARAM must be freed with OSSL_PARAM_free.
++// If an error occurred while adding parameters, the error is returned
++// and the OSSL_PARAM is nil. Once build() is called, the builder is finalized
++// and cannot be reused.
++func (b *paramBuilder) build() (C.GO_OSSL_PARAM_PTR, error) {
++	defer b.finalize()
++	if !b.check() {
++		return nil, b.err
++	}
++	param := C.go_openssl_OSSL_PARAM_BLD_to_param(b.bld)
++	if param == nil {
++		return nil, newOpenSSLError("OSSL_PARAM_BLD_build")
++	}
++	return param, nil
++}
++
++// addUTF8String adds a NUL-terminated UTF-8 string to the builder.
++// size should not include the terminating NUL byte. If size is zero, then it will be calculated.
++func (b *paramBuilder) addUTF8String(name *C.char, value *C.char, size C.size_t) {
++	if !b.check() {
++		return
++	}
++	// OSSL_PARAM_BLD_push_utf8_string calculates the size if it is zero.
++	if C.go_openssl_OSSL_PARAM_BLD_push_utf8_string(b.bld, name, value, size) != 1 {
++		b.err = newOpenSSLError("OSSL_PARAM_BLD_push_utf8_string(" + C.GoString(name) + ")")
++	}
++}
++
++// addOctetString adds an octet string to the builder.
++// The value is pinned and will be unpinned when the builder is freed.
++func (b *paramBuilder) addOctetString(name *C.char, value []byte) {
++	if !b.check() {
++		return
++	}
++	if len(value) != 0 {
++		b.pinner.Pin(&value[0])
++	}
++	if C.go_openssl_OSSL_PARAM_BLD_push_octet_string(b.bld, name, unsafe.Pointer(sbase(value)), C.size_t(len(value))) != 1 {
++		b.err = newOpenSSLError("OSSL_PARAM_BLD_push_octet_string(" + C.GoString(name) + ")")
++	}
++}
++
++// addInt32 adds an int32 to the builder.
++func (b *paramBuilder) addInt32(name *C.char, value int32) {
++	if !b.check() {
++		return
++	}
++	if C.go_openssl_OSSL_PARAM_BLD_push_int32(b.bld, name, C.int32_t(value)) != 1 {
++		b.err = newOpenSSLError("OSSL_PARAM_BLD_push_int32(" + C.GoString(name) + ")")
++	}
++}
++
++// addBN adds a GO_BIGNUM_PTR to the builder.
++func (b *paramBuilder) addBN(name *C.char, value C.GO_BIGNUM_PTR) {
++	if !b.check() {
++		return
++	}
++	if C.go_openssl_OSSL_PARAM_BLD_push_BN(b.bld, name, value) != 1 {
++		b.err = newOpenSSLError("OSSL_PARAM_BLD_push_BN(" + C.GoString(name) + ")")
++	}
++}
++
++// addBin adds a byte slice to the builder.
++// The slice is converted to a BIGNUM using BN_bin2bn and freed when the builder is finalized.
++// If private is true, the BIGNUM will be cleared with BN_clear_free,
++// otherwise it will be freed with BN_free.
++func (b *paramBuilder) addBin(name *C.char, value []byte, private bool) {
++	if !b.check() {
++		return
++	}
++	if len(value) == 0 {
++		// Nothing to do.
++		return
++	}
++	bn := C.go_openssl_BN_bin2bn(base(value), C.int(len(value)), nil)
++	if bn == nil {
++		b.err = newOpenSSLError("BN_bin2bn")
++		return
++	}
++	b.bnToFree = append(b.bnToFree, bnParam{bn, private})
++	b.addBN(name, bn)
++}
++
++// addBigInt adds a BigInt to the builder.
++// The BigInt is converted using bigToBN to a BIGNUM that is freed when the builder is finalized.
++// If private is true, the BIGNUM will be cleared with BN_clear_free,
++// otherwise it will be freed with BN_free.
++func (b *paramBuilder) addBigInt(name *C.char, value BigInt, private bool) {
++	if !b.check() {
++		return
++	}
++	if len(value) == 0 {
++		// Nothing to do.
++		return
++	}
++	bn := bigToBN(value)
++	if bn == nil {
++		b.err = newOpenSSLError("bigToBN")
++		return
++	}
++	b.bnToFree = append(b.bnToFree, bnParam{bn, private})
++	b.addBN(name, bn)
++}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/pbkdf2.go b/src/vendor/github.com/golang-fips/openssl/v2/pbkdf2.go
 new file mode 100644
-index 00000000000000..a895eab2d54767
+index 00000000000000..92276c6aadf423
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/pbkdf2.go
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,62 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -5386,10 +5838,44 @@ index 00000000000000..a895eab2d54767
 +import (
 +	"errors"
 +	"hash"
++	"sync"
++	"unsafe"
 +)
 +
-+func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) ([]byte, error) {
-+	md := hashToMD(h())
++// SupportsPBKDF2 reports whether the current OpenSSL version supports PBKDF2.
++func SupportsPBKDF2() bool {
++	switch vMajor {
++	case 1:
++		return true
++	case 3:
++		_, err := fetchPBKDF2()
++		return err == nil
++	default:
++		panic(errUnsupportedVersion())
++	}
++}
++
++// fetchPBKDF2 fetches the PBKDF2 algorithm.
++// It is safe to call this function concurrently.
++// The returned EVP_KDF_PTR shouldn't be freed.
++var fetchPBKDF2 = sync.OnceValues(func() (C.GO_EVP_KDF_PTR, error) {
++	checkMajorVersion(3)
++
++	name := C.CString("PBKDF2")
++	kdf := C.go_openssl_EVP_KDF_fetch(nil, name, nil)
++	C.free(unsafe.Pointer(name))
++	if kdf == nil {
++		return nil, newOpenSSLError("EVP_KDF_fetch")
++	}
++	return kdf, nil
++})
++
++func PBKDF2(password, salt []byte, iter, keyLen int, fh func() hash.Hash) ([]byte, error) {
++	h, err := hashFuncHash(fh)
++	if err != nil {
++		return nil, err
++	}
++	md := hashToMD(h)
 +	if md == nil {
 +		return nil, errors.New("unsupported hash function")
 +	}
@@ -5657,7 +6143,7 @@ index 00000000000000..9fd709635c3b40
 +const RandReader = randReader(0)
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/rc4.go b/src/vendor/github.com/golang-fips/openssl/v2/rc4.go
 new file mode 100644
-index 00000000000000..f88150591eceb6
+index 00000000000000..f1cd3647fb9753
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/rc4.go
 @@ -0,0 +1,66 @@
@@ -5673,7 +6159,7 @@ index 00000000000000..f88150591eceb6
 +func SupportsRC4() bool {
 +	// True for stock OpenSSL 1 w/o FIPS.
 +	// False for stock OpenSSL 3 unless the legacy provider is available.
-+	return (versionAtOrAbove(1, 1, 0) || !FIPS()) && loadCipher(cipherRC4, cipherModeNone) != nil
++	return (versionAtOrAbove(3, 0, 0) || !FIPS()) && loadCipher(cipherRC4, cipherModeNone) != nil
 +}
 +
 +// A RC4Cipher is an instance of RC4 using a particular key.
@@ -5729,10 +6215,10 @@ index 00000000000000..f88150591eceb6
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/rsa.go b/src/vendor/github.com/golang-fips/openssl/v2/rsa.go
 new file mode 100644
-index 00000000000000..4e45b02d88afc0
+index 00000000000000..cd5b3b8e2a9a85
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/rsa.go
-@@ -0,0 +1,443 @@
+@@ -0,0 +1,408 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -5746,17 +6232,6 @@ index 00000000000000..4e45b02d88afc0
 +	"hash"
 +	"runtime"
 +	"unsafe"
-+)
-+
-+var (
-+	OSSL_PKEY_PARAM_RSA_N            = C.CString("n")
-+	OSSL_PKEY_PARAM_RSA_E            = C.CString("e")
-+	OSSL_PKEY_PARAM_RSA_D            = C.CString("d")
-+	OSSL_PKEY_PARAM_RSA_FACTOR1      = C.CString("rsa-factor1")
-+	OSSL_PKEY_PARAM_RSA_FACTOR2      = C.CString("rsa-factor2")
-+	OSSL_PKEY_PARAM_RSA_EXPONENT1    = C.CString("rsa-exponent1")
-+	OSSL_PKEY_PARAM_RSA_EXPONENT2    = C.CString("rsa-exponent2")
-+	OSSL_PKEY_PARAM_RSA_COEFFICIENT1 = C.CString("rsa-coefficient1")
 +)
 +
 +func GenerateKeyRSA(bits int) (N, E, D, P, Q, Dp, Dq, Qinv BigInt, err error) {
@@ -5808,14 +6283,14 @@ index 00000000000000..4e45b02d88afc0
 +			C.go_openssl_BN_clear(tmp)
 +			return true
 +		}
-+		if !(setBigInt(&N, OSSL_PKEY_PARAM_RSA_N) &&
-+			setBigInt(&E, OSSL_PKEY_PARAM_RSA_E) &&
-+			setBigInt(&D, OSSL_PKEY_PARAM_RSA_D) &&
-+			setBigInt(&P, OSSL_PKEY_PARAM_RSA_FACTOR1) &&
-+			setBigInt(&Q, OSSL_PKEY_PARAM_RSA_FACTOR2) &&
-+			setBigInt(&Dp, OSSL_PKEY_PARAM_RSA_EXPONENT1) &&
-+			setBigInt(&Dq, OSSL_PKEY_PARAM_RSA_EXPONENT2) &&
-+			setBigInt(&Qinv, OSSL_PKEY_PARAM_RSA_COEFFICIENT1)) {
++		if !(setBigInt(&N, _OSSL_PKEY_PARAM_RSA_N) &&
++			setBigInt(&E, _OSSL_PKEY_PARAM_RSA_E) &&
++			setBigInt(&D, _OSSL_PKEY_PARAM_RSA_D) &&
++			setBigInt(&P, _OSSL_PKEY_PARAM_RSA_FACTOR1) &&
++			setBigInt(&Q, _OSSL_PKEY_PARAM_RSA_FACTOR2) &&
++			setBigInt(&Dp, _OSSL_PKEY_PARAM_RSA_EXPONENT1) &&
++			setBigInt(&Dq, _OSSL_PKEY_PARAM_RSA_EXPONENT2) &&
++			setBigInt(&Qinv, _OSSL_PKEY_PARAM_RSA_COEFFICIENT1)) {
 +			return bad(err)
 +		}
 +	default:
@@ -6112,24 +6587,15 @@ index 00000000000000..4e45b02d88afc0
 +	return C.go_openssl_RSA_set0_crt_params(key, bigToBN(dmp1), bigToBN(dmq1), bigToBN(iqmp)) == 1
 +}
 +func newRSAKey3(isPriv bool, n, e, d, p, q, dp, dq, qinv BigInt) (C.GO_EVP_PKEY_PTR, error) {
-+	// Construct the parameters.
-+	bld := C.go_openssl_OSSL_PARAM_BLD_new()
-+	if bld == nil {
-+		return nil, newOpenSSLError("OSSL_PARAM_BLD_new")
++	bld, err := newParamBuilder()
++	if err != nil {
++		return nil, err
 +	}
-+	defer C.go_openssl_OSSL_PARAM_BLD_free(bld)
++	defer bld.finalize()
 +
-+	type bigIntParam struct {
-+		name *C.char
-+		num  BigInt
-+	}
-+
-+	comps := make([]bigIntParam, 0, 8)
-+
-+	required := [...]bigIntParam{
-+		{OSSL_PKEY_PARAM_RSA_N, n}, {OSSL_PKEY_PARAM_RSA_E, e}, {OSSL_PKEY_PARAM_RSA_D, d},
-+	}
-+	comps = append(comps, required[:]...)
++	bld.addBigInt(_OSSL_PKEY_PARAM_RSA_N, n, false)
++	bld.addBigInt(_OSSL_PKEY_PARAM_RSA_E, e, false)
++	bld.addBigInt(_OSSL_PKEY_PARAM_RSA_D, d, false)
 +
 +	if p != nil && q != nil {
 +		allPrecomputedExists := dp != nil && dq != nil && qinv != nil
@@ -6140,34 +6606,19 @@ index 00000000000000..4e45b02d88afc0
 +		// In OpenSSL 3.0 and 3.1, we must also omit P and Q if any precomputed
 +		// value is missing. See https://github.com/openssl/openssl/pull/22334
 +		if vMinor >= 2 || allPrecomputedExists {
-+			comps = append(comps, bigIntParam{OSSL_PKEY_PARAM_RSA_FACTOR1, p}, bigIntParam{OSSL_PKEY_PARAM_RSA_FACTOR2, q})
++			bld.addBigInt(_OSSL_PKEY_PARAM_RSA_FACTOR1, p, true)
++			bld.addBigInt(_OSSL_PKEY_PARAM_RSA_FACTOR2, q, true)
 +		}
 +		if allPrecomputedExists {
-+			comps = append(comps,
-+				bigIntParam{OSSL_PKEY_PARAM_RSA_EXPONENT1, dp},
-+				bigIntParam{OSSL_PKEY_PARAM_RSA_EXPONENT2, dq},
-+				bigIntParam{OSSL_PKEY_PARAM_RSA_COEFFICIENT1, qinv},
-+			)
++			bld.addBigInt(_OSSL_PKEY_PARAM_RSA_EXPONENT1, dp, true)
++			bld.addBigInt(_OSSL_PKEY_PARAM_RSA_EXPONENT2, dq, true)
++			bld.addBigInt(_OSSL_PKEY_PARAM_RSA_COEFFICIENT1, qinv, true)
 +		}
 +	}
 +
-+	for _, comp := range comps {
-+		if comp.num == nil {
-+			continue
-+		}
-+		b := bigToBN(comp.num)
-+		if b == nil {
-+			return nil, newOpenSSLError("BN_lebin2bn failed")
-+		}
-+		// b must remain valid until OSSL_PARAM_BLD_to_param has been called.
-+		defer C.go_openssl_BN_clear_free(b)
-+		if C.go_openssl_OSSL_PARAM_BLD_push_BN(bld, comp.name, b) != 1 {
-+			return nil, newOpenSSLError("OSSL_PARAM_BLD_push_BN")
-+		}
-+	}
-+	params := C.go_openssl_OSSL_PARAM_BLD_to_param(bld)
-+	if params == nil {
-+		return nil, newOpenSSLError("OSSL_PARAM_BLD_to_param")
++	params, err := bld.build()
++	if err != nil {
++		return nil, err
 +	}
 +	defer C.go_openssl_OSSL_PARAM_free(params)
 +	selection := C.GO_EVP_PKEY_PUBLIC_KEY
@@ -6178,10 +6629,10 @@ index 00000000000000..4e45b02d88afc0
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/shims.h b/src/vendor/github.com/golang-fips/openssl/v2/shims.h
 new file mode 100644
-index 00000000000000..2370b6cc128f5e
+index 00000000000000..156d8e8ada678c
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/shims.h
-@@ -0,0 +1,392 @@
+@@ -0,0 +1,401 @@
 +#include <stdlib.h> // size_t
 +#include <stdint.h> // uint64_t
 +
@@ -6290,6 +6741,8 @@ index 00000000000000..2370b6cc128f5e
 +typedef void* GO_CRYPTO_THREADID_PTR;
 +typedef void* GO_EVP_SIGNATURE_PTR;
 +typedef void* GO_DSA_PTR;
++typedef void* GO_EVP_KDF_PTR;
++typedef void* GO_EVP_KDF_CTX_PTR;
 +
 +// #include <openssl/md5.h>
 +typedef void* GO_MD5_CTX_PTR;
@@ -6356,6 +6809,7 @@ index 00000000000000..2370b6cc128f5e
 +// #endif
 +#define FOR_ALL_OPENSSL_FUNCTIONS \
 +DEFINEFUNC(void, ERR_error_string_n, (unsigned long e, char *buf, size_t len), (e, buf, len)) \
++DEFINEFUNC(void, ERR_clear_error, (void), ()) \
 +DEFINEFUNC_LEGACY_1(unsigned long, ERR_get_error_line, (const char **file, int *line), (file, line)) \
 +DEFINEFUNC_3_0(unsigned long, ERR_get_error_all, (const char **file, int *line, const char **func, const char **data, int *flags), (file, line, func, data, flags)) \
 +DEFINEFUNC_RENAMED_1_1(const char *, OpenSSL_version, SSLeay_version, (int type), (type)) \
@@ -6378,12 +6832,13 @@ index 00000000000000..2370b6cc128f5e
 +DEFINEFUNC_3_0(int, EVP_default_properties_is_fips_enabled, (GO_OSSL_LIB_CTX_PTR libctx), (libctx)) \
 +DEFINEFUNC_3_0(int, EVP_default_properties_enable_fips, (GO_OSSL_LIB_CTX_PTR libctx, int enable), (libctx, enable)) \
 +DEFINEFUNC_3_0(int, OSSL_PROVIDER_available, (GO_OSSL_LIB_CTX_PTR libctx, const char *name), (libctx, name)) \
-+DEFINEFUNC_3_0(GO_OSSL_PROVIDER_PTR, OSSL_PROVIDER_load, (GO_OSSL_LIB_CTX_PTR libctx, const char *name), (libctx, name)) \
++DEFINEFUNC_3_0(GO_OSSL_PROVIDER_PTR, OSSL_PROVIDER_try_load, (GO_OSSL_LIB_CTX_PTR libctx, const char *name, int retain_fallbacks), (libctx, name, retain_fallbacks)) \
 +DEFINEFUNC_3_0(const char *, OSSL_PROVIDER_get0_name, (const GO_OSSL_PROVIDER_PTR prov), (prov)) \
 +DEFINEFUNC_3_0(GO_EVP_MD_PTR, EVP_MD_fetch, (GO_OSSL_LIB_CTX_PTR ctx, const char *algorithm, const char *properties), (ctx, algorithm, properties)) \
 +DEFINEFUNC_3_0(void, EVP_MD_free, (GO_EVP_MD_PTR md), (md)) \
 +DEFINEFUNC_3_0(const char *, EVP_MD_get0_name, (const GO_EVP_MD_PTR md), (md)) \
 +DEFINEFUNC_3_0(const GO_OSSL_PROVIDER_PTR, EVP_MD_get0_provider, (const GO_EVP_MD_PTR md), (md)) \
++DEFINEFUNC_RENAMED_3_0(int, EVP_MD_get_size, EVP_MD_size, (const GO_EVP_MD_PTR md), (md)) \
 +DEFINEFUNC_RENAMED_3_0(int, EVP_MD_get_block_size, EVP_MD_block_size, (const GO_EVP_MD_PTR md), (md)) \
 +DEFINEFUNC(int, RAND_bytes, (unsigned char *arg0, int arg1), (arg0, arg1)) \
 +DEFINEFUNC_RENAMED_1_1(GO_EVP_MD_CTX_PTR, EVP_MD_CTX_new, EVP_MD_CTX_create, (void), ()) \
@@ -6550,6 +7005,7 @@ index 00000000000000..2370b6cc128f5e
 +DEFINEFUNC_3_0(int, OSSL_PARAM_BLD_push_utf8_string, (GO_OSSL_PARAM_BLD_PTR bld, const char *key, const char *buf, size_t bsize), (bld, key, buf, bsize)) \
 +DEFINEFUNC_3_0(int, OSSL_PARAM_BLD_push_octet_string, (GO_OSSL_PARAM_BLD_PTR bld, const char *key, const void *buf, size_t bsize), (bld, key, buf, bsize)) \
 +DEFINEFUNC_3_0(int, OSSL_PARAM_BLD_push_BN, (GO_OSSL_PARAM_BLD_PTR bld, const char *key, const GO_BIGNUM_PTR bn), (bld, key, bn)) \
++DEFINEFUNC_3_0(int, OSSL_PARAM_BLD_push_int32, (GO_OSSL_PARAM_BLD_PTR bld, const char *key, int32_t num), (bld, key, num)) \
 +DEFINEFUNC_3_0(int, EVP_PKEY_CTX_set_hkdf_mode, (GO_EVP_PKEY_CTX_PTR arg0, int arg1), (arg0, arg1)) \
 +DEFINEFUNC_3_0(int, EVP_PKEY_CTX_set_hkdf_md, (GO_EVP_PKEY_CTX_PTR arg0, const GO_EVP_MD_PTR arg1), (arg0, arg1)) \
 +DEFINEFUNC_3_0(int, EVP_PKEY_CTX_set1_hkdf_salt, (GO_EVP_PKEY_CTX_PTR arg0, const unsigned char *arg1, int arg2), (arg0, arg1, arg2)) \
@@ -6559,9 +7015,6 @@ index 00000000000000..2370b6cc128f5e
 +DEFINEFUNC_LEGACY_1(int, EVP_PKEY_set1_EC_KEY, (GO_EVP_PKEY_PTR pkey, GO_EC_KEY_PTR key), (pkey, key)) \
 +DEFINEFUNC_3_0(int, EVP_PKEY_CTX_set0_rsa_oaep_label, (GO_EVP_PKEY_CTX_PTR ctx, void *label, int len), (ctx, label, len)) \
 +DEFINEFUNC(int, PKCS5_PBKDF2_HMAC, (const char *pass, int passlen, const unsigned char *salt, int saltlen, int iter, const GO_EVP_MD_PTR digest, int keylen, unsigned char *out), (pass, passlen, salt, saltlen, iter, digest, keylen, out)) \
-+DEFINEFUNC_3_0(int, EVP_PKEY_CTX_set_tls1_prf_md, (GO_EVP_PKEY_CTX_PTR arg0, const GO_EVP_MD_PTR arg1), (arg0, arg1)) \
-+DEFINEFUNC_3_0(int, EVP_PKEY_CTX_set1_tls1_prf_secret, (GO_EVP_PKEY_CTX_PTR arg0, const unsigned char *arg1, int arg2), (arg0, arg1, arg2)) \
-+DEFINEFUNC_3_0(int, EVP_PKEY_CTX_add1_tls1_prf_seed, (GO_EVP_PKEY_CTX_PTR arg0, const unsigned char *arg1, int arg2), (arg0, arg1, arg2)) \
 +DEFINEFUNC_1_1_1(int, EVP_PKEY_get_raw_public_key, (const GO_EVP_PKEY_PTR pkey, unsigned char *pub, size_t *len), (pkey, pub, len)) \
 +DEFINEFUNC_1_1_1(int, EVP_PKEY_get_raw_private_key, (const GO_EVP_PKEY_PTR pkey, unsigned char *priv, size_t *len), (pkey, priv, len)) \
 +DEFINEFUNC_3_0(GO_EVP_SIGNATURE_PTR, EVP_SIGNATURE_fetch, (GO_OSSL_LIB_CTX_PTR ctx, const char *algorithm, const char *properties), (ctx, algorithm, properties)) \
@@ -6573,6 +7026,13 @@ index 00000000000000..2370b6cc128f5e
 +DEFINEFUNC_LEGACY_1_1(int, DSA_set0_pqg, (GO_DSA_PTR d, GO_BIGNUM_PTR p, GO_BIGNUM_PTR q, GO_BIGNUM_PTR g), (d, p, q, g)) \
 +DEFINEFUNC_LEGACY_1_1(void, DSA_get0_key, (const GO_DSA_PTR d, const GO_BIGNUM_PTR *pub_key, const GO_BIGNUM_PTR *priv_key), (d, pub_key, priv_key)) \
 +DEFINEFUNC_LEGACY_1_1(int, DSA_set0_key, (GO_DSA_PTR d, GO_BIGNUM_PTR pub_key, GO_BIGNUM_PTR priv_key), (d, pub_key, priv_key)) \
++DEFINEFUNC_3_0(GO_EVP_KDF_PTR, EVP_KDF_fetch, (GO_OSSL_LIB_CTX_PTR libctx, const char *algorithm, const char *properties), (libctx, algorithm, properties)) \
++DEFINEFUNC_3_0(void, EVP_KDF_free, (GO_EVP_KDF_PTR kdf), (kdf)) \
++DEFINEFUNC_3_0(GO_EVP_KDF_CTX_PTR, EVP_KDF_CTX_new, (GO_EVP_KDF_PTR kdf), (kdf)) \
++DEFINEFUNC_3_0(int, EVP_KDF_CTX_set_params, (GO_EVP_KDF_CTX_PTR ctx, const GO_OSSL_PARAM_PTR params), (ctx, params)) \
++DEFINEFUNC_3_0(void, EVP_KDF_CTX_free, (GO_EVP_KDF_CTX_PTR ctx), (ctx)) \
++DEFINEFUNC_3_0(size_t, EVP_KDF_CTX_get_kdf_size, (GO_EVP_KDF_CTX_PTR ctx), (ctx)) \
++DEFINEFUNC_3_0(int, EVP_KDF_derive, (GO_EVP_KDF_CTX_PTR ctx, unsigned char *key, size_t keylen, const GO_OSSL_PARAM_PTR params), (ctx, key, keylen, params)) \
 +
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/thread_setup.go b/src/vendor/github.com/golang-fips/openssl/v2/thread_setup.go
 new file mode 100644
@@ -6746,10 +7206,10 @@ index 00000000000000..93281d6cffc352
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/tls1prf.go b/src/vendor/github.com/golang-fips/openssl/v2/tls1prf.go
 new file mode 100644
-index 00000000000000..5de62f95a7a4ec
+index 00000000000000..f342f221ea0c92
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/tls1prf.go
-@@ -0,0 +1,104 @@
+@@ -0,0 +1,160 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -6760,20 +7220,28 @@ index 00000000000000..5de62f95a7a4ec
 +	"crypto"
 +	"errors"
 +	"hash"
++	"sync"
 +	"unsafe"
 +)
 +
 +func SupportsTLS1PRF() bool {
-+	return vMajor > 1 ||
-+		(vMajor >= 1 && vMinor >= 1)
++	switch vMajor {
++	case 1:
++		return vMinor >= 1
++	case 3:
++		_, err := fetchTLS1PRF3()
++		return err == nil
++	default:
++		panic(errUnsupportedVersion())
++	}
 +}
 +
 +// TLS1PRF implements the TLS 1.0/1.1 pseudo-random function if h is nil,
 +// else it implements the TLS 1.2 pseudo-random function.
 +// The pseudo-random number will be written to result and will be of length len(result).
-+func TLS1PRF(result, secret, label, seed []byte, h func() hash.Hash) error {
++func TLS1PRF(result, secret, label, seed []byte, fh func() hash.Hash) error {
 +	var md C.GO_EVP_MD_PTR
-+	if h == nil {
++	if fh == nil {
 +		// TLS 1.0/1.1 PRF doesn't allow to specify the hash function,
 +		// it always uses MD5SHA1. If h is nil, then assume
 +		// that the caller wants to use TLS 1.0/1.1 PRF.
@@ -6781,11 +7249,29 @@ index 00000000000000..5de62f95a7a4ec
 +		// function is MD5SHA1.
 +		md = cryptoHashToMD(crypto.MD5SHA1)
 +	} else {
-+		md = hashToMD(h())
++		h, err := hashFuncHash(fh)
++		if err != nil {
++			return err
++		}
++		md = hashToMD(h)
 +	}
 +	if md == nil {
 +		return errors.New("unsupported hash function")
 +	}
++
++	switch vMajor {
++	case 1:
++		return tls1PRF1(result, secret, label, seed, md)
++	case 3:
++		return tls1PRF3(result, secret, label, seed, md)
++	default:
++		return errUnsupportedVersion()
++	}
++}
++
++// tls1PRF1 implements TLS1PRF for OpenSSL 1 using the EVP_PKEY API.
++func tls1PRF1(result, secret, label, seed []byte, md C.GO_EVP_MD_PTR) error {
++	checkMajorVersion(1)
 +
 +	ctx := C.go_openssl_EVP_PKEY_CTX_new_id(C.GO_EVP_PKEY_TLS1_PRF, nil)
 +	if ctx == nil {
@@ -6798,48 +7284,29 @@ index 00000000000000..5de62f95a7a4ec
 +	if C.go_openssl_EVP_PKEY_derive_init(ctx) != 1 {
 +		return newOpenSSLError("EVP_PKEY_derive_init")
 +	}
-+	switch vMajor {
-+	case 3:
-+		if C.go_openssl_EVP_PKEY_CTX_set_tls1_prf_md(ctx, md) != 1 {
-+			return newOpenSSLError("EVP_PKEY_CTX_set_tls1_prf_md")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_set1_tls1_prf_secret(ctx,
-+			base(secret), C.int(len(secret))) != 1 {
-+			return newOpenSSLError("EVP_PKEY_CTX_set1_tls1_prf_secret")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_add1_tls1_prf_seed(ctx,
-+			base(label), C.int(len(label))) != 1 {
-+			return newOpenSSLError("EVP_PKEY_CTX_add1_tls1_prf_seed")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_add1_tls1_prf_seed(ctx,
-+			base(seed), C.int(len(seed))) != 1 {
-+			return newOpenSSLError("EVP_PKEY_CTX_add1_tls1_prf_seed")
-+		}
-+	case 1:
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1,
-+			C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_TLS_MD,
-+			0, unsafe.Pointer(md)) != 1 {
-+			return newOpenSSLError("EVP_PKEY_CTX_set_tls1_prf_md")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1,
-+			C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_TLS_SECRET,
-+			C.int(len(secret)), unsafe.Pointer(base(secret))) != 1 {
-+			return newOpenSSLError("EVP_PKEY_CTX_set1_tls1_prf_secret")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1,
-+			C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_TLS_SEED,
-+			C.int(len(label)), unsafe.Pointer(base(label))) != 1 {
-+			return newOpenSSLError("EVP_PKEY_CTX_add1_tls1_prf_seed")
-+		}
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1,
-+			C.GO1_EVP_PKEY_OP_DERIVE,
-+			C.GO_EVP_PKEY_CTRL_TLS_SEED,
-+			C.int(len(seed)), unsafe.Pointer(base(seed))) != 1 {
-+			return newOpenSSLError("EVP_PKEY_CTX_add1_tls1_prf_seed")
-+		}
++	if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1,
++		C.GO1_EVP_PKEY_OP_DERIVE,
++		C.GO_EVP_PKEY_CTRL_TLS_MD,
++		0, unsafe.Pointer(md)) != 1 {
++		return newOpenSSLError("EVP_PKEY_CTX_set_tls1_prf_md")
++	}
++	if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1,
++		C.GO1_EVP_PKEY_OP_DERIVE,
++		C.GO_EVP_PKEY_CTRL_TLS_SECRET,
++		C.int(len(secret)), unsafe.Pointer(base(secret))) != 1 {
++		return newOpenSSLError("EVP_PKEY_CTX_set1_tls1_prf_secret")
++	}
++	if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1,
++		C.GO1_EVP_PKEY_OP_DERIVE,
++		C.GO_EVP_PKEY_CTRL_TLS_SEED,
++		C.int(len(label)), unsafe.Pointer(base(label))) != 1 {
++		return newOpenSSLError("EVP_PKEY_CTX_add1_tls1_prf_seed")
++	}
++	if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1,
++		C.GO1_EVP_PKEY_OP_DERIVE,
++		C.GO_EVP_PKEY_CTRL_TLS_SEED,
++		C.int(len(seed)), unsafe.Pointer(base(seed))) != 1 {
++		return newOpenSSLError("EVP_PKEY_CTX_add1_tls1_prf_seed")
 +	}
 +	outLen := C.size_t(len(result))
 +	if C.go_openssl_EVP_PKEY_derive_wrapper(ctx, base(result), outLen).result != 1 {
@@ -6853,6 +7320,147 @@ index 00000000000000..5de62f95a7a4ec
 +		return errors.New("tls1-prf: derived less bytes than requested")
 +	}
 +	return nil
++}
++
++// fetchTLS1PRF3 fetches the TLS1-PRF KDF algorithm.
++// It is safe to call this function concurrently.
++// The returned EVP_KDF_PTR shouldn't be freed.
++var fetchTLS1PRF3 = sync.OnceValues(func() (C.GO_EVP_KDF_PTR, error) {
++	checkMajorVersion(3)
++
++	name := C.CString("TLS1-PRF")
++	kdf := C.go_openssl_EVP_KDF_fetch(nil, name, nil)
++	C.free(unsafe.Pointer(name))
++	if kdf == nil {
++		return nil, newOpenSSLError("EVP_KDF_fetch")
++	}
++	return kdf, nil
++})
++
++// tls1PRF3 implements TLS1PRF for OpenSSL 3 using the EVP_KDF API.
++func tls1PRF3(result, secret, label, seed []byte, md C.GO_EVP_MD_PTR) error {
++	checkMajorVersion(3)
++
++	kdf, err := fetchTLS1PRF3()
++	if err != nil {
++		return err
++	}
++	ctx := C.go_openssl_EVP_KDF_CTX_new(kdf)
++	if ctx == nil {
++		return newOpenSSLError("EVP_KDF_CTX_new")
++	}
++	defer C.go_openssl_EVP_KDF_CTX_free(ctx)
++
++	bld, err := newParamBuilder()
++	if err != nil {
++		return err
++	}
++	bld.addUTF8String(_OSSL_KDF_PARAM_DIGEST, C.go_openssl_EVP_MD_get0_name(md), 0)
++	bld.addOctetString(_OSSL_KDF_PARAM_SECRET, secret)
++	bld.addOctetString(_OSSL_KDF_PARAM_SEED, label)
++	bld.addOctetString(_OSSL_KDF_PARAM_SEED, seed)
++	params, err := bld.build()
++	if err != nil {
++		return err
++	}
++	defer C.go_openssl_OSSL_PARAM_free(params)
++
++	if C.go_openssl_EVP_KDF_derive(ctx, base(result), C.size_t(len(result)), params) != 1 {
++		return newOpenSSLError("EVP_KDF_derive")
++	}
++	return nil
++}
+diff --git a/src/vendor/github.com/golang-fips/openssl/v2/zaes.go b/src/vendor/github.com/golang-fips/openssl/v2/zaes.go
+new file mode 100644
+index 00000000000000..4d945290e3bdff
+--- /dev/null
++++ b/src/vendor/github.com/golang-fips/openssl/v2/zaes.go
+@@ -0,0 +1,86 @@
++// Code generated by cmd/genaesmodes. DO NOT EDIT.
++
++//go:build !cmd_go_bootstrap
++
++package openssl
++
++import "crypto/cipher"
++
++type cipherWithCBC struct {
++	aesCipher
++}
++
++type cipherWithCTR struct {
++	aesCipher
++}
++
++type cipherWithCBC_CTR struct {
++	aesCipher
++	cipherWithCBC
++	cipherWithCTR
++}
++
++type cipherWithGCM struct {
++	aesCipher
++}
++
++type cipherWithCBC_GCM struct {
++	aesCipher
++	cipherWithCBC
++	cipherWithGCM
++}
++
++type cipherWithCTR_GCM struct {
++	aesCipher
++	cipherWithCTR
++	cipherWithGCM
++}
++
++type cipherWithCBC_CTR_GCM struct {
++	aesCipher
++	cipherWithCBC
++	cipherWithCTR
++	cipherWithGCM
++}
++
++func newAESBlock(c *evpCipher, kind cipherKind) cipher.Block {
++	aes := aesCipher{c}
++	var block cipher.Block
++	supportsCBC := loadCipher(kind, cipherModeCBC) != nil
++	supportsCTR := loadCipher(kind, cipherModeCTR) != nil
++	supportsGCM := loadCipher(kind, cipherModeGCM) != nil
++	switch {
++	case !supportsCBC && !supportsCTR && !supportsGCM:
++		block = aes
++	case supportsCBC && !supportsCTR && !supportsGCM:
++		block = cipherWithCBC{aes}
++	case !supportsCBC && supportsCTR && !supportsGCM:
++		block = cipherWithCTR{aes}
++	case supportsCBC && supportsCTR && !supportsGCM:
++		block = cipherWithCBC_CTR{aes,
++			cipherWithCBC{aes},
++			cipherWithCTR{aes},
++		}
++	case !supportsCBC && !supportsCTR && supportsGCM:
++		block = cipherWithGCM{aes}
++	case supportsCBC && !supportsCTR && supportsGCM:
++		block = cipherWithCBC_GCM{aes,
++			cipherWithCBC{aes},
++			cipherWithGCM{aes},
++		}
++	case !supportsCBC && supportsCTR && supportsGCM:
++		block = cipherWithCTR_GCM{aes,
++			cipherWithCTR{aes},
++			cipherWithGCM{aes},
++		}
++	case supportsCBC && supportsCTR && supportsGCM:
++		block = cipherWithCBC_CTR_GCM{aes,
++			cipherWithCBC{aes},
++			cipherWithCTR{aes},
++			cipherWithGCM{aes},
++		}
++	default:
++		panic("unreachable")
++	}
++	return block
 +}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/LICENSE b/src/vendor/github.com/microsoft/go-crypto-winnative/LICENSE
 new file mode 100644
@@ -10853,11 +11461,11 @@ index 00000000000000..1722410e5af193
 +	return getSystemDirectory() + "\\" + dll
 +}
 diff --git a/src/vendor/modules.txt b/src/vendor/modules.txt
-index cf5c0b83c9eeef..499d0cde63f7c9 100644
+index cf5c0b83c9eeef..9f0d68a33cfaf1 100644
 --- a/src/vendor/modules.txt
 +++ b/src/vendor/modules.txt
 @@ -1,3 +1,14 @@
-+# github.com/golang-fips/openssl/v2 v2.0.4-0.20240917142644-14fd57070072
++# github.com/golang-fips/openssl/v2 v2.0.4-0.20241030093648-1a537f4bd487
 +## explicit; go 1.22
 +github.com/golang-fips/openssl/v2
 +github.com/golang-fips/openssl/v2/bbig

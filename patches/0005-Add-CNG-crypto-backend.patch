@@ -905,34 +905,34 @@ index a0548a7f9179c5..ae6117a1554b7f 100644
  package x509
  
 diff --git a/src/go.mod b/src/go.mod
-index e3bab6c545819d..76f44dcd249e4b 100644
+index 3e9514234e7125..611e053ec8c2a0 100644
 --- a/src/go.mod
 +++ b/src/go.mod
 @@ -4,6 +4,7 @@ go 1.24
  
  require (
- 	github.com/golang-fips/openssl/v2 v2.0.4-0.20240917142644-14fd57070072
+ 	github.com/golang-fips/openssl/v2 v2.0.4-0.20241030093648-1a537f4bd487
 +	github.com/microsoft/go-crypto-winnative v0.0.0-20240929074641-3e2be6d20709
  	golang.org/x/crypto v0.25.1-0.20240722173533-bb80217080b0
  	golang.org/x/net v0.27.1-0.20240722181819-765c7e89b3bd
  )
 diff --git a/src/go.sum b/src/go.sum
-index 8ec2c59f2c63e5..87b5f8e316f388 100644
+index d159c7d47bac3b..e2ae52f398320a 100644
 --- a/src/go.sum
 +++ b/src/go.sum
 @@ -1,5 +1,7 @@
- github.com/golang-fips/openssl/v2 v2.0.4-0.20240917142644-14fd57070072 h1:MiLLfnjVDjuOST8SQ7XgeBpWMWPpVb8VKDhL5Uvco7Q=
- github.com/golang-fips/openssl/v2 v2.0.4-0.20240917142644-14fd57070072/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
+ github.com/golang-fips/openssl/v2 v2.0.4-0.20241030093648-1a537f4bd487 h1:Ne+sjU9k7dbdQg1Ix5c2JxT4mshYceU4VWOmClV79Pg=
+ github.com/golang-fips/openssl/v2 v2.0.4-0.20241030093648-1a537f4bd487/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
 +github.com/microsoft/go-crypto-winnative v0.0.0-20240929074641-3e2be6d20709 h1:Kno3m3hOXCrrJF9YphNJWNXm6MjIpflQrHWxAIRSIqA=
 +github.com/microsoft/go-crypto-winnative v0.0.0-20240929074641-3e2be6d20709/go.mod h1:JkxQeL8dGcyCuKjn1Etz4NmQrOMImMy4BA9hptEfVFA=
  golang.org/x/crypto v0.25.1-0.20240722173533-bb80217080b0 h1:wxHbFWyu21uEPJJnYaSDaHSWbvnZ9gLSSOPwnEc3lLM=
  golang.org/x/crypto v0.25.1-0.20240722173533-bb80217080b0/go.mod h1:T+wALwcMOSE0kXgUAnPAHqTLW+XHgcELELW8VaDgm/M=
  golang.org/x/net v0.27.1-0.20240722181819-765c7e89b3bd h1:pHzwejE8Zkb94bG4nA+fUeskKPFp1HPldrhv62dabro=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index e7e967659de213..83dcaed4cb82ec 100644
+index 80a14d54739524..74e0606b0ac903 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -475,6 +475,10 @@ var depsRules = `
+@@ -476,6 +476,10 @@ var depsRules = `
  
  	crypto/cipher,
  	crypto/internal/boring/bcache
@@ -943,7 +943,7 @@ index e7e967659de213..83dcaed4cb82ec 100644
  	< github.com/golang-fips/openssl/v2/internal/subtle
  	< github.com/golang-fips/openssl/v2
  	< crypto/internal/boring
-@@ -515,6 +519,7 @@ var depsRules = `
+@@ -516,6 +520,7 @@ var depsRules = `
  
  	# CRYPTO-MATH is core bignum-based crypto - no cgo, net; fmt now ok.
  	CRYPTO, FMT, math/big

@@ -58,7 +58,7 @@ index f0e3575637c62a..0e9aceeb832d3b 100644
  package main
  
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 0ffcabe4164af6..056f3ea5ae9beb 100644
+index 0facfb579cb196..223472e20d24a5 100644
 --- a/src/cmd/dist/test.go
 +++ b/src/cmd/dist/test.go
 @@ -1225,12 +1225,11 @@ func (t *tester) registerCgoTests(heading string) {
@@ -108,10 +108,10 @@ index 4aaf46b5d0f0dc..6fe798cf4a94e9 100644
  
  go list -f '{{.Dir}}' vendor/golang.org/x/net/http2/hpack
 diff --git a/src/cmd/link/internal/ld/lib.go b/src/cmd/link/internal/ld/lib.go
-index d66027387b97f8..8e4dfab49f6b6b 100644
+index 0c37a1dc1f8c15..faf8a1874d5f28 100644
 --- a/src/cmd/link/internal/ld/lib.go
 +++ b/src/cmd/link/internal/ld/lib.go
-@@ -1162,6 +1162,7 @@ var hostobj []Hostobj
+@@ -1163,6 +1163,7 @@ var hostobj []Hostobj
  // These packages can use internal linking mode.
  // Others trigger external mode.
  var internalpkg = []string{
@@ -611,7 +611,7 @@ index c44ae92f2528f3..698efc6751e12c 100644
  package tls
  
 diff --git a/src/crypto/tls/boring_test.go b/src/crypto/tls/boring_test.go
-index d879139773d1d7..50330a2cd77cf7 100644
+index dcbd33167e4499..1f577fd1d4d9ec 100644
 --- a/src/crypto/tls/boring_test.go
 +++ b/src/crypto/tls/boring_test.go
 @@ -2,7 +2,7 @@
@@ -688,7 +688,7 @@ index 095b58c31590d4..9aec21dbcd3bff 100644
  package x509
  
 diff --git a/src/crypto/x509/boring_test.go b/src/crypto/x509/boring_test.go
-index ffc3eeca9dbf95..b3227dc2560ff8 100644
+index 1b2454dbaab264..8cfc61049d0a08 100644
 --- a/src/crypto/x509/boring_test.go
 +++ b/src/crypto/x509/boring_test.go
 @@ -2,7 +2,7 @@
@@ -714,32 +714,32 @@ index c83a7272c9f01f..a0548a7f9179c5 100644
  package x509
  
 diff --git a/src/go.mod b/src/go.mod
-index d7a4ef150410e3..7a6455fefb4bed 100644
+index df27f25e789f05..3e9514234e7125 100644
 --- a/src/go.mod
 +++ b/src/go.mod
 @@ -3,6 +3,7 @@ module std
  go 1.24
  
  require (
-+	github.com/golang-fips/openssl/v2 v2.0.4-0.20240917142644-14fd57070072
++	github.com/golang-fips/openssl/v2 v2.0.4-0.20241030093648-1a537f4bd487
  	golang.org/x/crypto v0.25.1-0.20240722173533-bb80217080b0
  	golang.org/x/net v0.27.1-0.20240722181819-765c7e89b3bd
  )
 diff --git a/src/go.sum b/src/go.sum
-index 8ff5ecd640f084..c502448cd5ec1b 100644
+index b4efd6d3c50c11..d159c7d47bac3b 100644
 --- a/src/go.sum
 +++ b/src/go.sum
 @@ -1,3 +1,5 @@
-+github.com/golang-fips/openssl/v2 v2.0.4-0.20240917142644-14fd57070072 h1:MiLLfnjVDjuOST8SQ7XgeBpWMWPpVb8VKDhL5Uvco7Q=
-+github.com/golang-fips/openssl/v2 v2.0.4-0.20240917142644-14fd57070072/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
++github.com/golang-fips/openssl/v2 v2.0.4-0.20241030093648-1a537f4bd487 h1:Ne+sjU9k7dbdQg1Ix5c2JxT4mshYceU4VWOmClV79Pg=
++github.com/golang-fips/openssl/v2 v2.0.4-0.20241030093648-1a537f4bd487/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
  golang.org/x/crypto v0.25.1-0.20240722173533-bb80217080b0 h1:wxHbFWyu21uEPJJnYaSDaHSWbvnZ9gLSSOPwnEc3lLM=
  golang.org/x/crypto v0.25.1-0.20240722173533-bb80217080b0/go.mod h1:T+wALwcMOSE0kXgUAnPAHqTLW+XHgcELELW8VaDgm/M=
  golang.org/x/net v0.27.1-0.20240722181819-765c7e89b3bd h1:pHzwejE8Zkb94bG4nA+fUeskKPFp1HPldrhv62dabro=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index ca6a512bf95c7e..e69c1f8901fe74 100644
+index 578b4d6f68504c..80a14d54739524 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -460,6 +460,8 @@ var depsRules = `
+@@ -476,6 +476,8 @@ var depsRules = `
  
  	crypto/cipher,
  	crypto/internal/boring/bcache
@@ -748,7 +748,7 @@ index ca6a512bf95c7e..e69c1f8901fe74 100644
  	< crypto/internal/boring
  	< crypto/internal/backend
  	< crypto/boring;
-@@ -498,6 +500,7 @@ var depsRules = `
+@@ -514,6 +516,7 @@ var depsRules = `
  
  	# CRYPTO-MATH is core bignum-based crypto - no cgo, net; fmt now ok.
  	CRYPTO, FMT, math/big
@@ -756,7 +756,7 @@ index ca6a512bf95c7e..e69c1f8901fe74 100644
  	< crypto/internal/boring/bbig
  	< crypto/internal/backend/bbig
  	< crypto/rand
-@@ -797,7 +800,7 @@ var buildIgnore = []byte("\n//go:build ignore")
+@@ -812,7 +815,7 @@ var buildIgnore = []byte("\n//go:build ignore")
  
  func findImports(pkg string) ([]string, error) {
  	vpkg := pkg
@@ -765,7 +765,7 @@ index ca6a512bf95c7e..e69c1f8901fe74 100644
  		vpkg = "vendor/" + pkg
  	}
  	dir := filepath.Join(Default.GOROOT, "src", vpkg)
-@@ -807,7 +810,7 @@ func findImports(pkg string) ([]string, error) {
+@@ -822,7 +825,7 @@ func findImports(pkg string) ([]string, error) {
  	}
  	var imports []string
  	var haveImport = map[string]bool{}
@@ -817,7 +817,7 @@ index 00000000000000..a7f2712e9e1464
 +const OpenSSLCrypto = true
 +const OpenSSLCryptoInt = 1
 diff --git a/src/internal/goexperiment/flags.go b/src/internal/goexperiment/flags.go
-index 777337d92d3c72..ef00871d619651 100644
+index d7cf7655f3cea3..9c8b16735cd4f1 100644
 --- a/src/internal/goexperiment/flags.go
 +++ b/src/internal/goexperiment/flags.go
 @@ -59,6 +59,7 @@ type Flags struct {
@@ -829,7 +829,7 @@ index 777337d92d3c72..ef00871d619651 100644
  	// SystemCrypto enables the OpenSSL or CNG crypto experiment depending on
  	// which one is appropriate on the target GOOS.
 diff --git a/src/os/exec/exec_test.go b/src/os/exec/exec_test.go
-index a0bb89e203ddf1..2b4a2680dcdd7e 100644
+index 8c623871932f7d..2fa55073f5c19c 100644
 --- a/src/os/exec/exec_test.go
 +++ b/src/os/exec/exec_test.go
 @@ -14,6 +14,7 @@ import (
@@ -840,7 +840,7 @@ index a0bb89e203ddf1..2b4a2680dcdd7e 100644
  	"internal/poll"
  	"internal/testenv"
  	"io"
-@@ -737,6 +738,14 @@ func TestExtraFiles(t *testing.T) {
+@@ -689,6 +690,14 @@ func TestExtraFiles(t *testing.T) {
  		t.Skipf("skipping test on %q", runtime.GOOS)
  	}
  
