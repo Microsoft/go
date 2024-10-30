@@ -1499,7 +1499,7 @@ index fdad37b1863ae8..e627fbacb35836 100644
  
  		h := New()
 +		if boring.Enabled {
-+			if _, ok := h.(encoding.BinaryMarshaler); ok {
++			if _, ok := h.(encoding.BinaryMarshaler); !ok {
 +				t.Skip("BinaryMarshaler not implemented")
 +			}
 +		}
