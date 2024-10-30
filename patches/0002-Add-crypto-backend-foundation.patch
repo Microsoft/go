@@ -35,7 +35,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/crypto/rc4/rc4.go                        |  18 ++
  src/crypto/rsa/boring.go                     |   4 +-
  src/crypto/rsa/notboring.go                  |   2 +-
- src/crypto/rsa/pkcs1v15.go                   |  10 +-
+ src/crypto/rsa/pkcs1v15.go                   |  11 +-
  src/crypto/rsa/pkcs1v15_test.go              |   5 +
  src/crypto/rsa/pss.go                        |   8 +-
  src/crypto/rsa/rsa.go                        |  21 +-
@@ -58,7 +58,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/go/build/deps_test.go                    |   4 +
  src/net/smtp/smtp_test.go                    |  72 ++++---
  src/runtime/runtime_boring.go                |   5 +
- 54 files changed, 875 insertions(+), 106 deletions(-)
+ 54 files changed, 876 insertions(+), 106 deletions(-)
  create mode 100644 src/crypto/ed25519/boring.go
  create mode 100644 src/crypto/ed25519/notboring.go
  create mode 100644 src/crypto/internal/backend/backend_test.go
@@ -1107,10 +1107,10 @@ index 2abc0436405f8a..34c22c8fbba7da 100644
  func boringPublicKey(*PublicKey) (*boring.PublicKeyRSA, error) {
  	panic("boringcrypto: not available")
 diff --git a/src/crypto/rsa/pkcs1v15.go b/src/crypto/rsa/pkcs1v15.go
-index 2f958022f98584..0ca8a5c915a0d5 100644
+index 2f958022f98584..791d969ddb87d8 100644
 --- a/src/crypto/rsa/pkcs1v15.go
 +++ b/src/crypto/rsa/pkcs1v15.go
-@@ -7,7 +7,7 @@ package rsa
+@@ -7,10 +7,11 @@ package rsa
  import (
  	"bytes"
  	"crypto"
@@ -1119,7 +1119,11 @@ index 2f958022f98584..0ca8a5c915a0d5 100644
  	"crypto/internal/randutil"
  	"crypto/subtle"
  	"errors"
-@@ -95,7 +95,7 @@ func DecryptPKCS1v15(random io.Reader, priv *PrivateKey, ciphertext []byte) ([]b
++	"internal/goexperiment"
+ 	"io"
+ )
+ 
+@@ -95,7 +96,7 @@ func DecryptPKCS1v15(random io.Reader, priv *PrivateKey, ciphertext []byte) ([]b
  		return nil, err
  	}
  
@@ -1128,7 +1132,7 @@ index 2f958022f98584..0ca8a5c915a0d5 100644
  		bkey, err := boringPrivateKey(priv)
  		if err != nil {
  			return nil, err
-@@ -189,7 +189,7 @@ func decryptPKCS1v15(priv *PrivateKey, ciphertext []byte) (valid int, em []byte,
+@@ -189,7 +190,7 @@ func decryptPKCS1v15(priv *PrivateKey, ciphertext []byte) (valid int, em []byte,
  		return
  	}
  
@@ -1137,21 +1141,21 @@ index 2f958022f98584..0ca8a5c915a0d5 100644
  		var bkey *boring.PrivateKeyRSA
  		bkey, err = boringPrivateKey(priv)
  		if err != nil {
-@@ -293,7 +293,7 @@ func SignPKCS1v15(random io.Reader, priv *PrivateKey, hash crypto.Hash, hashed [
+@@ -293,7 +294,7 @@ func SignPKCS1v15(random io.Reader, priv *PrivateKey, hash crypto.Hash, hashed [
  		return nil, err
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) && hash != 0 && boring.SupportsHash(hash) {
++	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) && ((goexperiment.BoringCrypto && hash == 0) || boring.SupportsHash(hash)) {
  		bkey, err := boringPrivateKey(priv)
  		if err != nil {
  			return nil, err
-@@ -343,7 +343,7 @@ func pkcs1v15ConstructEM(pub *PublicKey, hash crypto.Hash, hashed []byte) ([]byt
+@@ -343,7 +344,7 @@ func pkcs1v15ConstructEM(pub *PublicKey, hash crypto.Hash, hashed []byte) ([]byt
  // The inputs are not considered confidential, and may leak through timing side
  // channels, or if an attacker has control of part of the inputs.
  func VerifyPKCS1v15(pub *PublicKey, hash crypto.Hash, hashed []byte, sig []byte) error {
 -	if boring.Enabled {
-+	if boring.Enabled && hash != 0 && boring.SupportsHash(hash) {
++	if boring.Enabled && ((goexperiment.BoringCrypto && hash == 0) || boring.SupportsHash(hash)) {
  		bkey, err := boringPublicKey(pub)
  		if err != nil {
  			return err
