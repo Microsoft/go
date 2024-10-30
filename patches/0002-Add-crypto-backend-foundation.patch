@@ -30,6 +30,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/crypto/md5/md5_test.go                   |  14 ++
  src/crypto/purego_test.go                    |   2 +-
  src/crypto/rand/rand.go                      |   2 +-
+ src/crypto/rand/rand_linux_test.go           |   5 +
  src/crypto/rand/rand_test.go                 |   2 +-
  src/crypto/rc4/rc4.go                        |  18 ++
  src/crypto/rsa/boring.go                     |   4 +-
@@ -56,7 +57,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/go/build/deps_test.go                    |   4 +
  src/net/smtp/smtp_test.go                    |  72 ++++---
  src/runtime/runtime_boring.go                |   5 +
- 52 files changed, 857 insertions(+), 106 deletions(-)
+ 53 files changed, 862 insertions(+), 106 deletions(-)
  create mode 100644 src/crypto/ed25519/boring.go
  create mode 100644 src/crypto/ed25519/notboring.go
  create mode 100644 src/crypto/internal/backend/backend_test.go
@@ -983,6 +984,29 @@ index b3d0a7368f7fa0..c34b994a67a289 100644
  	"io"
  	"os"
  	"sync"
+diff --git a/src/crypto/rand/rand_linux_test.go b/src/crypto/rand/rand_linux_test.go
+index 5238b458e53bb4..0c2a06d6ba12ad 100644
+--- a/src/crypto/rand/rand_linux_test.go
++++ b/src/crypto/rand/rand_linux_test.go
+@@ -6,6 +6,7 @@ package rand_test
+ 
+ import (
+ 	"bytes"
++	boring "crypto/internal/backend"
+ 	"crypto/rand/internal/seccomp"
+ 	"internal/syscall/unix"
+ 	"internal/testenv"
+@@ -16,6 +17,10 @@ import (
+ )
+ 
+ func TestNoGetrandom(t *testing.T) {
++	if boring.Enabled {
++		// OpenSSL segfaults instead of returning ENOSYS when getrandom is disabled
++		t.Skip("boring enabled")
++	}
+ 	if os.Getenv("GO_GETRANDOM_DISABLED") == "1" {
+ 		// We are running under seccomp, the rest of the test suite will take
+ 		// care of actually testing the implementation, we check that getrandom
 diff --git a/src/crypto/rand/rand_test.go b/src/crypto/rand/rand_test.go
 index 63581b75fdbc7f..dd220c7c544f76 100644
 --- a/src/crypto/rand/rand_test.go
