@@ -31,6 +31,9 @@ parameters:
   - name: sign
     type: boolean
     default: false
+  - name: signExistingRunID
+    type: string
+    default: 'nil'
   - name: publish
     type: boolean
     default: false
@@ -57,6 +60,7 @@ stages:
       jobsParameters:
         official: ${{ parameters.official }}
         sign: ${{ parameters.sign }}
+        signExistingRunID: ${{ parameters.signExistingRunID }}
         publish: ${{ parameters.publish }}
         publishReleaseStudio: ${{ parameters.publishReleaseStudio }}
         publishExistingRunID: ${{ parameters.publishExistingRunID }}
@@ -71,6 +75,8 @@ stages:
           - { os: windows, arch: amd64, config: buildandpack }
           - { os: linux, arch: arm, hostArch: amd64, config: buildandpack }
           - { os: linux, arch: arm64, hostArch: amd64, config: buildandpack }
+          - { os: darwin, arch: amd64, config: buildandpack }
+          - { os: darwin, arch: arm64, hostArch: amd64, config: buildandpack }
           - ${{ if parameters.includeArm64Host }}:
             - { os: linux, arch: arm64, config: buildandpack }
         - ${{ if parameters.innerloop }}:

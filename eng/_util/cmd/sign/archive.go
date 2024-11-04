@@ -1,0 +1,463 @@
+// Copyright (c) Microsoft Corporation.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package main
+
+import (
+	"archive/tar"
+	"archive/zip"
+	"context"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+type archiveType int
+
+const (
+	// zipArchive is a Windows zip archive.
+	zipArchive archiveType = iota
+	// tarGzArchive is a macOS or Linux tar.gz archive.
+	tarGzArchive
+)
+
+type archive struct {
+	path string
+	name string
+
+	archiveType  archiveType
+	archiveMacOS bool
+
+	// workDir is a work dir absolute path that is only used for processing this archive.
+	workDir string
+
+	// repackedPath is a repackaged archive with signed content. Assigned upon completion.
+	// Windows and macOS archives get repacked.
+	repackedPath string
+	// notarizedPath is a repacked archive that has also had the notarization ticket attached.
+	// Assigned upon completion.
+	notarizedPath string
+}
+
+func newArchive(p string) (*archive, error) {
+	name := filepath.Base(p)
+	a := archive{
+		path: p,
+		name: name,
+	}
+	if matchOrPanic("go*.zip", name) {
+		a.archiveType = zipArchive
+	} else if matchOrPanic("go*.tar.gz", name) {
+		a.archiveType = tarGzArchive
+	} else {
+		return nil, fmt.Errorf("unknown archive type: %s", p)
+	}
+
+	if matchOrPanic("go*darwin*.tar.gz", name) {
+		a.archiveMacOS = true
+	}
+
+	if err := os.MkdirAll(*tempDir, 0o777); err != nil {
+		return nil, err
+	}
+	workDir, err := os.MkdirTemp(*tempDir, "sign-work-"+name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create work directory: %v", err)
+	}
+	workDir, err = filepath.Abs(workDir)
+	if err != nil {
+		return nil, err
+	}
+	a.workDir = workDir
+
+	return &a, nil
+}
+
+// latestPath returns the path of the file that has the most signing steps applied to it. This
+// allows for some generalization across platforms in later steps.
+func (a *archive) latestPath() string {
+	if a.notarizedPath != "" {
+		return a.notarizedPath
+	}
+	if a.repackedPath != "" {
+		return a.repackedPath
+	}
+	return a.path
+}
+
+func (a *archive) sigPath() string {
+	return filepath.Join(a.workDir, a.name+".sig")
+}
+
+func (a *archive) macHardenPackPath() string {
+	return filepath.Join(a.workDir, a.name+".ToSignBundle.zip")
+}
+
+func (a *archive) macNotarizePackPath() string {
+	return filepath.Join(a.workDir, a.name+".ToNotarize.zip")
+}
+
+// entrySignInfo returns signing details for a given file in the Go archive, or nil if the given
+// file entry doesn't need to be signed.
+func (a *archive) entrySignInfo(name string) *fileToSign {
+	if a.archiveType == zipArchive {
+		if strings.HasSuffix(name, ".exe") {
+			return &fileToSign{
+				originalPath: a.path,
+				fullPath:     filepath.Join(a.workDir, "extract", name),
+				authenticode: "Microsoft400",
+			}
+		}
+	} else if a.archiveMacOS {
+		if matchOrPanic("go/bin/*", name) ||
+			matchOrPanic("go/pkg/tool/*/*", name) {
+
+			return &fileToSign{
+				originalPath: a.path,
+				zip:          true,
+			}
+		}
+	}
+	return nil
+}
+
+// prepareEntriesToSign extracts files from the archive that need to be signed and returns a list
+// of their extracted locations and details about how they should be signed.
+func (a *archive) prepareEntriesToSign(ctx context.Context) ([]*fileToSign, error) {
+	fail := func(err error) ([]*fileToSign, error) {
+		return nil, fmt.Errorf("failed to extract file from %q: %v", a.path, err)
+	}
+
+	var results []*fileToSign
+
+	if a.archiveType == zipArchive {
+		log.Printf("Extracting files to sign from %q", a.path)
+		zr, err := zip.OpenReader(a.path)
+		if err != nil {
+			return fail(err)
+		}
+		defer zr.Close()
+
+		for _, f := range zr.File {
+			if err := ctx.Err(); err != nil {
+				return fail(err)
+			}
+			if f.FileInfo().IsDir() {
+				continue
+			}
+			if info := a.entrySignInfo(f.Name); info != nil {
+				if err := withFileCreate(info.fullPath, func(fWriter *os.File) error {
+					fReader, err := f.Open()
+					if err != nil {
+						return err
+					}
+					_, err = io.Copy(fWriter, fReader)
+					return firstError(err, fReader.Close())
+				}); err != nil {
+					return fail(err)
+				}
+				results = append(results, info)
+			}
+		}
+	} else if a.archiveMacOS {
+		// Store macOS files to sign in a zip. Zipping is needed for this platform specifically,
+		// and the "Zip=true" feature mentioned in the doc only works when signing on a macOS
+		// runtime, so we need to do it ourselves.
+		// https://dev.azure.com/devdiv/DevDiv/_wiki/wikis/DevDiv.wiki/19841/Additional-Requirements-for-Signing-or-Notarizing-Mac-Files
+		fts := &fileToSign{
+			originalPath: a.path,
+			fullPath:     a.macHardenPackPath(),
+			authenticode: "MacDeveloperHarden",
+		}
+		log.Printf("Creating macOS file hardening bundle at %q", fts.fullPath)
+		if err := withZipCreate(fts.fullPath, func(zw *zip.Writer) error {
+			return a.extractMacOSEntriesToZip(ctx, zw)
+		}); err != nil {
+			return fail(err)
+		}
+		results = append(results, fts)
+	}
+
+	return results, nil
+}
+
+func (a *archive) extractMacOSEntriesToZip(ctx context.Context, zw *zip.Writer) error {
+	// Open tar.gz macOS archive to put files into the zip.
+	writtenNames := make(map[string]struct{})
+	return withTarGzOpen(a.path, func(tr *tar.Reader) error {
+		return eachTarEntry(tr, func(header *tar.Header, r io.Reader) error {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if header.Typeflag != tar.TypeReg {
+				return nil
+			}
+			if info := a.entrySignInfo(header.Name); info != nil {
+				if !info.zip {
+					return fmt.Errorf("unexpected file to sign directly rather than include in the zip batch: %q", header.Name)
+				}
+
+				base := filepath.Base(header.Name)
+				if _, ok := writtenNames[base]; ok {
+					return fmt.Errorf("duplicate file name in archive: %q", base)
+				}
+				writtenNames[base] = struct{}{}
+
+				w, err := zw.CreateHeader(&zip.FileHeader{
+					Name: base,
+				})
+				if err != nil {
+					return err
+				}
+				_, err = io.Copy(w, r)
+				return err
+			}
+			return nil
+		})
+	})
+}
+
+func (a *archive) repackSignedEntries(ctx context.Context) error {
+	targetPath := filepath.Join(a.workDir, a.name+".WithSignedContent")
+	if a.archiveType == zipArchive {
+		log.Printf("Repacking signed content to %q", targetPath)
+		if err := withZipOpen(a.path, func(zr *zip.ReadCloser) error {
+			return withZipCreate(targetPath, func(zw *zip.Writer) error {
+				return eachZipEntry(zr, func(f *zip.File) error {
+					if err := ctx.Err(); err != nil {
+						return err
+					}
+					return a.writeZipRepackEntry(f, zw)
+				})
+			})
+		}); err != nil {
+			return err
+		}
+		a.repackedPath = targetPath
+	} else if a.archiveMacOS {
+		log.Printf("Repacking hardened content to %q", targetPath)
+		// Open the original tar.gz for header info and to read unchanged files from.
+		if err := withTarGzOpen(a.path, func(originalTR *tar.Reader) error {
+			// Create the new tar.gz that we're assembling.
+			return withTarGzCreate(targetPath, func(outTW *tar.Writer) error {
+				// Open the zip payload we got back from the signing service.
+				return withZipOpen(a.macHardenPackPath(), func(zrc *zip.ReadCloser) error {
+					// Iterate through the original tar.gz file to populate the target.
+					return eachTarEntry(originalTR, func(hdr *tar.Header, originalR io.Reader) error {
+						if err := ctx.Err(); err != nil {
+							return err
+						}
+						return a.writeTarRepackEntry(hdr, originalR, &zrc.Reader, outTW)
+					})
+				})
+			})
+		}); err != nil {
+			return err
+		}
+		a.repackedPath = targetPath
+	}
+	return nil
+}
+
+// writeZipRepackEntry looks at one entry in the original zip and creates a corresponding entry in
+// the output zip. Reads signed entry content from the signed file on disk. If the file hasn't been
+// signed, the content is read from the original zip.
+func (a *archive) writeZipRepackEntry(original *zip.File, out *zip.Writer) error {
+	w, err := out.CreateHeader(&zip.FileHeader{
+		// Copy necessary original file metadata.
+		Name:     original.Name,
+		Method:   original.Method,
+		Comment:  original.Comment,
+		Modified: original.Modified,
+		Extra:    original.Extra,
+	})
+	if err != nil {
+		return err
+	}
+	var r io.ReadCloser
+	// If we have a signed version of this file, read from that.
+	// Otherwise, read from the original.
+	if info := a.entrySignInfo(original.Name); info != nil {
+		log.Printf("Replacing with signed version: %q", original.Name)
+		r, err = os.Open(info.fullPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		r, err = original.Open()
+		if err != nil {
+			return err
+		}
+	}
+	_, err = io.Copy(w, r)
+	return firstError(err, r.Close())
+}
+
+// writeTarRepackEntry looks at one entry in the original tar.gz and creates a corresponding entry
+// in the output tar.gz. Reads signed/hardened entry content from signedPack. Otherwise, the entry
+// content is copied from the original.
+func (a *archive) writeTarRepackEntry(hdr *tar.Header, original io.Reader, signedPack *zip.Reader, out *tar.Writer) error {
+	// Always start with header info from the original tar.gz even if we're going to replace the
+	// file content. This means we don't need to worry about lost metadata due to the zip
+	// round-trip.
+	newHeader := &tar.Header{
+		// Follow tar.Header documented compat guidance by copying over our selection of fields.
+		Name:     hdr.Name,
+		Linkname: hdr.Linkname,
+
+		Size:  hdr.Size,
+		Mode:  hdr.Mode,
+		Uid:   hdr.Uid,
+		Gid:   hdr.Gid,
+		Uname: hdr.Uname,
+		Gname: hdr.Gname,
+
+		ModTime:    hdr.ModTime,
+		AccessTime: hdr.AccessTime,
+		ChangeTime: hdr.ChangeTime,
+	}
+	isFile := hdr.Typeflag == tar.TypeReg
+	if info := a.entrySignInfo(hdr.Name); info != nil && isFile {
+		log.Printf("Replacing with signed version: %q", hdr.Name)
+		replacementFile, err := signedPack.Open(filepath.Base(hdr.Name))
+		if err != nil {
+			return err
+		}
+		defer replacementFile.Close()
+		// Get the file size to prepare to copy.
+		stat, err := replacementFile.Stat()
+		if err != nil {
+			return err
+		}
+		newHeader.Size = stat.Size()
+		original = replacementFile
+	}
+	if err := out.WriteHeader(newHeader); err != nil {
+		return fmt.Errorf(
+			"failed to write header for %q: %v",
+			newHeader.Name, err)
+	}
+	if isFile {
+		_, err := io.Copy(out, original)
+		if err != nil {
+			return fmt.Errorf("failed to write %q: %v", newHeader.Name, err)
+		}
+	}
+	// Call Flush to make sure our write was correct. We don't technically need to call Flush here
+	// because the next WriteHeader will confirm that we e.g. wrote the correct number of bytes.
+	// However, calling Flush ourselves lets us emit an error that mentions the bad filename
+	// (rather than the next, unrelated filename).
+	if err := out.Flush(); err != nil {
+		return fmt.Errorf("failed to flush %q: %v", newHeader.Name, err)
+	}
+	return nil
+}
+
+func (a *archive) prepareNotarize(ctx context.Context) ([]*fileToSign, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	if !a.archiveMacOS {
+		return nil, nil
+	}
+
+	log.Printf("Creating zip containing the macOS tar.gz to notarize at %q", a.macNotarizePackPath())
+	if err := withZipCreate(a.macNotarizePackPath(), func(zw *zip.Writer) error {
+		w, err := zw.CreateHeader(&zip.FileHeader{
+			Name: a.name,
+		})
+		if err != nil {
+			return err
+		}
+		return withFileOpen(a.latestPath(), func(f *os.File) error {
+			_, err := io.Copy(w, f)
+			return err
+		})
+	}); err != nil {
+		return nil, err
+	}
+	return []*fileToSign{
+		{
+			originalPath: a.path,
+			fullPath:     a.macNotarizePackPath(),
+			authenticode: "8020", // Can't specify MacNotarize or MacAppName is not detected.
+			macAppName:   "MicrosoftGo",
+		},
+	}, nil
+}
+
+func (a *archive) unpackNotarize(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if !a.archiveMacOS {
+		return nil
+	}
+
+	a.notarizedPath = filepath.Join(a.workDir, a.name+".notarized")
+	log.Printf("Unpacking notarized content to %q", a.notarizedPath)
+	return withZipOpen(a.macNotarizePackPath(), func(zr *zip.ReadCloser) error {
+		return eachZipEntry(zr, func(f *zip.File) error {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if f.Name != a.name {
+				return fmt.Errorf("unexpected file in notarize zip: %q", f.Name)
+			}
+			return withFileCreate(a.notarizedPath, func(w *os.File) error {
+				r, err := f.Open()
+				if err != nil {
+					return err
+				}
+				_, err = io.Copy(w, r)
+				return firstError(err, r.Close())
+			})
+		})
+	})
+}
+
+func (a *archive) prepareArchiveSignatures(ctx context.Context) ([]*fileToSign, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	// Copy the archive file to have .sig suffix, e.g. "tar.gz" to "tar.gz.sig". The signing
+	// process sends the "tar.gz.sig" file to get a signature, then replaces the "tar.gz.sig"
+	// file's content in-place with the result. We need to preemptively make a renamed copy of the
+	// file so we end up with both the original file and sig on the machine.
+	log.Printf("Copying file for signature generation: %q -> %q", a.latestPath(), a.sigPath())
+	if err := copyFile(a.sigPath(), a.latestPath()); err != nil {
+		return nil, err
+	}
+	return []*fileToSign{
+		{
+			originalPath: a.path,
+			fullPath:     a.sigPath(),
+			authenticode: "LinuxSignManagedLanguageCompiler",
+		},
+	}, nil
+}
+
+func (a *archive) copyToDestination(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	// Create destination if it doesn't exist.
+	if err := os.MkdirAll(*destinationDir, 0o777); err != nil {
+		return fmt.Errorf("failed to create destination directory: %v", err)
+	}
+
+	log.Printf("Copying finished files to destination: %q", a.latestPath())
+	if err := copyFile(filepath.Join(*destinationDir, a.name), a.latestPath()); err != nil {
+		return err
+	}
+	if err := copyFile(filepath.Join(*destinationDir, a.name+".sig"), a.sigPath()); err != nil {
+		return err
+	}
+	return nil
+}

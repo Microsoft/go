@@ -1,0 +1,28 @@
+<!-- Copyright (c) Microsoft Corporation. Use of this source code is governed by a BSD-style license that can be found in the LICENSE file. -->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Minimal info for '.csproj' to work. -->
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+  </PropertyGroup>
+
+  <!-- https://dev.azure.com/devdiv/DevDiv/_wiki/wikis/DevDiv.wiki/650/MicroBuild-Signing -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudioEng.MicroBuild.Core" Version="1.0.0" />
+  </ItemGroup>
+
+  <!-- Import a props file containing a list of items that specify the files to sign. -->
+  <Import Project="$(FilesToSignPropsFile)" Condition="'$(FilesToSignPropsFile)' != ''" />
+
+  <Target Name="PrepSign" BeforeTargets="AfterBuild">
+    <PropertyGroup Condition="'$(SignFilesDir)' != ''">
+      <!-- MicroBuild expects the files to be inside OutDir. -->
+      <OutDir>$([MSBuild]::NormalizeDirectory('$(SignFilesDir)'))</OutDir>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="SignFiles" BeforeTargets="PrepSign">
+    <Error Text="Assertion failed: this target should not exist! Is the signing plugin installed? When its target file is loaded, it should overwrite this SignFiles target." />
+  </Target>
+
+</Project>

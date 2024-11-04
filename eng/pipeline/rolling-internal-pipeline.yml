@@ -33,6 +33,11 @@ parameters:
     type: string
     default: nil
 
+  - name: signExistingRunID
+    displayName: 'For debugging signing: skip building, and instead sign the artifacts from an existing run. Leave "nil" otherwise.'
+    type: string
+    default: 'nil'
+
 variables:
   - template: variables/pool-providers.yml
   # MicroBuild configuration.
@@ -71,6 +76,7 @@ extends:
           buildandpack: true
           official: true
           sign: true
+          signExistingRunID: ${{ parameters.signExistingRunID }}
           createSourceArchive: true
           createSymbols: true
           publish: true
