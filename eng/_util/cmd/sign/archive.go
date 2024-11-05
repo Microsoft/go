@@ -142,12 +142,12 @@ func (a *archive) prepareEntriesToSign(ctx context.Context) ([]*fileToSign, erro
 		}
 		defer zr.Close()
 
-		for _, f := range zr.File {
+		if err := eachZipEntry(zr, func(f *zip.File) error {
 			if err := ctx.Err(); err != nil {
-				return fail(err)
+				return err
 			}
 			if f.FileInfo().IsDir() {
-				continue
+				return nil
 			}
 			if info := a.entrySignInfo(f.Name); info != nil {
 				if err := withFileCreate(info.fullPath, func(fWriter *os.File) error {
@@ -158,10 +158,13 @@ func (a *archive) prepareEntriesToSign(ctx context.Context) ([]*fileToSign, erro
 					_, err = io.Copy(fWriter, fReader)
 					return firstError(err, fReader.Close())
 				}); err != nil {
-					return fail(err)
+					return err
 				}
 				results = append(results, info)
 			}
+			return nil
+		}); err != nil {
+			return fail(err)
 		}
 	} else if a.archiveMacOS {
 		// Store macOS files to sign in a zip. Zipping is needed for this platform specifically,

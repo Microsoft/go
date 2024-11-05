@@ -9,6 +9,7 @@ import (
 	"archive/zip"
 	"compress/gzip"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,6 +17,10 @@ import (
 
 func eachZipEntry(r *zip.ReadCloser, f func(*zip.File) error) error {
 	for _, file := range r.File {
+		// Disallow absolute path, "..", etc.
+		if !filepath.IsLocal(file.Name) {
+			return fmt.Errorf("zip contains non-local path: %s", file.Name)
+		}
 		if err := f(file); err != nil {
 			return err
 		}
@@ -31,6 +36,10 @@ func eachTarEntry(r *tar.Reader, f func(*tar.Header, io.Reader) error) error {
 				return nil
 			}
 			return err
+		}
+		// Disallow absolute path, "..", etc.
+		if !filepath.IsLocal(header.Name) {
+			return fmt.Errorf("tar contains non-local path: %s", header.Name)
 		}
 		if err := f(header, r); err != nil {
 			return err
