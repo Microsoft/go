@@ -171,7 +171,11 @@ func findArchives(ctx context.Context, glob string) ([]*archive, error) {
 
 	archives := make([]*archive, 0, len(files))
 
-	// Make sure we don't e.g. see the same filenames in different directories.
+	// Check for duplicate filenames. At the end of signing, we will put all the results in the
+	// same directory (even if the sources came from different directories), so catching this
+	// early saves time.
+	//
+	// Use lowercase because we sign on a Windows machine with a case-insensitive filesystem.
 	archiveFilenames := make(map[string]string)
 
 	for _, f := range files {
@@ -183,11 +187,11 @@ func findArchives(ctx context.Context, glob string) ([]*archive, error) {
 			continue
 		}
 
-		filename := filepath.Base(f)
-		if existingF, ok := archiveFilenames[filepath.Base(f)]; ok {
-			return nil, fmt.Errorf("duplicate archive %q, already found %q", f, existingF)
+		filenameLower := strings.ToLower(filepath.Base(f))
+		if existingF, ok := archiveFilenames[filenameLower]; ok {
+			return nil, fmt.Errorf("duplicate archive %q, already found %q (comparing lowercase filename)", f, existingF)
 		}
-		archiveFilenames[filename] = f
+		archiveFilenames[filenameLower] = f
 
 		a, err := newArchive(f)
 		if err != nil {
