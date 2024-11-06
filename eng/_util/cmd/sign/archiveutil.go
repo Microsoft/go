@@ -7,6 +7,7 @@ package main
 import (
 	"archive/tar"
 	"archive/zip"
+	"cmp"
 	"compress/gzip"
 	"errors"
 	"fmt"
@@ -52,7 +53,7 @@ func withFileOpen(path string, f func(*os.File) error) error {
 	if err != nil {
 		return err
 	}
-	return firstError(f(file), file.Close())
+	return cmp.Or(f(file), file.Close())
 }
 
 func withZipOpen(path string, f func(*zip.ReadCloser) error) error {
@@ -60,7 +61,7 @@ func withZipOpen(path string, f func(*zip.ReadCloser) error) error {
 	if err != nil {
 		return err
 	}
-	return firstError(f(r), r.Close())
+	return cmp.Or(f(r), r.Close())
 }
 
 func withTarGzOpen(path string, f func(*tar.Reader) error) error {
@@ -82,13 +83,13 @@ func withFileCreate(path string, f func(*os.File) error) error {
 	if err != nil {
 		return err
 	}
-	return firstError(f(file), file.Close())
+	return cmp.Or(f(file), file.Close())
 }
 
 func withZipCreate(path string, f func(*zip.Writer) error) error {
 	return withFileCreate(path, func(file *os.File) error {
 		w := zip.NewWriter(file)
-		return firstError(f(w), w.Close())
+		return cmp.Or(f(w), w.Close())
 	})
 }
 
@@ -99,7 +100,7 @@ func withTarGzCreate(path string, f func(*tar.Writer) error) error {
 			return err
 		}
 		tw := tar.NewWriter(gzw)
-		return firstError(f(tw), tw.Close(), gzw.Close())
+		return cmp.Or(f(tw), tw.Close(), gzw.Close())
 	})
 }
 
@@ -108,7 +109,7 @@ func copyFile(dst, src string) error {
 	if err != nil {
 		return err
 	}
-	return firstError(copyToFile(dst, f), f.Close())
+	return cmp.Or(copyToFile(dst, f), f.Close())
 }
 
 func copyToFile(path string, r io.Reader) error {
@@ -120,16 +121,7 @@ func copyToFile(path string, r io.Reader) error {
 		return err
 	}
 	_, err = io.Copy(f, r)
-	return firstError(err, f.Close())
-}
-
-func firstError(errs ...error) error {
-	for _, err := range errs {
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return cmp.Or(err, f.Close())
 }
 
 // matchOrPanic returns whether name matches the pattern glob, or panics if pattern is invalid.

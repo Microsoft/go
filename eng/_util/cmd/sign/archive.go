@@ -7,6 +7,7 @@ package main
 import (
 	"archive/tar"
 	"archive/zip"
+	"cmp"
 	"context"
 	"fmt"
 	"io"
@@ -156,7 +157,7 @@ func (a *archive) prepareEntriesToSign(ctx context.Context) ([]*fileToSign, erro
 						return err
 					}
 					_, err = io.Copy(fWriter, fReader)
-					return firstError(err, fReader.Close())
+					return cmp.Or(err, fReader.Close())
 				}); err != nil {
 					return err
 				}
@@ -297,7 +298,7 @@ func (a *archive) writeZipRepackEntry(original *zip.File, out *zip.Writer) error
 		}
 	}
 	_, err = io.Copy(w, r)
-	return firstError(err, r.Close())
+	return cmp.Or(err, r.Close())
 }
 
 // writeTarRepackEntry looks at one entry in the original tar.gz and creates a corresponding entry
@@ -419,7 +420,7 @@ func (a *archive) unpackNotarize(ctx context.Context) error {
 					return err
 				}
 				_, err = io.Copy(w, r)
-				return firstError(err, r.Close())
+				return cmp.Or(err, r.Close())
 			})
 		})
 	})
