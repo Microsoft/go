@@ -94,6 +94,11 @@ stages:
             - name: MS_GO_UTIL_ALLOW_ONLY_MINIMAL_DEPS
               value: '1'
 
+          # On darwin (macOS) we haven't released a Microsoft Go toolchain.
+          - ${{ if eq(parameters.builder.os, 'darwin') }}:
+            - name: MS_USE_PATH_GO
+              value: '1'
+
           - ${{ if eq(parameters.builder.config, 'codeql_inner') }}:
             # Manually specify the repository being scanned by this job because
             # CodeQL can't detect the inner repository (the submodule)
@@ -144,10 +149,16 @@ stages:
 
           # Initialize stage 0 toolset ahead of time so we can track timing data separately from the
           # build operations. When we call this script again later, it won't download Go again.
-          - pwsh: |
-              . eng/utilities.ps1
-              Get-Stage0GoRoot
-            displayName: Init stage 0 Go toolset
+          - ${{ if eq(parameters.builder.os, 'darwin') }}:
+            - task: GoTool@0
+              inputs:
+                version: '1.23.3'
+              displayName: Init upstream stage 0 Go toolset
+          - ${{ else }}:
+            - pwsh: |
+                . eng/utilities.ps1
+                Download-Stage0
+              displayName: Init stage 0 Go toolset
 
           - template: ../steps/init-submodule-task.yml
 

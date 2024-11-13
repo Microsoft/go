@@ -15,9 +15,12 @@ For example, to build the repository:
 To list all possible tools:
   run.ps1
 
-Builds 'eng/_util/cmd/<tool>/<tool>.go' and runs it using the list of
-arguments. If necessary, this command automatically installs Go and downloads
-the dependencies of the tool.
+Builds 'eng/_util/cmd/<tool>/<tool>.go' and runs it using the list of arguments.
+
+This command automatically installs a known version of Microsoft Go that will be
+used to build the tools. The known version of Go will also be used to build the
+Go source code, if it's built. Set environment variable "MS_USE_PATH_GO" to 1 to
+your own Go from PATH instead.
 
 Every tool accepts a '-h' argument to show tool usage help.
 #>
@@ -79,8 +82,20 @@ if (-not ($tool_source -is [System.IO.FileInfo])) {
 # Now that we have a single result, navigate upwards to see which module it's in.
 $tool_module = $tool_source.Directory.Parent.Parent.FullName
 
-# Get (downloading if necessary) the GOROOT directory of a stage 0 Go.
-$stage0_goroot = Get-Stage0GoRoot
+# Download a consistent stage 0 version of Go unless opted out.
+if ($env:MS_USE_PATH_GO -eq "1") {
+  try {
+    Write-Host "Using $(go version) from '$(go env GOROOT)'. Results may differ from CI environment."
+  } catch {
+    Write-Host "Error: 'go' is most likely not in PATH. To download the known version, set 'MS_USE_PATH_GO' to '0' or unset it, then try again."
+    Write-Host "Exception: $_"
+    exit 1
+  }
+} else {
+  Download-Stage0
+}
+
+$stage0_goroot = & go env GOROOT
 
 # The tool may need to know where our copy of Go is located. Save it in env to give it access. Don't
 # pass it to the tool as an arg, becuase that would complicate arg handling in each tool.

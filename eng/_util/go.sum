@@ -29,6 +29,8 @@ github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5 h1:YH424zrwLTlyHS
 github.com/microsoft/azure-devops-go-api/azuredevops v1.0.0-b5/go.mod h1:PoGiBqKSQK1vIfQ+yVaFcGjDySHvym6FM1cNYnwzbrY=
 github.com/microsoft/go-infra v0.0.5 h1:2vfRe5hJUwJvnXcHDJiv/gqE0XIqCHnwXBFxXRm5+SI=
 github.com/microsoft/go-infra v0.0.5/go.mod h1:abvc0FBd6VZIdqeJEgo3+SDIE3wSbjpvPhRZ0i21pls=
+github.com/microsoft/go-infra/goinstallscript v0.0.0-20241113173623-26aea3823c67 h1:i/EXV3vFmJ6UYZ8a4fM2ssKlvSstxvJfiUHau81iNZE=
+github.com/microsoft/go-infra/goinstallscript v0.0.0-20241113173623-26aea3823c67/go.mod h1:SFsdKAEHdmGsGoh8FkksVaxoQ3rnnJ/TBqN09Ml/0Cw=
 github.com/rogpeppe/go-internal v1.11.0 h1:cWPaGQEPrBb5/AsnsZesgZZ9yb1OQ+GOISoDNXVBh4M=
 github.com/rogpeppe/go-internal v1.11.0/go.mod h1:ddIwULY96R17DhadqLgMfk9H9tvdUzkipdSkR5nkCZA=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
