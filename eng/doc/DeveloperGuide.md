@@ -78,3 +78,7 @@ cd go/src
 go version
 go test -short ./...
 ```
+
+## Making changes to go/src
+
+TODO
