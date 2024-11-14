@@ -138,6 +138,17 @@ func build(o *options) error {
 	}
 	fmt.Printf("---- Target platform: %v_%v\n", targetOS, targetArch)
 
+	// Setting GOROOT explicitly in the environment has not been necessary since Go 1.9
+	// (https://go.dev/doc/go1.9#goroot), but a dev or build machine may still have it set. It
+	// interferes with attempts to run the built Go (such as when building the race runtime), so
+	// remove the explicit GOROOT if set.
+	if explicitRoot, ok := os.LookupEnv("GOROOT"); ok {
+		fmt.Printf("---- Removing explicit GOROOT from environment: %v\n", explicitRoot)
+		if err := os.Unsetenv("GOROOT"); err != nil {
+			return err
+		}
+	}
+
 	// The upstream build scripts in {repo-root}/src require your working directory to be src, or
 	// they instantly fail. Change the current process dir so that we can run them.
 	if err := os.Chdir("go/src"); err != nil {
