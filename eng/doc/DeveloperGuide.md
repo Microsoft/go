@@ -7,12 +7,12 @@ This guide is primarily intended for developers working for the Go team at Micro
 
 ## Setting up the repository
 
-### Step 0: Contributor License Agreement
+### Contributor License Agreement
 
 Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution.
 For details, visit https://cla.opensource.microsoft.com.
 
-### Step 1: Install a Go toolchain
+### Install a Go toolchain
 
 A preexisting Go toolchain is required to bootstrap the build process.
 You can use your system's package manager to install Go, or you can download it from the [official Go website](https://golang.org/dl/).
@@ -22,7 +22,7 @@ If the version is too low, the bootstrap process will fail and ask you to instal
 This repository implements some scripts (provided by `eng/run.ps1`) to facilitate installing the correct bootstrapping Go version and also to build the Go toolchain from source, see the [`eng` Readme](../eng/README.md) for more information.
 It is recommended that you get familiar with both the upstream Go build process and the scripts provided in this repository.
 
-### Step 2: Install git and the git-go-patch command
+### Install git and the git-go-patch command
 
 This repository heavily relies on advanced Git features to manage the Go submodule, so it is recommended to develop with a local clone of the repository rather than using the GitHub web interface.
 
@@ -49,7 +49,7 @@ git go-patch -h
 > [!NOTE]
 > `git` detects that our `git-go-patch` executable starts with `git-` and makes it available as `git go-patch`.
 
-### Step 2: Initialize the submodule and apply patches
+### Initialize the submodule and apply patches
 
 The repository uses a [Git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) named `go` to store the Go source code.
 All the patches that modify the Go source code are stored in the [`patches`](../../patches) directory.
@@ -60,7 +60,7 @@ To initialize the submodule and apply the patches, run the following command:
 git go-patch apply
 ```
 
-### Step 3: Build the Go toolchain
+### Build the Go toolchain
 
 You now can edit the `go/src` directory as you would the upstream Go project.
 [The upstream "Installing Go from source" instructions](https://go.dev/doc/install/source) apply to the `go` directory and can be used to build and test.
@@ -82,7 +82,7 @@ There are different ways to use the new Go toolchain:
 - You can use the full path to the `go` command in the `go/bin` directory.
 - You can instruct your IDE to use the `go` command in the `go/bin` directory (recommended approach). See the [IDE setup](#ide-setup) section for more information.
 
-### Step 4: Test that your environment is set up correctly
+### Test that your environment is set up correctly
 
 To test that your environment is set up correctly, run the following command:
 
@@ -104,14 +104,9 @@ Please refer to the [Go extension documentation](https://code.visualstudio.com/d
 You can use the Go toolchain from the `go` submodule in VS Code by following these steps:
 
 1. In VS Code, open `Command Palette's Help` > `Show All Commands`. Or use the keyboard shortcut (`Ctrl+Shift+P`).
-1. Search for `Preferences: Open Workspace Settings (JSON)` then run the command from the pallet.
-1. Add the following setting to the JSON file that opens (replacing `{/path/to/microsoft-go}` with the path to the root of the Microsoft Go repository):
-
-```json
-{
-    "go.toolsGopath": "{/path/to/microsoft-go}/go/bin"
-}
-``` 
+1. Search for `Go: Choose Go environment` then run the command from the pallet.
+1. Select `Choose from file browser`.
+1. Select the `go` command in the `go/bin` directory.
 1. Save the file and restart VS Code.
 
 ## Making changes to go/src
