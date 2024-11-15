@@ -44,7 +44,7 @@ git go-patch -h
 
 ### Step 2: Initialize the submodule and apply patches
 
-The repository uses a `go` submodule to store the Go source code.
+The repository uses a [Git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) named `go` to store the Go source code.
 All the patches that modify the Go source code are stored in the `patches` directory.
 
 To initialize the submodule and apply the patches, run the following command:
@@ -55,7 +55,8 @@ git go-patch apply
 
 ### Step 3: Build the Go toolchain
 
-You now can edit the `go/src` directory as you would any other Go project.
+You now can edit the `go/src` directory as you would the upstream Go project.
+[The upstream "Installing Go from source" instructions](https://go.dev/doc/install/source) apply to the `go` directory and can be used to build and test.
 
 Note that the `go/src/go.mod` file uses a `go` directive with a version that is not available as a prebuilt binary.
 This is because that module contains the future version of Go, which is not yet released.
