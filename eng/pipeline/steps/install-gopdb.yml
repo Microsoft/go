@@ -26,9 +26,9 @@ steps:
 
   - pwsh: |
       . eng/utilities.ps1
-      $gobin = Get-Stage0GoRoot # Make sure we have a Go toolchain available
+      Download-Stage0 # Make sure we have a Go toolchain available
       cd go-pdb
-      & $gobin/bin/go.exe build -o $(pdbPath)/gopdb.exe ./cmd/gopdb
+      & go build -o $(pdbPath)/gopdb.exe ./cmd/gopdb
     displayName: Install gopdb
 
   - pwsh: |
