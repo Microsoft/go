@@ -39,7 +39,6 @@ var (
 	tempDir          = flag.String("temp-dir", "eng/signing/signing-temp", "Directory to store temporary files.")
 	signingCsprojDir = flag.String("signing-csproj-dir", "eng/signing", "Directory containing Sign.csproj and related files.")
 
-	notarize = flag.Bool("notarize", false, "Notarize macOS archives. This is currently not working in the signing service.")
 	signType = flag.String("sign-type", "test", "Type of signing to perform. Options: test, real.")
 
 	timeout = flag.Duration("timeout", 0,
@@ -108,27 +107,23 @@ func run() error {
 		}
 	}
 
-	if *notarize {
-		log.Println("Notarizing macOS archives")
+	log.Println("Notarizing macOS archives")
 
-		filesToNotarize, err := flatMapSlice(archives, func(a *archive) ([]*fileToSign, error) {
-			return a.prepareNotarize(ctx)
-		})
-		if err != nil {
+	filesToNotarize, err := flatMapSlice(archives, func(a *archive) ([]*fileToSign, error) {
+		return a.prepareNotarize(ctx)
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := sign(ctx, "2-Notarize", filesToNotarize); err != nil {
+		return err
+	}
+
+	for _, a := range archives {
+		if err := a.unpackNotarize(ctx); err != nil {
 			return err
 		}
-
-		if err := sign(ctx, "2-Notarize", filesToNotarize); err != nil {
-			return err
-		}
-
-		for _, a := range archives {
-			if err := a.unpackNotarize(ctx); err != nil {
-				return err
-			}
-		}
-	} else {
-		log.Println("Skipping notarizing macOS archives")
 	}
 
 	log.Println("Creating signature files")
@@ -208,6 +203,11 @@ func findArchives(ctx context.Context, glob string) ([]*archive, error) {
 }
 
 func sign(ctx context.Context, step string, files []*fileToSign) error {
+	if len(files) == 0 {
+		log.Printf("No files to sign for step %q", step)
+		return nil
+	}
+
 	var sb strings.Builder
 	sb.WriteString("<Project>\n")
 	sb.WriteString("  <ItemGroup>\n")

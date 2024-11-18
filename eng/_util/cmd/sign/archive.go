@@ -370,29 +370,17 @@ func (a *archive) prepareNotarize(ctx context.Context) ([]*fileToSign, error) {
 		return nil, nil
 	}
 
-	log.Printf("Creating zip containing the macOS tar.gz to notarize at %q", a.macNotarizePackPath())
-	if err := withZipCreate(a.macNotarizePackPath(), func(zw *zip.Writer) error {
-		w, err := zw.CreateHeader(&zip.FileHeader{
-			Name: a.name,
-		})
-		if err != nil {
-			return err
-		}
-		return withFileOpen(a.latestPath(), func(f *os.File) error {
-			_, err := io.Copy(w, f)
-			return err
-		})
-	}); err != nil {
-		return nil, err
-	}
-	return []*fileToSign{
-		{
-			originalPath: a.path,
-			fullPath:     a.macNotarizePackPath(),
-			authenticode: "8020", // Can't specify MacNotarize or MacAppName is not detected.
-			macAppName:   "MicrosoftGo",
-		},
-	}, nil
+	// Currently, we don't produce any macOS artifacts that can accept stapled notarization, like
+	// app bundles, disk images, or installers.
+	//
+	// The executable binaries inside our tar.gz archive are already notarized by the earlier
+	// "MacDeveloperHarden" step, and that's the best we can do. Individual file notarizations are
+	// not stapled: they are stored by Apple and downloaded on demand.
+	//
+	// If we do produce notarizable artifacts in the future, add the logic here to pack them in a
+	// zip and add logic to unpackNotarize to extract them back out, if zip submission is still a
+	// MicroBuild and/or ESRP requirement.
+	return nil, nil
 }
 
 func (a *archive) unpackNotarize(ctx context.Context) error {
@@ -404,26 +392,7 @@ func (a *archive) unpackNotarize(ctx context.Context) error {
 		return nil
 	}
 
-	a.notarizedPath = filepath.Join(a.workDir, a.name+".notarized")
-	log.Printf("Unpacking notarized content to %q", a.notarizedPath)
-	return withZipOpen(a.macNotarizePackPath(), func(zr *zip.ReadCloser) error {
-		return eachZipEntry(zr, func(f *zip.File) error {
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-			if f.Name != a.name {
-				return fmt.Errorf("unexpected file in notarize zip: %q", f.Name)
-			}
-			return withFileCreate(a.notarizedPath, func(w *os.File) error {
-				r, err := f.Open()
-				if err != nil {
-					return err
-				}
-				_, err = io.Copy(w, r)
-				return cmp.Or(err, r.Close())
-			})
-		})
-	})
+	return nil
 }
 
 func (a *archive) prepareArchiveSignatures(ctx context.Context) ([]*fileToSign, error) {
