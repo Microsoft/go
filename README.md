@@ -104,25 +104,21 @@ extracting the tar.gz file, build it using the
 
 #### Clone and build
 
-This repository wraps the upstream Go repository and includes build scripts that
-automate some aspects of the build process. See [eng/README.md](eng/README.md)
-for more details about the infrastructure.
+The first step is to clone this repository using Git and check out the desired
+tag or commit. The `zip` file that GitHub offers for download is incomplete: it
+doesn't include the `go` submodule.
 
-Prerequisites:
+If you want to contribute to the Microsoft Go project, read the [Developer
+Guide](eng/doc/DeveloperGuide.md). It lists the steps we recommend to set up a
+Microsoft Go development environment, execute your first Microsoft Go build, run
+the standard library test suite, and contribute a PR.
 
-* [PowerShell 6+](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell)
-* [Go install from source prerequisites](https://go.dev/doc/install/source)
-  * Exception: this repository's build script automatically downloads a
-    bootstrap version of Go.
+If you just want to build Microsoft Go on your own machine, you may find it more
+convenient to use the tools provided by the `eng/run.ps1` script. We use this
+script for CI builds. See [eng/README.md](eng/README.md) for more details about
+`eng/run.ps1` and other repository infrastructure.
 
-After cloning the repository and checking out the desired tag or commit, use the
-following build command:
-
-```
-pwsh eng/run.ps1 build -refresh
-```
-
-The resulting Go binary can then be found at `go/bin/go`.
+Once built, the Microsoft Go binary is found at `go/bin/go`.
 
 ## Contributing
 

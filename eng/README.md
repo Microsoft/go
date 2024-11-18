@@ -23,6 +23,14 @@ submodule to new Go commits.
 
 ## Building Go
 
+Prerequisites:
+
+* [Git](https://git-scm.com/downloads)
+* [PowerShell 6+](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell)
+* [Go install from source prerequisites](https://go.dev/doc/install/source)
+  * Exception: this repository's build script automatically downloads a
+    bootstrap version of Go.
+
 In the root of the repository, run this command:
 
 ```pwsh
