@@ -80,13 +80,13 @@ We recommend reading the upstream instructions, but we've included some minimal 
 First, use the following commands to build the Go toolchain using the source in the `go/src` directory:
 
 - On Unix-like systems:
-    ```
+    ```bash
     cd go/src
     ./make.bash
     ```
 
 - On Windows:
-    ```
+    ```bat
     cd go/src
     .\make.bat
     ```
