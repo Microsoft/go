@@ -94,7 +94,7 @@ First, use the following commands to build the Go toolchain using the source in 
 The newly built Go toolchain will be available in the `go/bin` directory.
 An app built by `go/bin/go` will use the standard library in `go/src`, so changes that you make to the standard library are reflected in the built app.
 
-From now on, when this guide mentions the `go` command, it refers to the one in the `go/bin` directory.
+From now on, when this guide mentions the `go` command, it refers to executing the `go` binary in the `go/bin` directory.
 
 > [!NOTE]
 > Rebuilding the Go toolchain from source is not necessary for changes in the Go standard library: changes are immediately reflected in any `go build`, `go test`, or `go run` commands.
@@ -102,9 +102,10 @@ From now on, when this guide mentions the `go` command, it refers to the one in 
 
 There are different ways to use the new Go toolchain:
 
-- Add `go/bin` to your `PATH`. This is not recommended because the development version of Go will probably contain unstable features that may interfere with your other Go projects.
-- Use the full path to the `go` command in the `go/bin` directory. When using the console, this is recommended.
-- Instruct your IDE to use the `go` command in the `go/bin` directory. Recommended approach for most development work. See the [IDE setup](#ide-setup) section for more information.
+- Use the full path to the `go` command.
+- Add the full path of `go/bin` to the start of `PATH`.
+  - We only recommend setting `PATH` in a specific terminal session, not user-wide or system-wide. The development version of Go will probably contain unstable features that may interfere with your other Go projects.
+- Instruct your IDE to use the `go` command. Recommended approach for most development work. See the [IDE setup](#ide-setup) section for more information.
 
 ### Test that your environment is set up correctly
 
