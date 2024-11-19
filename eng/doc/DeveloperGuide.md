@@ -15,18 +15,29 @@ For details, visit https://cla.opensource.microsoft.com.
 ### Install a Go toolchain
 
 A preexisting Go toolchain is required to bootstrap the build process.
-You can use your system's package manager to install Go, or you can download it from the [official Go website](https://golang.org/dl/).
-The only requirement is that the Go version is high enough for the bootstrap process.
-If the version is too low, the bootstrap process will fail and ask you to install a newer version.
+You can use your system's package manager to install Go, download Go from the [official Go website](https://golang.org/dl/), or download a prebuilt version of Microsoft Go itself.
 
-This repository implements some scripts (provided by `eng/run.ps1`) to facilitate installing the correct bootstrapping Go version and also to build the Go toolchain from source, see the [`eng` Readme](../eng/README.md) for more information.
-It is recommended that you get familiar with both the upstream Go build process and the scripts provided in this repository.
+The only requirement is that the Go version is high enough for the bootstrap process.
+If you attempt to build Go while using a bootstrap Go with a version that is too low, the bootstrap process will fail and ask you to install a newer version.
+
+> [!NOTE]
+> The in-support versions of Go found on the [official Go website](https://golang.org/dl/) are always high enough to bootstrap the development branch.
+> This is because:
+> * The [last two major versions of Go are supported by the Go project](https://go.dev/s/release#release-maintenance). (Microsoft Go has the same policy.)
+> * Go N can always be bootstrapped by [both N-1 and N-2](https://tip.golang.org/doc/install/source#go14).
+
+> [!NOTE]
+> This repository's `eng/run.ps1` PowerShell script is able to download a correct bootstrapping Go version automatically before building Microsoft Go from source.
+> We recommend that Microsoft Go team members be familiar with this script because it is used by Microsoft Go CI.
+> However, it isn't necessary to use the script for most work on the Microsoft Go patches.
+> See the [`eng` Readme](/eng/README.md) for more information about `eng/run.ps1`.
 
 ### Install git and the git-go-patch command
 
-This repository heavily relies on advanced Git features to manage the Go submodule, so it is recommended to develop with a local clone of the repository rather than using the GitHub web interface.
+This repository heavily relies on advanced Git features to manage the Go submodule, so it is recommended to develop with a local Git clone of the repository rather than other methods, e.g. using the GitHub web interface.
 
-You will need to have Git installed on your system, either from your system's package manager or from the [official Git website](https://git-scm.com/downloads).
+Make sure Git is installed on your system.
+You can get Git from your system's package manager or the [official Git website](https://git-scm.com/downloads).
 
 The [`git-go-patch`](https://github.com/microsoft/go-infra/tree/main/cmd/git-go-patch) command is a tool that helps you manage the patches in the `go` submodule.
 
@@ -64,27 +75,40 @@ git go-patch apply
 
 You now can edit the `go/src` directory as you would the upstream Go project.
 [The upstream "Installing Go from source" instructions](https://go.dev/doc/install/source) apply to the `go` directory and can be used to build and test.
+We recommend reading the upstream instructions, but we've included some minimal instructions here to get started.
 
-In order to make changes to the standard library packages located in `go/src` you will first need to build to Go toolchain from the `go/src` directory itself using the following command:
+First, use the following commands to build the Go toolchain using the source in the `go/src` directory:
 
-```
-cd go/src
-./make.bash # or make.bat on Windows
-```
+- On Unix-like systems:
+    ```
+    cd go/src
+    ./make.bash
+    ```
+
+- On Windows:
+    ```
+    cd go/src
+    .\make.bat
+    ```
+
+The newly built Go toolchain will be available in the `go/bin` directory.
+An app built by `go/bin/go` will use the standard library in `go/src`, so changes that you make to the standard library are reflected in the built app.
+
+From now on, when this guide mentions the `go` command, it refers to the one in the `go/bin` directory.
 
 > [!NOTE]
-> Rebuilding the Go toolchain from source is not necessary for changes in the Go standard library, they are immediately reflected in any future `go build`, `go test`, or `go run` commands.
-> However, if you are making changes to the Go toolchain itself (any package under `go/src/cmd`), you will need to rebuild the Go toolchain.
+> Rebuilding the Go toolchain from source is not necessary for changes in the Go standard library: changes are immediately reflected in any `go build`, `go test`, or `go run` commands.
+> However, if you make changes to the Go toolchain itself (any package under `go/src/cmd`), you do need to rebuild the Go toolchain.
 
-The newly built Go toolchain will be available in the `go/bin` directory. From now one this guide will assume that any mention of the `go` command refers to the one in the `go/bin` directory.
 There are different ways to use the new Go toolchain:
-- Add `go/bin` to your `PATH`, although but it is not recommended because it will probably contain unstable features that may interfere with other Go projects.
-- You can use the full path to the `go` command in the `go/bin` directory.
-- You can instruct your IDE to use the `go` command in the `go/bin` directory (recommended approach). See the [IDE setup](#ide-setup) section for more information.
+
+- Add `go/bin` to your `PATH`. This is not recommended because the development version of Go will probably contain unstable features that may interfere with your other Go projects.
+- Use the full path to the `go` command in the `go/bin` directory. When using the console, this is recommended.
+- Instruct your IDE to use the `go` command in the `go/bin` directory. Recommended approach for most development work. See the [IDE setup](#ide-setup) section for more information.
 
 ### Test that your environment is set up correctly
 
-To test that your environment is set up correctly, run the following command:
+To test that your environment is set up correctly, run the following commands, which work the same on all platforms:
 
 ```
 cd go/src
@@ -94,20 +118,24 @@ go test -short ./...
 
 ## IDE setup
 
-### Visual Studio Code
+### VS Code
 
-Visual Studio Code (VS Code from now on) is a popular IDE for Go development. We recommend using the official Go extension for VS Code.
+[VS Code](https://code.visualstudio.com/) (Visual Studio Code) is a popular IDE for Go development.
+We recommend using the official Go extension for VS Code.
 Please refer to the [Go extension documentation](https://code.visualstudio.com/docs/languages/go) for more information on how to set up VS Code for Go development.
 
 #### Using the Go toolchain from the `go` submodule
 
-You can use the Go toolchain from the `go` submodule in VS Code by following these steps:
+You can use your build of `go` in VS Code by following these steps:
 
-1. In VS Code, open `Command Palette's Help` > `Show All Commands`. Or use the keyboard shortcut (`Ctrl+Shift+P`).
-1. Search for `Go: Choose Go environment` then run the command from the pallet.
+1. In VS Code, open the command palette.
+    - `View` > `Command Palette...`.
+    - Default keyboard shortcut: `Ctrl+Shift+P`.
+1. Search for `Go: Choose Go environment` and select it.
 1. Select `Choose from file browser`.
-1. Select the `go` command in the `go/bin` directory.
-1. Save the file and restart VS Code.
+1. Select the `go` executable in the `go/bin` directory. (On Windows, `go.exe`.)
+1. Open the command palette.
+1. Search for `Developer: Reload Window` and select it.
 
 ## Making changes to go/src
 
