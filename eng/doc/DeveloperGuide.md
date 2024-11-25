@@ -138,61 +138,85 @@ You can use your build of `go` in VS Code by following these steps:
 1. Open the command palette.
 1. Search for `Developer: Reload Window` and select it.
 
-## Making changes to `go/src`
+## Making changes to `go`
 
-Once the `go/src` directory is prepared, any modifications made to this directory are tracked by the Git history of the submodule. 
-You can view these changes by running:
+Once the `go` directory is prepared, it is a submodule, a semi-independent Git repository.
+Git tracks changes in `go` separately from the main repository.
+
+You can view the changes tracked in `go` by running:
 
 ```bash
+cd go
 git status
 ```
 
-To create patch files from the changes, you must commit them.
-Only committed changes will be extracted by `git go-patch extract` and included in the patch files.
+A Git GUI that supports submodules shows the statuses of both the main repository and the `go` submodule.
+
+> [!NOTE]
+> In this section, many commands expect that your console's working directory is somewhere inside the submodule.
+> This is indicated by a code sample starting with `cd go`.
+> If you use the same console session, you don't need to run the `cd` command again.
+>
+> The `git go-patch` subcommands don't require that your working directory is in the submodule.
+> However, we recommend running them inside the submodule anyway because it makes the workflow less confusing and error-prone.
+
+At this point, you can make changes, run tests, rebuild, and use the built Go toolchain in external projects.
+Most of the interesting Go code to modify is in `go/src`.
+
+Once you have made changes that work as you expect, move on to the next step.
 
 ### Generating new patch files
 
-After making changes in the `go/src` directory, you must commit your changes following the standard Git process. For example:
+After making changes in the `go` directory, you must commit your changes following the standard Git process.
+For example:
 
 ```bash
+cd go
 git add . --all
 git commit -m "example"
 ```
 
 This creates a commit with the message "example" in the Git log. 
 
-Then, when you run:
+### Changing existing patch files
 
-```bash
-git go-patch extract
-```
-
-The `extract` subcommand generates a patch file under the `go/patches` directory.
-The patch file is prefixed with a serial number (one greater than the number of existing patch files), followed by a dash-separated commit message.
-
-### Squashing changes to existing patch files
-
-Creating new patch files is not always necessary when there are existing patch files with similar purposes for the same files.
+Creating new patch files is not always necessary.
+It often makes more sense to update an existing patch file because the changes serve the same purpose.
 In such cases, you can squash new commits on top of the existing ones to update their contents.
-The `git go-patch extract` command detects the differences in these commits and regenerates the patch files with the updated contents.
+You can also amend commits directly.
 
-Before starting work, please check the `go/patches` directory for any existing patch files related to the files you're working on.
-This helps maintain a clean repository by avoiding redundant patch files.
+Before submitting a PR, check the `patches` directory or submodule history for any existing patches related to the files you're working on.
+We prefer to avoid redundant patch files to keep the repository clean and easy to review.
 
-To squash changes, use a rebase.
+To squash commits, amend them, and more, use a rebase.
 We recommend using an [*interactive rebase*](https://git-scm.com/docs/git-rebase#_interactive_mode).
 The patching tool can start an interactive rebase session for you.
 To do this, run:
 
 ```bash
+cd go
 git go-patch rebase
 ```
 
-When your rebase is complete, run `git go-patch extract` to update the patch files.
+Make sure the rebase is complete before continuing.
+If you're unsure, check `git status` in the submodule.
+
+### Updating `patches`
+
+So far, your change only exists inside the `go` submodule's Git state.
+To extract your change into a new patch file or update the existing patch files, run:
+
+```bash
+cd go
+git go-patch extract
+```
+
+Each automatically generated patch filename has a serial number prefix followed by a dash-separated commit message.
+They are human-readable text files, but you shouldn't edit or rename them manually.
 
 ### Submitting changes
 
-When working with the `go/src` submodule, you may notice that Git marks the submodule as modified in your clone of `microsoft/go`.
+When working with the `go` submodule, you may notice that outside the submodule, Git marks the `go` submodule as modified.
 It's important to **not** commit this change.
 
 One way to avoid committing the change is to clean up the submodule after completing your work on the patches.
