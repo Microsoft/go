@@ -140,15 +140,17 @@ You can use your build of `go` in VS Code by following these steps:
 
 ## Making changes to `go/src`
 
-Once the `go/src` folder is prepared, any modifications made to this directory will be tracked by the Git history of the submodule. You can view these changes by running:
+Once the `go/src` folder is prepared, any modifications made to this directory will be tracked by the Git history of the submodule. 
+You can view these changes by running:
 
 ```bash
 git status
 ```
 
-To create patch files from the changes, you must commit them. Only committed changes will be extracted by go-patch and included in the patch files.
+To create patch files from the changes, you must commit them.
+Only committed changes will be extracted by go-patch and included in the patch files.
 
-### Generating New Patch Files
+### Generating new patch files
 
 After making changes in the `go/src` directory, you must commit your changes following the standard Git process. For example:
 
@@ -165,19 +167,32 @@ Then, when you run:
 git go-patch extract
 ```
 
-The `go-patch` command will generate a patch file under the `go/patches` directory. The patch file will be prefixed with a serial number (one greater than the number of existing patch files), followed by a dash-separated commit message.
+The `go-patch` command will generate a patch file under the `go/patches` directory.
+The patch file will be prefixed with a serial number (one greater than the number of existing patch files), followed by a dash-separated commit message.
 
-### Squashing Changes to Existing Patch Files
+### Squashing changes to existing patch files
 
-Creating new patch files is not always necessary when there are existing patch files with similar purposes for the same files. In such cases, you can squash new commits on top of the existing ones to update their contents. The go-patch extract command will detect the differences in these commits and regenerate the patch files with the updated contents.
+Creating new patch files is not always necessary when there are existing patch files with similar purposes for the same files.
+In such cases, you can squash new commits on top of the existing ones to update their contents.
+The go-patch extract command will detect the differences in these commits and regenerate the patch files with the updated contents.
 
-Before starting work, please check the go/patches folder for any existing patch files related to the files you're working on. This helps maintain a clean repository by avoiding redundant patch files.
+Before starting work, please check the go/patches folder for any existing patch files related to the files you're working on.
+This helps maintain a clean repository by avoiding redundant patch files.
 
-### Submitting Changes
+### Submitting changes
 
-When working with the `go/src` submodule, changes should not be committed directly. Instead, we use patch files to manage modifications. Since the submodule is pinned to a specific commit hash, we always start from that state and apply patch files on top. This approach avoids the need to maintain a fork and ensures consistency.
-After generating the required patch files and completing your work, it is crucial to clean up the submodule to prevent any changes from being committed. To restore the submodule to its original state, execute the following command:
+When working with the `go/src` submodule, changes should not be committed directly.
+Instead, we use patch files to manage modifications.
+Since the submodule is pinned to a specific commit hash, we always start from that state and apply patch files on top.
+This approach avoids the need to maintain a fork and ensures consistency.
+
+After generating the required patch files and completing your work, it is crucial to clean up the submodule to prevent any changes from being committed.
+To restore the submodule to its original state, execute the following command:
+
+
 ```bash
 git submodule update --init --recursive --checkout
 ```
-This ensures the submodule remains clean and aligned with its designated commit state. Once done, you can proceed to commit the patch files to your pull request.
+
+This ensures the submodule remains clean and aligned with its designated commit state.
+Once done, you can proceed to commit the patch files to your pull request.
