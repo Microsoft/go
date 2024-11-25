@@ -179,20 +179,56 @@ The go-patch extract command will detect the differences in these commits and re
 Before starting work, please check the go/patches folder for any existing patch files related to the files you're working on.
 This helps maintain a clean repository by avoiding redundant patch files.
 
+To squash changes, use a rebase.
+We recommend using an [*interactive rebase*](https://git-scm.com/docs/git-rebase#_interactive_mode).
+The patching tool can start an interactive rebase session for you.
+To do this, run:
+
+```bash
+git go-patch rebase
+```
+
+When your rebase is complete, run `git go-patch extract` to update the patch files.
+
 ### Submitting changes
 
-When working with the `go/src` submodule, changes should not be committed directly.
-Instead, we use patch files to manage modifications.
-Since the submodule is pinned to a specific commit hash, we always start from that state and apply patch files on top.
-This approach avoids the need to maintain a fork and ensures consistency.
+When working with the `go/src` submodule, you may notice that Git marks the submodule as modified in your clone of `microsoft/go`.
+It's important to **not** commit this change.
 
-After generating the required patch files and completing your work, it is crucial to clean up the submodule to prevent any changes from being committed.
+One way to avoid committing the change is to clean up the submodule after completing your work on the patches.
 To restore the submodule to its original state, execute the following command:
-
 
 ```bash
 git submodule update --init --recursive --checkout
 ```
 
-This ensures the submodule remains clean and aligned with its designated commit state.
-Once done, you can proceed to commit the patch files to your pull request.
+This allows you to use `git add .`, `git commit -a`, and similar commands without concern.
+
+If you make a mistake and commit the submodule change, PR tests will fail harmlessly.
+
+> [!NOTE]
+> If you use `git add [...]` or a GUI to selectively stage and commit changes, it isn't necessary to clean up the submodule.
+> It may be useful to keep the submodule dirty for faster iteration on the patches in response to PR feedback and test results.
+
+Commit the patch file changes.
+
+If you have write access to the `microsoft/go` repository, push the changes to a branch named `dev/<your GitHub username>/<topic>`.
+The `dev/` prefix is important, `your GitHub username` isn't as important, and `topic` is unimportant but helps you organize and recognize your own work.
+
+If you don't have write access, use a GitHub fork, and give the branch any name you want.
+
+Submit a GitHub PR with your change.
+Include a short description and links to related GitHub issues if any exist.
+If you submit the PR to a release branch, add a `[<branch>]` prefix to the PR title, such as `[release-branch.go1.22] Support TLS 1.3`.
+
+### Merging changes
+
+If you don't have write access to `microsoft/go`, wait for a maintainer to review and merge your PR.
+
+If you do have write access, in general, wait for two review approvals before merging your PR.
+Exceptions where only one approval is necessary:
+
+* Small documentation updates.
+* Backports to release branches without significant changes.
+
+Squash, rebase, and merge-commit merges are all acceptable.
