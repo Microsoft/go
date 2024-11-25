@@ -140,7 +140,7 @@ You can use your build of `go` in VS Code by following these steps:
 
 ## Making changes to `go/src`
 
-Once the `go/src` folder is prepared, any modifications made to this directory will be tracked by the Git history of the submodule. 
+Once the `go/src` directory is prepared, any modifications made to this directory will be tracked by the Git history of the submodule. 
 You can view these changes by running:
 
 ```bash
@@ -148,7 +148,7 @@ git status
 ```
 
 To create patch files from the changes, you must commit them.
-Only committed changes will be extracted by go-patch and included in the patch files.
+Only committed changes will be extracted by `git go-patch extract` and included in the patch files.
 
 ### Generating new patch files
 
@@ -167,16 +167,16 @@ Then, when you run:
 git go-patch extract
 ```
 
-The `go-patch` command will generate a patch file under the `go/patches` directory.
+The `extract` subcommand generates a patch file under the `go/patches` directory.
 The patch file will be prefixed with a serial number (one greater than the number of existing patch files), followed by a dash-separated commit message.
 
 ### Squashing changes to existing patch files
 
 Creating new patch files is not always necessary when there are existing patch files with similar purposes for the same files.
 In such cases, you can squash new commits on top of the existing ones to update their contents.
-The go-patch extract command will detect the differences in these commits and regenerate the patch files with the updated contents.
+The `git go-patch extract` command will detect the differences in these commits and regenerate the patch files with the updated contents.
 
-Before starting work, please check the go/patches folder for any existing patch files related to the files you're working on.
+Before starting work, please check the `go/patches` directory for any existing patch files related to the files you're working on.
 This helps maintain a clean repository by avoiding redundant patch files.
 
 To squash changes, use a rebase.
