@@ -9,7 +9,7 @@ go 1.22.0
 require (
 	github.com/microsoft/go-infra v0.0.5
 	github.com/microsoft/go-infra/goinstallscript v0.0.0-20241113173623-26aea3823c67
-	golang.org/x/sys v0.27.0
+	golang.org/x/sys v0.28.0
 	gotest.tools/gotestsum v1.12.0
 )
 
