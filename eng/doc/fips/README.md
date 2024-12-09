@@ -349,7 +349,9 @@ Not all OpenSSL versions are supported. OpenSSL does not maintain ABI compatibil
 Versions not listed above are not supported at all.
 
 > [!NOTE]
-> Note that one can enable or disable certain [OpenSSL features] when building it, diverging from the default configuration. The Go runtime does not support all possible configurations, and some may cause the Go runtime to panic during initialization or not work as expected. The Go runtime is tested with the default configuration of the supported versions and with the OpenSSL configuration shipped in [Azure Linux].
+> Any build of OpenSSL might have various [OpenSSL features] enabled or disabled, diverging from the default configuration. Microsoft Go does not support all possible OpenSSL configurations. Some may cause the Go runtime to panic during initialization or not work as expected.
+>
+> The Go runtime is tested with the default configuration of each supported OpenSSL version and with the OpenSSL configurations in the [Azure Linux] 2 and [Azure Linux] 3 distributions.
 
 ### Dynamic linking
 
@@ -394,6 +396,10 @@ A program running in FIPS mode can claim it is using a FIPS-certified cryptograp
 ## Changelog
 
 This list of major changes is intended for quick reference and for access to historical information about versions that are no longer supported. The behavior of all in-support versions are documented in the sections above with notes for version-specific differences where necessary.
+
+### Go [1.22.9-2](https://github.com/microsoft/go/releases/tag/v1.22.9-2) and [1.23.3-2](https://github.com/microsoft/go/releases/tag/v1.23.3-2) (Dec 2024)
+
+- Adds compatibility with changes that [Azure Linux] 3 made to the OpenSSL configuration, specifically the change to use [SCOSSL](https://github.com/microsoft/SymCrypt-OpenSSL). The SCOSSL-related Azure Linux packages must also be up to date for compatibility, at least `SymCrypt-103.6.0-1` and `SymCrypt-OpenSSL-1.6.1-1`.
 
 ### Go 1.22 (Feb 2024)
 
