@@ -9,7 +9,7 @@ Subject: [PATCH] Add OpenSSL crypto backend
  src/cmd/link/internal/ld/lib.go               |   1 +
  .../internal/backend/bbig/big_openssl.go      |  12 +
  .../internal/backend/fips140/openssl.go       |  41 +++
- src/crypto/internal/backend/openssl_linux.go  | 323 ++++++++++++++++++
+ src/crypto/internal/backend/openssl_linux.go  | 331 ++++++++++++++++++
  src/crypto/rsa/rsa_test.go                    |   3 +
  src/go.mod                                    |   1 +
  src/go.sum                                    |   2 +
@@ -19,7 +19,7 @@ Subject: [PATCH] Add OpenSSL crypto backend
  .../goexperiment/exp_opensslcrypto_on.go      |   9 +
  src/internal/goexperiment/flags.go            |   1 +
  src/os/exec/exec_test.go                      |   9 +
- 15 files changed, 428 insertions(+), 5 deletions(-)
+ 15 files changed, 436 insertions(+), 5 deletions(-)
  create mode 100644 src/crypto/internal/backend/bbig/big_openssl.go
  create mode 100644 src/crypto/internal/backend/fips140/openssl.go
  create mode 100644 src/crypto/internal/backend/openssl_linux.go
@@ -142,10 +142,10 @@ index 00000000000000..118efa3a492a7d
 +}
 diff --git a/src/crypto/internal/backend/openssl_linux.go b/src/crypto/internal/backend/openssl_linux.go
 new file mode 100644
-index 00000000000000..06329e4faef026
+index 00000000000000..d3a663737a1ce3
 --- /dev/null
 +++ b/src/crypto/internal/backend/openssl_linux.go
-@@ -0,0 +1,323 @@
+@@ -0,0 +1,331 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -362,6 +362,14 @@ index 00000000000000..06329e4faef026
 +	return openssl.ExtractHKDF(h, secret, salt)
 +}
 +
++func SupportsPBKDF2() bool {
++	return openssl.SupportsPBKDF2()
++}
++
++func PBKDF2(pass, salt []byte, iter, keyLen int, h func() hash.Hash) ([]byte, error) {
++	return openssl.PBKDF2(pass, salt, iter, keyLen, h)
++}
++
 +func SupportsTLS1PRF() bool {
 +	return openssl.SupportsTLS1PRF()
 +}
@@ -506,7 +514,7 @@ index 9e661352f16e0b..0a58eccb57a869 100644
  golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
  golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1 h1:+Yk1FZ5E+/ewA0nOO/HRYs9E4yeqpGOShuSAdzCNNoQ=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index afbdd6770f3f79..2694c2ec84d091 100644
+index 58082b3636f209..37cb128ba9409a 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -516,8 +516,10 @@ var depsRules = `

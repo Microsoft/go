@@ -33,12 +33,13 @@ Subject: [PATCH] Add crypto backend foundation
  .../internal/backend/fips140/isrequirefips.go |   9 +
  .../internal/backend/fips140/norequirefips.go |   9 +
  .../backend/fips140/nosystemcrypto.go         |  11 +
- src/crypto/internal/backend/nobackend.go      | 223 ++++++++++++++++++
+ src/crypto/internal/backend/nobackend.go      | 229 ++++++++++++++++++
  src/crypto/internal/backend/stub.s            |  10 +
  src/crypto/internal/cryptotest/allocations.go |   2 +-
  .../internal/cryptotest/implementations.go    |   2 +-
  src/crypto/md5/md5.go                         |   7 +
  src/crypto/md5/md5_test.go                    |  14 ++
+ src/crypto/pbkdf2/pbkdf2.go                   |   4 +
  src/crypto/pbkdf2/pbkdf2_test.go              |   2 +-
  src/crypto/purego_test.go                     |   2 +-
  src/crypto/rand/rand.go                       |   2 +-
@@ -73,7 +74,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/hash/notboring_test.go                    |   9 +
  src/net/smtp/smtp_test.go                     |  72 ++++--
  src/runtime/runtime_boring.go                 |   5 +
- 69 files changed, 1135 insertions(+), 80 deletions(-)
+ 70 files changed, 1145 insertions(+), 80 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ed25519/boring.go
@@ -1099,10 +1100,10 @@ index 00000000000000..83691d7dd42d51
 +}
 diff --git a/src/crypto/internal/backend/nobackend.go b/src/crypto/internal/backend/nobackend.go
 new file mode 100644
-index 00000000000000..ffa8d38e5d490f
+index 00000000000000..71e0ec9dc25a02
 --- /dev/null
 +++ b/src/crypto/internal/backend/nobackend.go
-@@ -0,0 +1,223 @@
+@@ -0,0 +1,229 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -1232,6 +1233,12 @@ index 00000000000000..ffa8d38e5d490f
 +}
 +
 +func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func SupportsPBKDF2() bool { panic("cryptobackend: not available") }
++
++func PBKDF2(password, salt []byte, iter, keyLen int, fh func() hash.Hash) ([]byte, error) {
 +	panic("cryptobackend: not available")
 +}
 +
@@ -1446,6 +1453,27 @@ index 437d9b9d4c0e0d..5bc3e7b0f8435f 100644
  	for i, test := range largeUnmarshalTests {
  
  		h := New()
+diff --git a/src/crypto/pbkdf2/pbkdf2.go b/src/crypto/pbkdf2/pbkdf2.go
+index 0fdd9e822d40a5..bc8e560487a6ef 100644
+--- a/src/crypto/pbkdf2/pbkdf2.go
++++ b/src/crypto/pbkdf2/pbkdf2.go
+@@ -19,6 +19,7 @@ pbkdf2.Key.
+ package pbkdf2
+ 
+ import (
++	boring "crypto/internal/backend"
+ 	"crypto/internal/fips140/pbkdf2"
+ 	"crypto/internal/fips140only"
+ 	"errors"
+@@ -53,5 +54,8 @@ func Key[Hash hash.Hash](h func() Hash, password string, salt []byte, iter, keyL
+ 			return nil, errors.New("crypto/pbkdf2: use of hash functions other than SHA-2 or SHA-3 is not allowed in FIPS 140-only mode")
+ 		}
+ 	}
++	if boring.Enabled && boring.SupportsPBKDF2() {
++		return boring.PBKDF2([]byte(password), salt, iter, keyLength, func() hash.Hash { return h() })
++	}
+ 	return pbkdf2.Key(h, password, salt, iter, keyLength)
+ }
 diff --git a/src/crypto/pbkdf2/pbkdf2_test.go b/src/crypto/pbkdf2/pbkdf2_test.go
 index 03980c7e54d3be..4968a666fad4e5 100644
 --- a/src/crypto/pbkdf2/pbkdf2_test.go
