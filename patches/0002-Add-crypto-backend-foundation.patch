@@ -23,6 +23,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/crypto/ed25519/boring.go                  |  71 ++++++
  src/crypto/ed25519/ed25519.go                 |  73 ++++++
  src/crypto/ed25519/notboring.go               |  16 ++
+ src/crypto/hkdf/hkdf.go                       |  14 ++
  src/crypto/hkdf/hkdf_test.go                  |   2 +-
  src/crypto/hmac/hmac.go                       |   2 +-
  src/crypto/hmac/hmac_test.go                  |   2 +-
@@ -73,7 +74,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/hash/notboring_test.go                    |   9 +
  src/net/smtp/smtp_test.go                     |  72 ++++--
  src/runtime/runtime_boring.go                 |   5 +
- 69 files changed, 1135 insertions(+), 80 deletions(-)
+ 70 files changed, 1149 insertions(+), 80 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ed25519/boring.go
@@ -810,6 +811,52 @@ index 00000000000000..b0cdd44d81c753
 +func boringPrivateKey(PrivateKey) (*boring.PrivateKeyEd25519, error) {
 +	panic("boringcrypto: not available")
 +}
+diff --git a/src/crypto/hkdf/hkdf.go b/src/crypto/hkdf/hkdf.go
+index 7cfbe2c60de356..78139ed6170da5 100644
+--- a/src/crypto/hkdf/hkdf.go
++++ b/src/crypto/hkdf/hkdf.go
+@@ -11,6 +11,7 @@
+ package hkdf
+ 
+ import (
++	boring "crypto/internal/backend"
+ 	"crypto/internal/fips140/hkdf"
+ 	"crypto/internal/fips140only"
+ 	"errors"
+@@ -27,6 +28,9 @@ func Extract[H hash.Hash](h func() H, secret, salt []byte) ([]byte, error) {
+ 	if err := checkFIPS140Only(h, secret); err != nil {
+ 		return nil, err
+ 	}
++	if boring.Enabled && boring.SupportsHKDF() {
++		return boring.ExtractHKDF(func() hash.Hash { return h() }, secret, salt)
++	}
+ 	return hkdf.Extract(h, secret, salt), nil
+ }
+ 
+@@ -47,6 +51,9 @@ func Expand[H hash.Hash](h func() H, pseudorandomKey []byte, info string, keyLen
+ 		return nil, errors.New("hkdf: requested key length too large")
+ 	}
+ 
++	if boring.Enabled && boring.SupportsHKDF() {
++		return boring.ExpandHKDF(func() hash.Hash { return h() }, pseudorandomKey, []byte(info), keyLength)
++	}
+ 	return hkdf.Expand(h, pseudorandomKey, info, keyLength), nil
+ }
+ 
+@@ -63,6 +70,13 @@ func Key[Hash hash.Hash](h func() Hash, secret, salt []byte, info string, keyLen
+ 		return nil, errors.New("hkdf: requested key length too large")
+ 	}
+ 
++	if boring.Enabled && boring.SupportsHKDF() {
++		pseudorandomKey, err := boring.ExtractHKDF(func() hash.Hash { return h() }, secret, salt)
++		if err != nil {
++			return nil, err
++		}
++		return boring.ExpandHKDF(func() hash.Hash { return h() }, pseudorandomKey, []byte(info), keyLength)
++	}
+ 	return hkdf.Key(h, secret, salt, info, keyLength), nil
+ }
+ 
 diff --git a/src/crypto/hkdf/hkdf_test.go b/src/crypto/hkdf/hkdf_test.go
 index 201b440289bb2d..4ed4960ff35b66 100644
 --- a/src/crypto/hkdf/hkdf_test.go
