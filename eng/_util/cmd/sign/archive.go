@@ -95,11 +95,15 @@ func (a *archive) sigPath() string {
 }
 
 func (a *archive) macHardenPackPath() string {
-	return filepath.Join(a.workDir, a.name+".ToSignBundle.zip")
+	return filepath.Join(a.workDir, a.name+".ToHardenBundle.zip")
 }
 
-func (a *archive) macNotarizePackPath() string {
-	return filepath.Join(a.workDir, a.name+".ToNotarize.zip")
+func (a *archive) macIndividualNotarizePackPath() string {
+	return filepath.Join(a.workDir, a.name+".FilesToNotarize.zip")
+}
+
+func (a *archive) macBundleNotarizePackPath() string {
+	return filepath.Join(a.workDir, a.name+".BundlesToNotarize.zip")
 }
 
 // entrySignInfo returns signing details for a given file in the Go archive, or nil if the given
@@ -189,6 +193,31 @@ func (a *archive) prepareEntriesToSign(ctx context.Context) ([]*fileToSign, erro
 	return results, nil
 }
 
+func (a *archive) prepareIndividualNotarize(ctx context.Context) ([]*fileToSign, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	if !a.archiveMacOS {
+		return nil, nil
+	}
+
+	// Simply send the hardened zip back to the signing service for notarization.
+	// Copy it first so that we can still access the hardened, pre-notarized files for diagnosis.
+	if err := copyFile(a.macIndividualNotarizePackPath(), a.macHardenPackPath()); err != nil {
+		return nil, err
+	}
+
+	return []*fileToSign{
+		{
+			originalPath: a.path,
+			fullPath:     a.macIndividualNotarizePackPath(),
+			authenticode: "8020", // Can't specify MacNotarize or MacAppName is not detected.
+			macAppName:   "MicrosoftGo",
+		},
+	}, nil
+}
+
 func (a *archive) extractMacOSEntriesToZip(ctx context.Context, zw *zip.Writer) error {
 	// Open tar.gz macOS archive to put files into the zip.
 	writtenNames := make(map[string]struct{})
@@ -249,7 +278,7 @@ func (a *archive) repackSignedEntries(ctx context.Context) error {
 			// Create the new tar.gz that we're assembling.
 			return withTarGzCreate(targetPath, func(outTW *tar.Writer) error {
 				// Open the zip payload we got back from the signing service.
-				return withZipOpen(a.macHardenPackPath(), func(zrc *zip.ReadCloser) error {
+				return withZipOpen(a.macIndividualNotarizePackPath(), func(zrc *zip.ReadCloser) error {
 					// Iterate through the original tar.gz file to populate the target.
 					return eachTarEntry(originalTR, func(hdr *tar.Header, originalR io.Reader) error {
 						if err := ctx.Err(); err != nil {
@@ -361,7 +390,7 @@ func (a *archive) writeTarRepackEntry(hdr *tar.Header, original io.Reader, signe
 	return nil
 }
 
-func (a *archive) prepareNotarize(ctx context.Context) ([]*fileToSign, error) {
+func (a *archive) prepareBundleNotarize(ctx context.Context) ([]*fileToSign, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -378,12 +407,12 @@ func (a *archive) prepareNotarize(ctx context.Context) ([]*fileToSign, error) {
 	// not stapled: they are stored by Apple and downloaded on demand.
 	//
 	// If we do produce notarizable artifacts in the future, add the logic here to pack them in a
-	// zip and add logic to unpackNotarize to extract them back out, if zip submission is still a
-	// MicroBuild and/or ESRP requirement.
+	// zip and add logic to unpackBundleNotarize to extract them back out, if zip submission is
+	// still a MicroBuild and/or ESRP requirement.
 	return nil, nil
 }
 
-func (a *archive) unpackNotarize(ctx context.Context) error {
+func (a *archive) unpackBundleNotarize(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}

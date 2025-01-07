@@ -101,27 +101,37 @@ func run() error {
 		return err
 	}
 
+	log.Println("Notarizing macOS individual files")
+
+	individualFilesToNotarize, err := flatMapSlice(archives, func(a *archive) ([]*fileToSign, error) {
+		return a.prepareIndividualNotarize(ctx)
+	})
+
+	if err := sign(ctx, "2-Notarize-Individual", individualFilesToNotarize); err != nil {
+		return err
+	}
+
 	for _, a := range archives {
 		if err := a.repackSignedEntries(ctx); err != nil {
 			return err
 		}
 	}
 
-	log.Println("Notarizing macOS archives")
+	log.Println("Notarizing macOS bundles")
 
 	filesToNotarize, err := flatMapSlice(archives, func(a *archive) ([]*fileToSign, error) {
-		return a.prepareNotarize(ctx)
+		return a.prepareBundleNotarize(ctx)
 	})
 	if err != nil {
 		return err
 	}
 
-	if err := sign(ctx, "2-Notarize", filesToNotarize); err != nil {
+	if err := sign(ctx, "3-Notarize-Bundles", filesToNotarize); err != nil {
 		return err
 	}
 
 	for _, a := range archives {
-		if err := a.unpackNotarize(ctx); err != nil {
+		if err := a.unpackBundleNotarize(ctx); err != nil {
 			return err
 		}
 	}
@@ -135,7 +145,7 @@ func run() error {
 		return err
 	}
 
-	if err := sign(ctx, "3-Sigs", signatureFiles); err != nil {
+	if err := sign(ctx, "4-Sigs", signatureFiles); err != nil {
 		return err
 	}
 
