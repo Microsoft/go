@@ -39,7 +39,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/crypto/internal/cryptotest/allocations.go |   2 +-
  .../internal/cryptotest/implementations.go    |   2 +-
  src/crypto/md5/md5.go                         |   7 +
- src/crypto/md5/md5_test.go                    |  14 ++
+ src/crypto/md5/md5_test.go                    |  21 ++
  src/crypto/pbkdf2/pbkdf2.go                   |   4 +
  src/crypto/pbkdf2/pbkdf2_test.go              |   2 +-
  src/crypto/purego_test.go                     |   2 +-
@@ -55,28 +55,28 @@ Subject: [PATCH] Add crypto backend foundation
  src/crypto/rsa/rsa.go                         |   4 +-
  src/crypto/rsa/rsa_test.go                    |  12 +-
  src/crypto/sha1/sha1.go                       |   2 +-
- src/crypto/sha1/sha1_test.go                  |  12 +-
+ src/crypto/sha1/sha1_test.go                  |  19 +-
  src/crypto/sha256/sha256.go                   |   6 +-
- src/crypto/sha256/sha256_test.go              |  19 ++
+ src/crypto/sha256/sha256_test.go              |  29 +++
  src/crypto/sha512/sha512.go                   |   2 +-
- src/crypto/sha512/sha512_test.go              |  19 ++
+ src/crypto/sha512/sha512_test.go              |  29 +++
  src/crypto/tls/cipher_suites.go               |   2 +-
  src/crypto/tls/fipsonly/fipsonly.go           |   2 +-
  src/crypto/tls/fipsonly/fipsonly_test.go      |   2 +-
  src/crypto/tls/handshake_client.go            |  10 +-
  src/crypto/tls/handshake_client_tls13.go      |  14 +-
  src/crypto/tls/handshake_server.go            |  10 +-
- src/crypto/tls/handshake_server_tls13.go      |  24 +-
+ src/crypto/tls/handshake_server_tls13.go      |  25 +-
  src/crypto/tls/internal/fips140tls/fipstls.go |   3 +-
  src/crypto/tls/prf.go                         |  41 ++++
  src/go/build/deps_test.go                     |   8 +-
  src/hash/boring_test.go                       |   9 +
  src/hash/example_test.go                      |   2 +
- src/hash/marshal_test.go                      |   5 +
+ src/hash/marshal_test.go                      |   9 +
  src/hash/notboring_test.go                    |   9 +
  src/net/smtp/smtp_test.go                     |  72 ++++--
  src/runtime/runtime_boring.go                 |   5 +
- 72 files changed, 1181 insertions(+), 86 deletions(-)
+ 72 files changed, 1217 insertions(+), 89 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ed25519/boring.go
@@ -1456,10 +1456,10 @@ index 75e1fc7404724a..60428f8e1201de 100644
  	d.Reset()
  	d.Write(data)
 diff --git a/src/crypto/md5/md5_test.go b/src/crypto/md5/md5_test.go
-index 437d9b9d4c0e0d..5bc3e7b0f8435f 100644
+index 437d9b9d4c0e0d..ee28c55f846e81 100644
 --- a/src/crypto/md5/md5_test.go
 +++ b/src/crypto/md5/md5_test.go
-@@ -6,6 +6,7 @@ package md5
+@@ -6,12 +6,14 @@ package md5
  
  import (
  	"bytes"
@@ -1467,7 +1467,14 @@ index 437d9b9d4c0e0d..5bc3e7b0f8435f 100644
  	"crypto/internal/cryptotest"
  	"crypto/rand"
  	"encoding"
-@@ -88,6 +89,11 @@ func TestGolden(t *testing.T) {
+ 	"fmt"
+ 	"hash"
+ 	"io"
++	"strings"
+ 	"testing"
+ 	"unsafe"
+ )
+@@ -88,6 +90,11 @@ func TestGolden(t *testing.T) {
  }
  
  func TestGoldenMarshal(t *testing.T) {
@@ -1479,7 +1486,17 @@ index 437d9b9d4c0e0d..5bc3e7b0f8435f 100644
  	for _, g := range golden {
  		h := New()
  		h2 := New()
-@@ -157,6 +163,9 @@ func TestLarge(t *testing.T) {
+@@ -96,6 +103,9 @@ func TestGoldenMarshal(t *testing.T) {
+ 
+ 		state, err := h.(encoding.BinaryMarshaler).MarshalBinary()
+ 		if err != nil {
++			if strings.Contains(err.Error(), "hash state is not marshallable") {
++				t.Skip("BinaryMarshaler not supported")
++			}
+ 			t.Errorf("could not marshal: %v", err)
+ 			continue
+ 		}
+@@ -157,6 +167,9 @@ func TestLarge(t *testing.T) {
  
  // Tests that blockGeneric (pure Go) and block (in assembly for amd64, 386, arm) match.
  func TestBlockGeneric(t *testing.T) {
@@ -1489,7 +1506,7 @@ index 437d9b9d4c0e0d..5bc3e7b0f8435f 100644
  	gen, asm := New().(*digest), New().(*digest)
  	buf := make([]byte, BlockSize*20) // arbitrary factor
  	rand.Read(buf)
-@@ -204,6 +213,11 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
+@@ -204,10 +217,18 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
  }
  
  func TestLargeHashes(t *testing.T) {
@@ -1501,6 +1518,13 @@ index 437d9b9d4c0e0d..5bc3e7b0f8435f 100644
  	for i, test := range largeUnmarshalTests {
  
  		h := New()
+ 		if err := h.(encoding.BinaryUnmarshaler).UnmarshalBinary([]byte(test.state)); err != nil {
++			if strings.Contains(err.Error(), "hash state is not marshallable") {
++				t.Skip("BinaryMarshaler not supported")
++			}
+ 			t.Errorf("test %d could not unmarshal: %v", i, err)
+ 			continue
+ 		}
 diff --git a/src/crypto/pbkdf2/pbkdf2.go b/src/crypto/pbkdf2/pbkdf2.go
 index d40daab5e5b879..c32b3fd82b99b0 100644
 --- a/src/crypto/pbkdf2/pbkdf2.go
@@ -1862,10 +1886,10 @@ index b799f0d2fb1548..9aa23e9aa17e89 100644
  	"errors"
  	"hash"
 diff --git a/src/crypto/sha1/sha1_test.go b/src/crypto/sha1/sha1_test.go
-index 9d707b7cde5c2d..cb0c343afc46b6 100644
+index 9d707b7cde5c2d..8da08b3d860a85 100644
 --- a/src/crypto/sha1/sha1_test.go
 +++ b/src/crypto/sha1/sha1_test.go
-@@ -8,7 +8,7 @@ package sha1
+@@ -8,13 +8,14 @@ package sha1
  
  import (
  	"bytes"
@@ -1874,7 +1898,14 @@ index 9d707b7cde5c2d..cb0c343afc46b6 100644
  	"crypto/internal/cryptotest"
  	"crypto/rand"
  	"encoding"
-@@ -97,6 +97,11 @@ func TestGolden(t *testing.T) {
+ 	"fmt"
+ 	"hash"
+ 	"io"
++	"strings"
+ 	"testing"
+ )
+ 
+@@ -97,6 +98,11 @@ func TestGolden(t *testing.T) {
  }
  
  func TestGoldenMarshal(t *testing.T) {
@@ -1886,7 +1917,17 @@ index 9d707b7cde5c2d..cb0c343afc46b6 100644
  	h := New()
  	h2 := New()
  	for _, g := range golden {
-@@ -210,6 +215,11 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
+@@ -107,6 +113,9 @@ func TestGoldenMarshal(t *testing.T) {
+ 
+ 		state, err := h.(encoding.BinaryMarshaler).MarshalBinary()
+ 		if err != nil {
++			if strings.Contains(err.Error(), "hash state is not marshallable") {
++				t.Skip("BinaryMarshaler not supported")
++			}
+ 			t.Errorf("could not marshal: %v", err)
+ 			continue
+ 		}
+@@ -210,10 +219,18 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
  }
  
  func TestLargeHashes(t *testing.T) {
@@ -1898,6 +1939,13 @@ index 9d707b7cde5c2d..cb0c343afc46b6 100644
  	for i, test := range largeUnmarshalTests {
  
  		h := New()
+ 		if err := h.(encoding.BinaryUnmarshaler).UnmarshalBinary([]byte(test.state)); err != nil {
++			if strings.Contains(err.Error(), "hash state is not marshallable") {
++				t.Skip("BinaryMarshaler not supported")
++			}
+ 			t.Errorf("test %d could not unmarshal: %v", i, err)
+ 			continue
+ 		}
 diff --git a/src/crypto/sha256/sha256.go b/src/crypto/sha256/sha256.go
 index 069938a22dbc5a..8d0e06b86f4359 100644
 --- a/src/crypto/sha256/sha256.go
@@ -1930,10 +1978,10 @@ index 069938a22dbc5a..8d0e06b86f4359 100644
  	}
  	h := New224()
 diff --git a/src/crypto/sha256/sha256_test.go b/src/crypto/sha256/sha256_test.go
-index e1af9640e25547..41df7dbebf7e7a 100644
+index e1af9640e25547..c4f142c1430285 100644
 --- a/src/crypto/sha256/sha256_test.go
 +++ b/src/crypto/sha256/sha256_test.go
-@@ -8,6 +8,7 @@ package sha256
+@@ -8,11 +8,13 @@ package sha256
  
  import (
  	"bytes"
@@ -1941,7 +1989,13 @@ index e1af9640e25547..41df7dbebf7e7a 100644
  	"crypto/internal/cryptotest"
  	"encoding"
  	"fmt"
-@@ -155,6 +156,11 @@ func testGoldenMarshal(t *testing.T) {
+ 	"hash"
+ 	"io"
++	"strings"
+ 	"testing"
+ )
+ 
+@@ -155,6 +157,11 @@ func testGoldenMarshal(t *testing.T) {
  
  	for _, tt := range tests {
  		t.Run(tt.name, func(t *testing.T) {
@@ -1953,7 +2007,17 @@ index e1af9640e25547..41df7dbebf7e7a 100644
  			for _, g := range tt.gold {
  				h := tt.newHash()
  				h2 := tt.newHash()
-@@ -204,6 +210,14 @@ func TestMarshalTypeMismatch(t *testing.T) {
+@@ -163,6 +170,9 @@ func testGoldenMarshal(t *testing.T) {
+ 
+ 				state, err := h.(encoding.BinaryMarshaler).MarshalBinary()
+ 				if err != nil {
++					if strings.Contains(err.Error(), "hash state is not marshallable") {
++						t.Skip("BinaryMarshaler not supported")
++					}
+ 					t.Errorf("could not marshal: %v", err)
+ 					continue
+ 				}
+@@ -204,8 +214,19 @@ func TestMarshalTypeMismatch(t *testing.T) {
  	h1 := New()
  	h2 := New224()
  
@@ -1967,8 +2031,13 @@ index e1af9640e25547..41df7dbebf7e7a 100644
 +
  	state1, err := h1.(encoding.BinaryMarshaler).MarshalBinary()
  	if err != nil {
++		if strings.Contains(err.Error(), "hash state is not marshallable") {
++			t.Skip("BinaryMarshaler not supported")
++		}
  		t.Errorf("could not marshal: %v", err)
-@@ -275,6 +289,11 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
+ 	}
+ 
+@@ -275,10 +296,18 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
  	return h.Sum(nil), nil
  }
  func TestLargeHashes(t *testing.T) {
@@ -1980,6 +2049,13 @@ index e1af9640e25547..41df7dbebf7e7a 100644
  	for i, test := range largeUnmarshalTests {
  
  		h := New()
+ 		if err := h.(encoding.BinaryUnmarshaler).UnmarshalBinary([]byte(test.state)); err != nil {
++			if strings.Contains(err.Error(), "hash state is not marshallable") {
++				t.Skip("BinaryMarshaler not supported")
++			}
+ 			t.Errorf("test %d could not unmarshal: %v", i, err)
+ 			continue
+ 		}
 diff --git a/src/crypto/sha512/sha512.go b/src/crypto/sha512/sha512.go
 index 1435eac1f5b5dc..17e8501154762a 100644
 --- a/src/crypto/sha512/sha512.go
@@ -1994,10 +2070,10 @@ index 1435eac1f5b5dc..17e8501154762a 100644
  	"hash"
  )
 diff --git a/src/crypto/sha512/sha512_test.go b/src/crypto/sha512/sha512_test.go
-index 1fe9d132bb186d..a2c2926359a192 100644
+index 1fe9d132bb186d..97b7da8c2d3d88 100644
 --- a/src/crypto/sha512/sha512_test.go
 +++ b/src/crypto/sha512/sha512_test.go
-@@ -8,6 +8,7 @@ package sha512
+@@ -8,12 +8,14 @@ package sha512
  
  import (
  	"bytes"
@@ -2005,7 +2081,14 @@ index 1fe9d132bb186d..a2c2926359a192 100644
  	"crypto/internal/cryptotest"
  	"encoding"
  	"encoding/hex"
-@@ -744,6 +745,11 @@ func testGoldenMarshal(t *testing.T) {
+ 	"fmt"
+ 	"hash"
+ 	"io"
++	"strings"
+ 	"testing"
+ )
+ 
+@@ -744,6 +746,11 @@ func testGoldenMarshal(t *testing.T) {
  	for _, tt := range tests {
  		t.Run(tt.name, func(t *testing.T) {
  			for _, test := range tt.golden {
@@ -2017,7 +2100,17 @@ index 1fe9d132bb186d..a2c2926359a192 100644
  				h := tt.newHash()
  				h2 := tt.newHash()
  
-@@ -805,6 +811,14 @@ func TestMarshalMismatch(t *testing.T) {
+@@ -751,6 +758,9 @@ func testGoldenMarshal(t *testing.T) {
+ 
+ 				state, err := h.(encoding.BinaryMarshaler).MarshalBinary()
+ 				if err != nil {
++					if strings.Contains(err.Error(), "hash state is not marshallable") {
++						t.Skip("BinaryMarshaler not supported")
++					}
+ 					t.Errorf("could not marshal: %v", err)
+ 					return
+ 				}
+@@ -805,8 +815,19 @@ func TestMarshalMismatch(t *testing.T) {
  			h1 := fn1()
  			h2 := fn2()
  
@@ -2031,8 +2124,13 @@ index 1fe9d132bb186d..a2c2926359a192 100644
 +
  			state, err := h1.(encoding.BinaryMarshaler).MarshalBinary()
  			if err != nil {
++				if strings.Contains(err.Error(), "hash state is not marshallable") {
++					t.Skip("BinaryMarshaler not supported")
++				}
  				t.Errorf("i=%d: could not marshal: %v", i, err)
-@@ -880,6 +894,11 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
+ 				continue
+ 			}
+@@ -880,10 +901,18 @@ func safeSum(h hash.Hash) (sum []byte, err error) {
  }
  
  func TestLargeHashes(t *testing.T) {
@@ -2044,6 +2142,13 @@ index 1fe9d132bb186d..a2c2926359a192 100644
  	for i, test := range largeUnmarshalTests {
  
  		h := New()
+ 		if err := h.(encoding.BinaryUnmarshaler).UnmarshalBinary([]byte(test.state)); err != nil {
++			if strings.Contains(err.Error(), "hash state is not marshallable") {
++				t.Skip("BinaryMarshaler not supported")
++			}
+ 			t.Errorf("test %d could not unmarshal: %v", i, err)
+ 			continue
+ 		}
 diff --git a/src/crypto/tls/cipher_suites.go b/src/crypto/tls/cipher_suites.go
 index 01d65688284f97..d8a26c24024348 100644
 --- a/src/crypto/tls/cipher_suites.go
@@ -2168,7 +2273,7 @@ index 7c75977ad3ffb2..b9db95ca7b9d5a 100644
  
  	if err := hs.processClientHello(); err != nil {
 diff --git a/src/crypto/tls/handshake_server_tls13.go b/src/crypto/tls/handshake_server_tls13.go
-index 76fff6974e7403..218d40171d2567 100644
+index 76fff6974e7403..bccf52fb28fcc5 100644
 --- a/src/crypto/tls/handshake_server_tls13.go
 +++ b/src/crypto/tls/handshake_server_tls13.go
 @@ -8,8 +8,9 @@ import (
@@ -2182,23 +2287,30 @@ index 76fff6974e7403..218d40171d2567 100644
  	"crypto/internal/fips140/mlkem"
  	"crypto/internal/fips140/tls13"
  	"crypto/internal/hpke"
-@@ -477,6 +478,15 @@ func cloneHash(in hash.Hash, h crypto.Hash) hash.Hash {
+@@ -470,15 +471,19 @@ func (hs *serverHandshakeStateTLS13) checkForResumption() error {
+ // interfaces implemented by standard library hashes to clone the state of in
+ // to a new instance of h. It returns nil if the operation fails.
+ func cloneHash(in hash.Hash, h crypto.Hash) hash.Hash {
++	if boring.Enabled {
++		// CNG and OpenSSL with SymCrypt hash functions do not implement the
++		// encoding.BinaryMarshaler interface, but they do implement the Clone method.
++		if cloner, ok := in.(interface{ Clone() hash.Hash }); ok {
++			return cloner.Clone()
++		}
++	}
+ 	// Recreate the interface to avoid importing encoding.
+ 	type binaryMarshaler interface {
+ 		MarshalBinary() (data []byte, err error)
+ 		UnmarshalBinary(data []byte) error
  	}
  	marshaler, ok := in.(binaryMarshaler)
- 	if !ok {
-+		if boring.Enabled {
-+			// CNG and OpenSSL with SymCrypt hash functions do not implement the
-+			// encoding.BinaryMarshaler interface, but they do implement the Clone method.
-+			if cloner, ok := in.(interface{ Clone() (hash.Hash, error) }); ok {
-+				if out, err := cloner.Clone(); err == nil {
-+					return out
-+				}
-+			}
-+		}
- 		return nil
- 	}
+-	if !ok {
+-		return nil
+-	}
  	state, err := marshaler.MarshalBinary()
-@@ -572,8 +582,12 @@ func (hs *serverHandshakeStateTLS13) doHelloRetryRequest(selectedGroup CurveID)
+ 	if err != nil {
+ 		return nil
+@@ -572,8 +577,12 @@ func (hs *serverHandshakeStateTLS13) doHelloRetryRequest(selectedGroup CurveID)
  		if err := transcriptMsg(helloRetryRequest, confTranscript); err != nil {
  			return nil, err
  		}
@@ -2212,7 +2324,7 @@ index 76fff6974e7403..218d40171d2567 100644
  			"hrr ech accept confirmation",
  			confTranscript.Sum(nil),
  			8,
-@@ -734,9 +748,13 @@ func (hs *serverHandshakeStateTLS13) sendServerParameters() error {
+@@ -734,9 +743,13 @@ func (hs *serverHandshakeStateTLS13) sendServerParameters() error {
  		if err := transcriptMsg(hs.hello, echTranscript); err != nil {
  			return err
  		}
@@ -2392,10 +2504,18 @@ index f07b9aaa2c4898..b380537215634d 100644
  
  import (
 diff --git a/src/hash/marshal_test.go b/src/hash/marshal_test.go
-index 3091f7a67acede..fead8cc4bec73a 100644
+index 3091f7a67acede..23736034d5c352 100644
 --- a/src/hash/marshal_test.go
 +++ b/src/hash/marshal_test.go
-@@ -65,6 +65,11 @@ func TestMarshalHash(t *testing.T) {
+@@ -21,6 +21,7 @@ import (
+ 	"hash/crc32"
+ 	"hash/crc64"
+ 	"hash/fnv"
++	"strings"
+ 	"testing"
+ )
+ 
+@@ -65,6 +66,11 @@ func TestMarshalHash(t *testing.T) {
  			}
  
  			h := tt.new()
@@ -2407,6 +2527,16 @@ index 3091f7a67acede..fead8cc4bec73a 100644
  			h.Write(buf[:256])
  			sum := h.Sum(nil)
  
+@@ -80,6 +86,9 @@ func TestMarshalHash(t *testing.T) {
+ 			}
+ 			enc, err := h2m.MarshalBinary()
+ 			if err != nil {
++				if strings.Contains(err.Error(), "hash state is not marshallable") {
++					t.Skip("BinaryMarshaler not supported")
++				}
+ 				t.Fatalf("MarshalBinary: %v", err)
+ 			}
+ 			if !bytes.Equal(enc, tt.golden) {
 diff --git a/src/hash/notboring_test.go b/src/hash/notboring_test.go
 new file mode 100644
 index 00000000000000..11dc691600b110

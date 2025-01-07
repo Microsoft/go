@@ -5,70 +5,73 @@ Subject: [PATCH] Vendor crypto backends
 
 To reproduce, run 'go mod vendor' in 'go/src'.
 ---
- .../golang-fips/openssl/v2/.gitignore         |    1 +
- .../golang-fips/openssl/v2/.gitleaks.toml     |    9 +
- .../github.com/golang-fips/openssl/v2/LICENSE |   20 +
- .../golang-fips/openssl/v2/README.md          |   66 ++
- .../github.com/golang-fips/openssl/v2/aes.go  |  147 +++
- .../golang-fips/openssl/v2/bbig/big.go        |   37 +
- .../github.com/golang-fips/openssl/v2/big.go  |   11 +
- .../golang-fips/openssl/v2/cgo_go124.go       |   18 +
- .../golang-fips/openssl/v2/cipher.go          |  569 +++++++++
- .../github.com/golang-fips/openssl/v2/des.go  |  114 ++
- .../github.com/golang-fips/openssl/v2/dsa.go  |  323 +++++
- .../github.com/golang-fips/openssl/v2/ec.go   |   68 ++
- .../github.com/golang-fips/openssl/v2/ecdh.go |  303 +++++
- .../golang-fips/openssl/v2/ecdsa.go           |  208 ++++
- .../golang-fips/openssl/v2/ed25519.go         |  218 ++++
- .../github.com/golang-fips/openssl/v2/evp.go  |  569 +++++++++
- .../golang-fips/openssl/v2/goopenssl.c        |  248 ++++
- .../golang-fips/openssl/v2/goopenssl.h        |  262 +++++
- .../github.com/golang-fips/openssl/v2/hash.go | 1041 +++++++++++++++++
- .../github.com/golang-fips/openssl/v2/hkdf.go |  322 +++++
- .../github.com/golang-fips/openssl/v2/hmac.go |  274 +++++
- .../github.com/golang-fips/openssl/v2/init.go |   64 +
- .../golang-fips/openssl/v2/init_unix.go       |   31 +
- .../golang-fips/openssl/v2/init_windows.go    |   36 +
- .../golang-fips/openssl/v2/openssl.go         |  469 ++++++++
- .../golang-fips/openssl/v2/params.go          |  210 ++++
- .../golang-fips/openssl/v2/pbkdf2.go          |   62 +
- .../golang-fips/openssl/v2/port_dsa.c         |   85 ++
- .../openssl/v2/port_evp_md5_sha1.c            |  126 ++
- .../github.com/golang-fips/openssl/v2/rand.go |   20 +
- .../github.com/golang-fips/openssl/v2/rc4.go  |   66 ++
- .../github.com/golang-fips/openssl/v2/rsa.go  |  408 +++++++
- .../github.com/golang-fips/openssl/v2/shims.h |  416 +++++++
- .../golang-fips/openssl/v2/thread_setup.go    |   14 +
- .../golang-fips/openssl/v2/thread_setup.h     |    4 +
- .../openssl/v2/thread_setup_unix.c            |   64 +
- .../openssl/v2/thread_setup_windows.c         |   64 +
- .../golang-fips/openssl/v2/tls1prf.go         |  160 +++
- .../github.com/golang-fips/openssl/v2/zaes.go |   86 ++
- .../microsoft/go-crypto-winnative/LICENSE     |   21 +
- .../microsoft/go-crypto-winnative/cng/aes.go  |  393 +++++++
- .../go-crypto-winnative/cng/bbig/big.go       |   31 +
- .../microsoft/go-crypto-winnative/cng/big.go  |   30 +
- .../go-crypto-winnative/cng/cipher.go         |   52 +
- .../microsoft/go-crypto-winnative/cng/cng.go  |  131 +++
- .../microsoft/go-crypto-winnative/cng/des.go  |  106 ++
- .../microsoft/go-crypto-winnative/cng/dsa.go  |  465 ++++++++
- .../microsoft/go-crypto-winnative/cng/ecdh.go |  255 ++++
- .../go-crypto-winnative/cng/ecdsa.go          |  169 +++
- .../microsoft/go-crypto-winnative/cng/hash.go |  306 +++++
- .../microsoft/go-crypto-winnative/cng/hkdf.go |  124 ++
- .../microsoft/go-crypto-winnative/cng/hmac.go |   35 +
- .../microsoft/go-crypto-winnative/cng/keys.go |  220 ++++
- .../go-crypto-winnative/cng/pbkdf2.go         |   70 ++
- .../microsoft/go-crypto-winnative/cng/rand.go |   28 +
- .../microsoft/go-crypto-winnative/cng/rc4.go  |   65 +
- .../microsoft/go-crypto-winnative/cng/rsa.go  |  396 +++++++
- .../go-crypto-winnative/cng/tls1prf.go        |   88 ++
- .../internal/bcrypt/bcrypt_windows.go         |  359 ++++++
- .../internal/bcrypt/zsyscall_windows.go       |  389 ++++++
- .../internal/subtle/aliasing.go               |   32 +
- .../internal/sysdll/sys_windows.go            |   55 +
- src/vendor/modules.txt                        |   11 +
- 63 files changed, 11044 insertions(+)
+ src/go.mod                                    |   4 +-
+ src/go.sum                                    |   8 +-
+ .../golang-fips/openssl/v2/.gitignore         |   1 +
+ .../golang-fips/openssl/v2/.gitleaks.toml     |   9 +
+ .../github.com/golang-fips/openssl/v2/LICENSE |  20 +
+ .../golang-fips/openssl/v2/README.md          |  66 ++
+ .../github.com/golang-fips/openssl/v2/aes.go  | 147 ++++
+ .../golang-fips/openssl/v2/bbig/big.go        |  37 +
+ .../github.com/golang-fips/openssl/v2/big.go  |  11 +
+ .../golang-fips/openssl/v2/cgo_go124.go       |  18 +
+ .../golang-fips/openssl/v2/cipher.go          | 569 ++++++++++++++
+ .../github.com/golang-fips/openssl/v2/des.go  | 114 +++
+ .../github.com/golang-fips/openssl/v2/dsa.go  | 323 ++++++++
+ .../github.com/golang-fips/openssl/v2/ec.go   |  68 ++
+ .../github.com/golang-fips/openssl/v2/ecdh.go | 303 ++++++++
+ .../golang-fips/openssl/v2/ecdsa.go           | 208 +++++
+ .../golang-fips/openssl/v2/ed25519.go         | 228 ++++++
+ .../github.com/golang-fips/openssl/v2/evp.go  | 580 ++++++++++++++
+ .../golang-fips/openssl/v2/goopenssl.c        | 248 ++++++
+ .../golang-fips/openssl/v2/goopenssl.h        | 261 +++++++
+ .../github.com/golang-fips/openssl/v2/hash.go | 714 ++++++++++++++++++
+ .../github.com/golang-fips/openssl/v2/hkdf.go | 322 ++++++++
+ .../github.com/golang-fips/openssl/v2/hmac.go | 274 +++++++
+ .../github.com/golang-fips/openssl/v2/init.go |  64 ++
+ .../golang-fips/openssl/v2/init_unix.go       |  31 +
+ .../golang-fips/openssl/v2/init_windows.go    |  36 +
+ .../golang-fips/openssl/v2/openssl.go         | 469 ++++++++++++
+ .../golang-fips/openssl/v2/params.go          | 210 ++++++
+ .../golang-fips/openssl/v2/pbkdf2.go          |  62 ++
+ .../golang-fips/openssl/v2/port_dsa.c         |  85 +++
+ .../github.com/golang-fips/openssl/v2/rand.go |  20 +
+ .../github.com/golang-fips/openssl/v2/rc4.go  |  66 ++
+ .../github.com/golang-fips/openssl/v2/rsa.go  | 408 ++++++++++
+ .../github.com/golang-fips/openssl/v2/shims.h | 413 ++++++++++
+ .../golang-fips/openssl/v2/thread_setup.go    |  14 +
+ .../golang-fips/openssl/v2/thread_setup.h     |   4 +
+ .../openssl/v2/thread_setup_unix.c            |  64 ++
+ .../openssl/v2/thread_setup_windows.c         |  64 ++
+ .../golang-fips/openssl/v2/tls1prf.go         | 160 ++++
+ .../github.com/golang-fips/openssl/v2/zaes.go |  86 +++
+ .../microsoft/go-crypto-winnative/LICENSE     |  21 +
+ .../microsoft/go-crypto-winnative/cng/aes.go  | 393 ++++++++++
+ .../go-crypto-winnative/cng/bbig/big.go       |  31 +
+ .../microsoft/go-crypto-winnative/cng/big.go  |  30 +
+ .../go-crypto-winnative/cng/cipher.go         |  52 ++
+ .../microsoft/go-crypto-winnative/cng/cng.go  | 131 ++++
+ .../microsoft/go-crypto-winnative/cng/des.go  | 106 +++
+ .../microsoft/go-crypto-winnative/cng/dsa.go  | 465 ++++++++++++
+ .../microsoft/go-crypto-winnative/cng/ecdh.go | 255 +++++++
+ .../go-crypto-winnative/cng/ecdsa.go          | 169 +++++
+ .../microsoft/go-crypto-winnative/cng/hash.go | 312 ++++++++
+ .../microsoft/go-crypto-winnative/cng/hkdf.go | 124 +++
+ .../microsoft/go-crypto-winnative/cng/hmac.go |  35 +
+ .../microsoft/go-crypto-winnative/cng/keys.go | 220 ++++++
+ .../go-crypto-winnative/cng/pbkdf2.go         |  70 ++
+ .../microsoft/go-crypto-winnative/cng/rand.go |  28 +
+ .../microsoft/go-crypto-winnative/cng/rc4.go  |  65 ++
+ .../microsoft/go-crypto-winnative/cng/rsa.go  | 396 ++++++++++
+ .../microsoft/go-crypto-winnative/cng/sha3.go | 284 +++++++
+ .../go-crypto-winnative/cng/tls1prf.go        |  88 +++
+ .../internal/bcrypt/bcrypt_windows.go         | 368 +++++++++
+ .../internal/bcrypt/ntstatus_windows.go       |  45 ++
+ .../internal/bcrypt/zsyscall_windows.go       | 412 ++++++++++
+ .../internal/subtle/aliasing.go               |  32 +
+ .../internal/sysdll/sys_windows.go            |  55 ++
+ src/vendor/modules.txt                        |  11 +
+ 66 files changed, 10981 insertions(+), 6 deletions(-)
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitignore
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitleaks.toml
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/LICENSE
@@ -97,7 +100,6 @@ To reproduce, run 'go mod vendor' in 'go/src'.
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/params.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/pbkdf2.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/port_dsa.c
- create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/port_evp_md5_sha1.c
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/rand.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/rc4.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/rsa.go
@@ -126,12 +128,45 @@ To reproduce, run 'go mod vendor' in 'go/src'.
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/cng/rand.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/cng/rc4.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/cng/rsa.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/cng/sha3.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/cng/tls1prf.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/bcrypt_windows.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/ntstatus_windows.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/zsyscall_windows.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/internal/subtle/aliasing.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/internal/sysdll/sys_windows.go
 
+diff --git a/src/go.mod b/src/go.mod
+index e9da0eb1301b93..96bdcd421e1129 100644
+--- a/src/go.mod
++++ b/src/go.mod
+@@ -3,8 +3,8 @@ module std
+ go 1.24
+ 
+ require (
+-	github.com/golang-fips/openssl/v2 v2.0.4-0.20241211125030-65f2a3ae34cf
+-	github.com/microsoft/go-crypto-winnative v0.0.0-20241212090637-6d419040e383
++	github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337
++	github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37
+ 	golang.org/x/crypto v0.30.0
+ 	golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1
+ )
+diff --git a/src/go.sum b/src/go.sum
+index b464f023942b74..abebb59dcd7739 100644
+--- a/src/go.sum
++++ b/src/go.sum
+@@ -1,7 +1,7 @@
+-github.com/golang-fips/openssl/v2 v2.0.4-0.20241211125030-65f2a3ae34cf h1:gkjE7LMxjlaSn8fdvbT/HJrpGcW/ZnwYpps7sSBhLD4=
+-github.com/golang-fips/openssl/v2 v2.0.4-0.20241211125030-65f2a3ae34cf/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
+-github.com/microsoft/go-crypto-winnative v0.0.0-20241212090637-6d419040e383 h1:fMAxrMWT19/kkIZIuB9cjqW8SqRxCH2+2ZiZr5qrpuI=
+-github.com/microsoft/go-crypto-winnative v0.0.0-20241212090637-6d419040e383/go.mod h1:JkxQeL8dGcyCuKjn1Etz4NmQrOMImMy4BA9hptEfVFA=
++github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337 h1:OhuURhDVbg+f/BvlG+qT5sQVkutwhI0Kmsy7koQ4l9A=
++github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
++github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37 h1:KB8xmJcFSPlZFMg2mxz5b6DCE8k1qpHy2HFevAJLELI=
++github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37/go.mod h1:JkxQeL8dGcyCuKjn1Etz4NmQrOMImMy4BA9hptEfVFA=
+ golang.org/x/crypto v0.30.0 h1:RwoQn3GkWiMkzlX562cLB7OxWvjH1L8xutO2WoJcRoY=
+ golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
+ golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1 h1:+Yk1FZ5E+/ewA0nOO/HRYs9E4yeqpGOShuSAdzCNNoQ=
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/.gitignore b/src/vendor/github.com/golang-fips/openssl/v2/.gitignore
 new file mode 100644
 index 00000000000000..79b5594df7fa29
@@ -2113,10 +2148,10 @@ index 00000000000000..bc5f1117fd4355
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/ed25519.go b/src/vendor/github.com/golang-fips/openssl/v2/ed25519.go
 new file mode 100644
-index 00000000000000..cd237025109997
+index 00000000000000..f96db2cd5efcad
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/ed25519.go
-@@ -0,0 +1,218 @@
+@@ -0,0 +1,228 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -2209,7 +2244,7 @@ index 00000000000000..cd237025109997
 +	if err := extractPKEYPubEd25519(k._pkey, pub); err != nil {
 +		return nil, err
 +	}
-+	pubk, err := NewPublicKeyEd25119(pub)
++	pubk, err := NewPublicKeyEd25519(pub)
 +	if err != nil {
 +		return nil, err
 +	}
@@ -2227,14 +2262,24 @@ index 00000000000000..cd237025109997
 +	return priv, nil
 +}
 +
++// Deprecated: use NewPrivateKeyEd25519 instead.
 +func NewPrivateKeyEd25119(priv []byte) (*PrivateKeyEd25519, error) {
++	return NewPrivateKeyEd25519(priv)
++}
++
++func NewPrivateKeyEd25519(priv []byte) (*PrivateKeyEd25519, error) {
 +	if len(priv) != privateKeySizeEd25519 {
 +		panic("ed25519: bad private key length: " + strconv.Itoa(len(priv)))
 +	}
 +	return NewPrivateKeyEd25519FromSeed(priv[:seedSizeEd25519])
 +}
 +
++// Deprecated: use NewPublicKeyEd25519 instead.
 +func NewPublicKeyEd25119(pub []byte) (*PublicKeyEd25519, error) {
++	return NewPublicKeyEd25519(pub)
++}
++
++func NewPublicKeyEd25519(pub []byte) (*PublicKeyEd25519, error) {
 +	if len(pub) != publicKeySizeEd25519 {
 +		panic("ed25519: bad public key length: " + strconv.Itoa(len(pub)))
 +	}
@@ -2337,10 +2382,10 @@ index 00000000000000..cd237025109997
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/evp.go b/src/vendor/github.com/golang-fips/openssl/v2/evp.go
 new file mode 100644
-index 00000000000000..ef68bbfb8fb065
+index 00000000000000..8b5b367f9f8092
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/evp.go
-@@ -0,0 +1,569 @@
+@@ -0,0 +1,580 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -2391,29 +2436,8 @@ index 00000000000000..ef68bbfb8fb065
 +
 +// hashToMD converts a hash.Hash implementation from this package to a GO_EVP_MD_PTR.
 +func hashToMD(h hash.Hash) C.GO_EVP_MD_PTR {
-+	var ch crypto.Hash
-+	switch h.(type) {
-+	case *sha1Hash, *sha1Marshal:
-+		ch = crypto.SHA1
-+	case *sha224Hash, *sha224Marshal:
-+		ch = crypto.SHA224
-+	case *sha256Hash, *sha256Marshal:
-+		ch = crypto.SHA256
-+	case *sha384Hash, *sha384Marshal:
-+		ch = crypto.SHA384
-+	case *sha512Hash, *sha512Marshal:
-+		ch = crypto.SHA512
-+	case *sha3_224Hash:
-+		ch = crypto.SHA3_224
-+	case *sha3_256Hash:
-+		ch = crypto.SHA3_256
-+	case *sha3_384Hash:
-+		ch = crypto.SHA3_384
-+	case *sha3_512Hash:
-+		ch = crypto.SHA3_512
-+	}
-+	if ch != 0 {
-+		return cryptoHashToMD(ch)
++	if h, ok := h.(*evpHash); ok {
++		return h.alg.md
 +	}
 +	return nil
 +}
@@ -2432,78 +2456,110 @@ index 00000000000000..ef68bbfb8fb065
 +	return md, nil
 +}
 +
-+// cryptoHashToMD converts a crypto.Hash to a GO_EVP_MD_PTR.
-+func cryptoHashToMD(ch crypto.Hash) (md C.GO_EVP_MD_PTR) {
++type hashAlgorithm struct {
++	md             C.GO_EVP_MD_PTR
++	ch             crypto.Hash
++	size           int
++	blockSize      int
++	marshallable   bool
++	magic          string
++	marshalledSize int
++}
++
++// loadHash converts a crypto.Hash to a EVP_MD.
++func loadHash(ch crypto.Hash) *hashAlgorithm {
 +	if v, ok := cacheMD.Load(ch); ok {
-+		return v.(C.GO_EVP_MD_PTR)
++		return v.(*hashAlgorithm)
 +	}
-+	defer func() {
-+		if md != nil {
-+			switch vMajor {
-+			case 1:
-+				// On OpenSSL 1 EVP_MD objects can be not-nil even
-+				// when they are not supported. We need to pass the md
-+				// to a EVP_MD_CTX to really know if they can be used.
-+				ctx := C.go_openssl_EVP_MD_CTX_new()
-+				if C.go_openssl_EVP_DigestInit_ex(ctx, md, nil) != 1 {
-+					md = nil
-+				}
-+				C.go_openssl_EVP_MD_CTX_free(ctx)
-+			case 3:
-+				// On OpenSSL 3, directly operating on a EVP_MD object
-+				// not created by EVP_MD_fetch has negative performance
-+				// implications, as digest operations will have
-+				// to fetch it on every call. Better to just fetch it once here.
-+				md = C.go_openssl_EVP_MD_fetch(nil, C.go_openssl_EVP_MD_get0_name(md), nil)
-+			default:
-+				panic(errUnsupportedVersion())
-+			}
-+		}
-+		cacheMD.Store(ch, md)
-+	}()
-+	// SupportsHash returns false for MD5SHA1 because we don't
-+	// provide a hash.Hash implementation for it. Yet, it can
-+	// still be used when signing/verifying with an RSA key.
-+	if ch == crypto.MD5SHA1 {
-+		if vMajor == 1 && vMinor == 0 {
-+			return C.go_openssl_EVP_md5_sha1_backport()
-+		} else {
-+			return C.go_openssl_EVP_md5_sha1()
-+		}
-+	}
++
++	var hash hashAlgorithm
 +	switch ch {
++	case crypto.RIPEMD160:
++		hash.md = C.go_openssl_EVP_ripemd160()
 +	case crypto.MD4:
-+		return C.go_openssl_EVP_md4()
++		hash.md = C.go_openssl_EVP_md4()
 +	case crypto.MD5:
-+		return C.go_openssl_EVP_md5()
++		hash.md = C.go_openssl_EVP_md5()
++		hash.magic = md5Magic
++		hash.marshalledSize = md5MarshaledSize
++	case crypto.MD5SHA1:
++		if vMajor == 1 && vMinor == 0 {
++			// OpenSSL 1.0.2 does not support MD5SHA1.
++			hash.md = nil
++		} else {
++			hash.md = C.go_openssl_EVP_md5_sha1()
++		}
 +	case crypto.SHA1:
-+		return C.go_openssl_EVP_sha1()
++		hash.md = C.go_openssl_EVP_sha1()
++		hash.magic = sha1Magic
++		hash.marshalledSize = sha1MarshaledSize
 +	case crypto.SHA224:
-+		return C.go_openssl_EVP_sha224()
++		hash.md = C.go_openssl_EVP_sha224()
++		hash.magic = magic224
++		hash.marshalledSize = marshaledSize256
 +	case crypto.SHA256:
-+		return C.go_openssl_EVP_sha256()
++		hash.md = C.go_openssl_EVP_sha256()
++		hash.magic = magic256
++		hash.marshalledSize = marshaledSize256
 +	case crypto.SHA384:
-+		return C.go_openssl_EVP_sha384()
++		hash.md = C.go_openssl_EVP_sha384()
++		hash.magic = magic384
++		hash.marshalledSize = marshaledSize512
 +	case crypto.SHA512:
-+		return C.go_openssl_EVP_sha512()
++		hash.md = C.go_openssl_EVP_sha512()
++		hash.magic = magic512
++		hash.marshalledSize = marshaledSize512
++	case crypto.SHA512_224:
++		if versionAtOrAbove(1, 1, 1) {
++			hash.md = C.go_openssl_EVP_sha512_224()
++			hash.magic = magic512_224
++			hash.marshalledSize = marshaledSize512
++		}
++	case crypto.SHA512_256:
++		if versionAtOrAbove(1, 1, 1) {
++			hash.md = C.go_openssl_EVP_sha512_256()
++			hash.magic = magic512_256
++			hash.marshalledSize = marshaledSize512
++		}
 +	case crypto.SHA3_224:
 +		if versionAtOrAbove(1, 1, 1) {
-+			return C.go_openssl_EVP_sha3_224()
++			hash.md = C.go_openssl_EVP_sha3_224()
 +		}
 +	case crypto.SHA3_256:
 +		if versionAtOrAbove(1, 1, 1) {
-+			return C.go_openssl_EVP_sha3_256()
++			hash.md = C.go_openssl_EVP_sha3_256()
 +		}
 +	case crypto.SHA3_384:
 +		if versionAtOrAbove(1, 1, 1) {
-+			return C.go_openssl_EVP_sha3_384()
++			hash.md = C.go_openssl_EVP_sha3_384()
 +		}
 +	case crypto.SHA3_512:
 +		if versionAtOrAbove(1, 1, 1) {
-+			return C.go_openssl_EVP_sha3_512()
++			hash.md = C.go_openssl_EVP_sha3_512()
 +		}
 +	}
-+	return nil
++	if hash.md == nil {
++		cacheMD.Store(ch, (*hashAlgorithm)(nil))
++		return nil
++	}
++	hash.ch = ch
++	hash.size = int(C.go_openssl_EVP_MD_get_size(hash.md))
++	hash.blockSize = int(C.go_openssl_EVP_MD_get_block_size(hash.md))
++	if vMajor == 3 {
++		// On OpenSSL 3, directly operating on a EVP_MD object
++		// not created by EVP_MD_fetch has negative performance
++		// implications, as digest operations will have
++		// to fetch it on every call. Better to just fetch it once here.
++		md := C.go_openssl_EVP_MD_fetch(nil, C.go_openssl_EVP_MD_get0_name(hash.md), nil)
++		// Don't overwrite md in case it can't be fetched, as the md may still be used
++		// outside of EVP_MD_CTX, for example to sign and verify RSA signatures.
++		if md != nil {
++			hash.md = md
++		}
++	}
++	hash.marshallable = hash.magic != "" && isHashMarshallable(hash.md)
++	cacheMD.Store(ch, &hash)
++	return &hash
 +}
 +
 +// generateEVPPKey generates a new EVP_PKEY with the given id and properties.
@@ -2645,11 +2701,11 @@ index 00000000000000..ef68bbfb8fb065
 +			}
 +		}
 +	case C.GO_RSA_PKCS1_PSS_PADDING:
-+		md := cryptoHashToMD(ch)
-+		if md == nil {
++		alg := loadHash(ch)
++		if alg == nil {
 +			return nil, errors.New("crypto/rsa: unsupported hash function")
 +		}
-+		if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, C.GO_EVP_PKEY_RSA, -1, C.GO_EVP_PKEY_CTRL_MD, 0, unsafe.Pointer(md)) != 1 {
++		if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, C.GO_EVP_PKEY_RSA, -1, C.GO_EVP_PKEY_CTRL_MD, 0, unsafe.Pointer(alg.md)) != 1 {
 +			return nil, newOpenSSLError("EVP_PKEY_CTX_ctrl failed")
 +		}
 +		// setPadding must happen after setting EVP_PKEY_CTRL_MD.
@@ -2665,11 +2721,11 @@ index 00000000000000..ef68bbfb8fb065
 +	case C.GO_RSA_PKCS1_PADDING:
 +		if ch != 0 {
 +			// We support unhashed messages.
-+			md := cryptoHashToMD(ch)
-+			if md == nil {
++			alg := loadHash(ch)
++			if alg == nil {
 +				return nil, errors.New("crypto/rsa: unsupported hash function")
 +			}
-+			if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1, -1, C.GO_EVP_PKEY_CTRL_MD, 0, unsafe.Pointer(md)) != 1 {
++			if C.go_openssl_EVP_PKEY_CTX_ctrl(ctx, -1, -1, C.GO_EVP_PKEY_CTRL_MD, 0, unsafe.Pointer(alg.md)) != 1 {
 +				return nil, newOpenSSLError("EVP_PKEY_CTX_ctrl failed")
 +			}
 +			if err := setPadding(); err != nil {
@@ -2784,8 +2840,8 @@ index 00000000000000..ef68bbfb8fb065
 +}
 +
 +func evpHashSign(withKey withKeyFunc, h crypto.Hash, msg []byte) ([]byte, error) {
-+	md := cryptoHashToMD(h)
-+	if md == nil {
++	alg := loadHash(h)
++	if alg == nil {
 +		return nil, errors.New("unsupported hash function: " + strconv.Itoa(int(h)))
 +	}
 +	var out []byte
@@ -2796,7 +2852,7 @@ index 00000000000000..ef68bbfb8fb065
 +	}
 +	defer C.go_openssl_EVP_MD_CTX_free(ctx)
 +	if withKey(func(key C.GO_EVP_PKEY_PTR) C.int {
-+		return C.go_openssl_EVP_DigestSignInit(ctx, nil, md, nil, key)
++		return C.go_openssl_EVP_DigestSignInit(ctx, nil, alg.md, nil, key)
 +	}) != 1 {
 +		return nil, newOpenSSLError("EVP_DigestSignInit failed")
 +	}
@@ -2816,8 +2872,8 @@ index 00000000000000..ef68bbfb8fb065
 +}
 +
 +func evpHashVerify(withKey withKeyFunc, h crypto.Hash, msg, sig []byte) error {
-+	md := cryptoHashToMD(h)
-+	if md == nil {
++	alg := loadHash(h)
++	if alg == nil {
 +		return errors.New("unsupported hash function: " + strconv.Itoa(int(h)))
 +	}
 +	ctx := C.go_openssl_EVP_MD_CTX_new()
@@ -2826,7 +2882,7 @@ index 00000000000000..ef68bbfb8fb065
 +	}
 +	defer C.go_openssl_EVP_MD_CTX_free(ctx)
 +	if withKey(func(key C.GO_EVP_PKEY_PTR) C.int {
-+		return C.go_openssl_EVP_DigestVerifyInit(ctx, nil, md, nil, key)
++		return C.go_openssl_EVP_DigestVerifyInit(ctx, nil, alg.md, nil, key)
 +	}) != 1 {
 +		return newOpenSSLError("EVP_DigestVerifyInit failed")
 +	}
@@ -3166,10 +3222,10 @@ index 00000000000000..626f184badc53d
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/goopenssl.h b/src/vendor/github.com/golang-fips/openssl/v2/goopenssl.h
 new file mode 100644
-index 00000000000000..1165f99157c663
+index 00000000000000..f5cdced630679f
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/goopenssl.h
-@@ -0,0 +1,262 @@
+@@ -0,0 +1,261 @@
 +// This header file describes the OpenSSL ABI as built for use in Go.
 +
 +#include <stdlib.h> // size_t
@@ -3199,7 +3255,6 @@ index 00000000000000..1165f99157c663
 +int go_openssl_version_patch(void* handle);
 +int go_openssl_thread_setup(void);
 +void go_openssl_load_functions(void* handle, unsigned int major, unsigned int minor, unsigned int patch);
-+const GO_EVP_MD_PTR go_openssl_EVP_md5_sha1_backport(void);
 +void go_openssl_DSA_get0_pqg_backport(const GO_DSA_PTR d, GO_BIGNUM_PTR *p, GO_BIGNUM_PTR *q, GO_BIGNUM_PTR *g);
 +int go_openssl_DSA_set0_pqg_backport(GO_DSA_PTR d, GO_BIGNUM_PTR p, GO_BIGNUM_PTR q, GO_BIGNUM_PTR g);
 +void go_openssl_DSA_get0_key_backport(const GO_DSA_PTR d, GO_BIGNUM_PTR *pub_key, GO_BIGNUM_PTR *priv_key);
@@ -3435,10 +3490,10 @@ index 00000000000000..1165f99157c663
 \ No newline at end of file
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/hash.go b/src/vendor/github.com/golang-fips/openssl/v2/hash.go
 new file mode 100644
-index 00000000000000..6fd3a518906004
+index 00000000000000..b2109857b49bdf
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/hash.go
-@@ -0,0 +1,1041 @@
+@@ -0,0 +1,714 @@
 +//go:build !cmd_go_bootstrap
 +
 +package openssl
@@ -3455,6 +3510,9 @@ index 00000000000000..6fd3a518906004
 +	"unsafe"
 +)
 +
++// maxHashSize is the size of SHA52 and SHA3_512, the largest hashes we support.
++const maxHashSize = 64
++
 +// NOTE: Implementation ported from https://go-review.googlesource.com/c/go/+/404295.
 +// The cgo calls in this file are arranged to avoid marking the parameters as escaping.
 +// To do that, we call noescape (including via addr).
@@ -3467,7 +3525,7 @@ index 00000000000000..6fd3a518906004
 +// This is all to preserve compatibility with the allocation behavior of the non-openssl implementations.
 +
 +func hashOneShot(ch crypto.Hash, p []byte, sum []byte) bool {
-+	return C.go_openssl_EVP_Digest(unsafe.Pointer(&*addr(p)), C.size_t(len(p)), (*C.uchar)(unsafe.Pointer(&*addr(sum))), nil, cryptoHashToMD(ch), nil) != 0
++	return C.go_openssl_EVP_Digest(unsafe.Pointer(&*addr(p)), C.size_t(len(p)), (*C.uchar)(unsafe.Pointer(&*addr(sum))), nil, loadHash(ch).md, nil) != 0
 +}
 +
 +func MD4(p []byte) (sum [16]byte) {
@@ -3519,9 +3577,43 @@ index 00000000000000..6fd3a518906004
 +	return
 +}
 +
-+// SupportsHash returns true if a hash.Hash implementation is supported for h.
++func SHA512_224(p []byte) (sum [28]byte) {
++	if !hashOneShot(crypto.SHA512_224, p, sum[:]) {
++		panic("openssl: SHA512 failed")
++	}
++	return
++}
++
++func SHA512_256(p []byte) (sum [32]byte) {
++	if !hashOneShot(crypto.SHA512_256, p, sum[:]) {
++		panic("openssl: SHA512_256 failed")
++	}
++	return
++}
++
++// cacheHashSupported is a cache of crypto.Hash support.
++var cacheHashSupported sync.Map
++
++// SupportsHash reports whether the current OpenSSL version supports the given hash.
 +func SupportsHash(h crypto.Hash) bool {
-+	return cryptoHashToMD(h) != nil
++	if v, ok := cacheHashSupported.Load(h); ok {
++		return v.(bool)
++	}
++	alg := loadHash(h)
++	if alg == nil {
++		cacheHashSupported.Store(h, false)
++		return false
++	}
++	// EVP_MD objects can be non-nil even when they can't be used
++	// in a EVP_MD_CTX, e.g. MD5 in FIPS mode. We need to prove
++	// if they can be used by passing them to a EVP_MD_CTX.
++	var supported bool
++	if ctx := C.go_openssl_EVP_MD_CTX_new(); ctx != nil {
++		supported = C.go_openssl_EVP_DigestInit_ex(ctx, alg.md, nil) == 1
++		C.go_openssl_EVP_MD_CTX_free(ctx)
++	}
++	cacheHashSupported.Store(h, supported)
++	return supported
 +}
 +
 +func SHA3_224(p []byte) (sum [28]byte) {
@@ -3552,20 +3644,78 @@ index 00000000000000..6fd3a518906004
 +	return
 +}
 +
-+var isMarshallableCache sync.Map
++// NewMD4 returns a new MD4 hash.
++// The returned hash doesn't implement encoding.BinaryMarshaler and
++// encoding.BinaryUnmarshaler.
++func NewMD4() hash.Hash {
++	return newEvpHash(crypto.MD4)
++}
 +
-+// isHashMarshallable returns true if the memory layout of cb
++// NewMD5 returns a new MD5 hash.
++func NewMD5() hash.Hash {
++	return newEvpHash(crypto.MD5)
++}
++
++// NewSHA1 returns a new SHA1 hash.
++func NewSHA1() hash.Hash {
++	return newEvpHash(crypto.SHA1)
++}
++
++// NewSHA224 returns a new SHA224 hash.
++func NewSHA224() hash.Hash {
++	return newEvpHash(crypto.SHA224)
++}
++
++// NewSHA256 returns a new SHA256 hash.
++func NewSHA256() hash.Hash {
++	return newEvpHash(crypto.SHA256)
++}
++
++// NewSHA384 returns a new SHA384 hash.
++func NewSHA384() hash.Hash {
++	return newEvpHash(crypto.SHA384)
++}
++
++// NewSHA512 returns a new SHA512 hash.
++func NewSHA512() hash.Hash {
++	return newEvpHash(crypto.SHA512)
++}
++
++// NewSHA512_224 returns a new SHA512_224 hash.
++func NewSHA512_224() hash.Hash {
++	return newEvpHash(crypto.SHA512_224)
++}
++
++// NewSHA512_256 returns a new SHA512_256 hash.
++func NewSHA512_256() hash.Hash {
++	return newEvpHash(crypto.SHA512_256)
++}
++
++// NewSHA3_224 returns a new SHA3-224 hash.
++func NewSHA3_224() hash.Hash {
++	return newEvpHash(crypto.SHA3_224)
++}
++
++// NewSHA3_256 returns a new SHA3-256 hash.
++func NewSHA3_256() hash.Hash {
++	return newEvpHash(crypto.SHA3_256)
++}
++
++// NewSHA3_384 returns a new SHA3-384 hash.
++func NewSHA3_384() hash.Hash {
++	return newEvpHash(crypto.SHA3_384)
++}
++
++// NewSHA3_512 returns a new SHA3-512 hash.
++func NewSHA3_512() hash.Hash {
++	return newEvpHash(crypto.SHA3_512)
++}
++
++// isHashMarshallable returns true if the memory layout of md
 +// is known by this library and can therefore be marshalled.
-+func isHashMarshallable(ch crypto.Hash) bool {
++func isHashMarshallable(md C.GO_EVP_MD_PTR) bool {
 +	if vMajor == 1 {
 +		return true
-+	}
-+	if v, ok := isMarshallableCache.Load(ch); ok {
-+		return v.(bool)
-+	}
-+	md := cryptoHashToMD(ch)
-+	if md == nil {
-+		return false
 +	}
 +	prov := C.go_openssl_EVP_MD_get0_provider(md)
 +	if prov == nil {
@@ -3579,51 +3729,73 @@ index 00000000000000..6fd3a518906004
 +	// We only know the memory layout of the built-in providers.
 +	// See evpHash.hashState for more details.
 +	marshallable := name == "default" || name == "fips"
-+	isMarshallableCache.Store(ch, marshallable)
 +	return marshallable
 +}
 +
++// cloneHash is an interface that defines a Clone method.
++//
++// hahs.CloneHash will probably be added in Go 1.25, see https://golang.org/issue/69521,
++// but we need it now.
++type cloneHash interface {
++	hash.Hash
++	// Clone returns a separate Hash instance with the same state as h.
++	Clone() hash.Hash
++}
++
++var _ hash.Hash = (*evpHash)(nil)
++var _ cloneHash = (*evpHash)(nil)
++
 +// evpHash implements generic hash methods.
 +type evpHash struct {
++	alg *hashAlgorithm
 +	ctx C.GO_EVP_MD_CTX_PTR
 +	// ctx2 is used in evpHash.sum to avoid changing
 +	// the state of ctx. Having it here allows reusing the
 +	// same allocated object multiple times.
-+	ctx2         C.GO_EVP_MD_CTX_PTR
-+	size         int
-+	blockSize    int
-+	marshallable bool
++	ctx2 C.GO_EVP_MD_CTX_PTR
 +}
 +
 +func newEvpHash(ch crypto.Hash) *evpHash {
-+	md := cryptoHashToMD(ch)
-+	if md == nil {
++	alg := loadHash(ch)
++	if alg == nil {
 +		panic("openssl: unsupported hash function: " + strconv.Itoa(int(ch)))
 +	}
-+	ctx := C.go_openssl_EVP_MD_CTX_new()
-+	if C.go_openssl_EVP_DigestInit_ex(ctx, md, nil) != 1 {
-+		C.go_openssl_EVP_MD_CTX_free(ctx)
-+		panic(newOpenSSLError("EVP_DigestInit_ex"))
-+	}
-+	ctx2 := C.go_openssl_EVP_MD_CTX_new()
-+	blockSize := int(C.go_openssl_EVP_MD_get_block_size(md))
-+	h := &evpHash{
-+		ctx:          ctx,
-+		ctx2:         ctx2,
-+		size:         ch.Size(),
-+		blockSize:    blockSize,
-+		marshallable: isHashMarshallable(ch),
-+	}
-+	runtime.SetFinalizer(h, (*evpHash).finalize)
++	h := &evpHash{alg: alg}
++	// Don't call init() yet, it would be wasteful
++	// if the caller only wants to know the hash type. This
++	// is a common pattern in this package, as some functions
++	// accept a `func() hash.Hash` parameter and call it just
++	// to know the hash type.
 +	return h
 +}
 +
 +func (h *evpHash) finalize() {
-+	C.go_openssl_EVP_MD_CTX_free(h.ctx)
-+	C.go_openssl_EVP_MD_CTX_free(h.ctx2)
++	if h.ctx != nil {
++		C.go_openssl_EVP_MD_CTX_free(h.ctx)
++	}
++	if h.ctx2 != nil {
++		C.go_openssl_EVP_MD_CTX_free(h.ctx2)
++	}
++}
++
++func (h *evpHash) init() {
++	if h.ctx != nil {
++		return
++	}
++	h.ctx = C.go_openssl_EVP_MD_CTX_new()
++	if C.go_openssl_EVP_DigestInit_ex(h.ctx, h.alg.md, nil) != 1 {
++		C.go_openssl_EVP_MD_CTX_free(h.ctx)
++		panic(newOpenSSLError("EVP_DigestInit_ex"))
++	}
++	h.ctx2 = C.go_openssl_EVP_MD_CTX_new()
++	runtime.SetFinalizer(h, (*evpHash).finalize)
 +}
 +
 +func (h *evpHash) Reset() {
++	if h.ctx == nil {
++		// The hash is not initialized yet, no need to reset.
++		return
++	}
 +	// There is no need to reset h.ctx2 because it is always reset after
 +	// use in evpHash.sum.
 +	if C.go_openssl_EVP_DigestInit_ex(h.ctx, nil, nil) != 1 {
@@ -3633,7 +3805,11 @@ index 00000000000000..6fd3a518906004
 +}
 +
 +func (h *evpHash) Write(p []byte) (int, error) {
-+	if len(p) > 0 && C.go_openssl_EVP_DigestUpdate(h.ctx, unsafe.Pointer(&*addr(p)), C.size_t(len(p))) != 1 {
++	if len(p) == 0 {
++		return 0, nil
++	}
++	h.init()
++	if C.go_openssl_EVP_DigestUpdate(h.ctx, unsafe.Pointer(&*addr(p)), C.size_t(len(p))) != 1 {
 +		panic(newOpenSSLError("EVP_DigestUpdate"))
 +	}
 +	runtime.KeepAlive(h)
@@ -3641,7 +3817,11 @@ index 00000000000000..6fd3a518906004
 +}
 +
 +func (h *evpHash) WriteString(s string) (int, error) {
-+	if len(s) > 0 && C.go_openssl_EVP_DigestUpdate(h.ctx, unsafe.Pointer(unsafe.StringData(s)), C.size_t(len(s))) == 0 {
++	if len(s) == 0 {
++		return 0, nil
++	}
++	h.init()
++	if C.go_openssl_EVP_DigestUpdate(h.ctx, unsafe.Pointer(unsafe.StringData(s)), C.size_t(len(s))) == 0 {
 +		panic("openssl: EVP_DigestUpdate failed")
 +	}
 +	runtime.KeepAlive(h)
@@ -3649,6 +3829,7 @@ index 00000000000000..6fd3a518906004
 +}
 +
 +func (h *evpHash) WriteByte(c byte) error {
++	h.init()
 +	if C.go_openssl_EVP_DigestUpdate(h.ctx, unsafe.Pointer(&c), 1) == 0 {
 +		panic("openssl: EVP_DigestUpdate failed")
 +	}
@@ -3657,56 +3838,53 @@ index 00000000000000..6fd3a518906004
 +}
 +
 +func (h *evpHash) Size() int {
-+	return h.size
++	return h.alg.size
 +}
 +
 +func (h *evpHash) BlockSize() int {
-+	return h.blockSize
++	return h.alg.blockSize
 +}
 +
-+func (h *evpHash) sum(out []byte) {
++func (h *evpHash) Sum(in []byte) []byte {
++	h.init()
++	out := make([]byte, h.Size(), maxHashSize) // explicit cap to allow stack allocation
 +	if C.go_hash_sum(h.ctx, h.ctx2, base(out)) != 1 {
 +		panic(newOpenSSLError("go_hash_sum"))
 +	}
 +	runtime.KeepAlive(h)
++	return append(in, out...)
 +}
 +
-+// clone returns a new evpHash object that is a deep clone of itself.
++// Clone returns a new evpHash object that is a deep clone of itself.
 +// The duplicate object contains all state and data contained in the
 +// original object at the point of duplication.
-+func (h *evpHash) clone() (*evpHash, error) {
-+	ctx := C.go_openssl_EVP_MD_CTX_new()
-+	if ctx == nil {
-+		return nil, newOpenSSLError("EVP_MD_CTX_new")
++func (h *evpHash) Clone() hash.Hash {
++	h2 := &evpHash{alg: h.alg}
++	if h.ctx != nil {
++		h2.ctx = C.go_openssl_EVP_MD_CTX_new()
++		if h2.ctx == nil {
++			panic(newOpenSSLError("EVP_MD_CTX_new"))
++		}
++		if C.go_openssl_EVP_MD_CTX_copy_ex(h2.ctx, h.ctx) != 1 {
++			C.go_openssl_EVP_MD_CTX_free(h2.ctx)
++			panic(newOpenSSLError("EVP_MD_CTX_copy"))
++		}
++		h2.ctx2 = C.go_openssl_EVP_MD_CTX_new()
++		if h2.ctx2 == nil {
++			C.go_openssl_EVP_MD_CTX_free(h2.ctx)
++			panic(newOpenSSLError("EVP_MD_CTX_new"))
++		}
++		runtime.SetFinalizer(h2, (*evpHash).finalize)
 +	}
-+	if C.go_openssl_EVP_MD_CTX_copy_ex(ctx, h.ctx) != 1 {
-+		C.go_openssl_EVP_MD_CTX_free(ctx)
-+		return nil, newOpenSSLError("EVP_MD_CTX_copy")
-+	}
-+	ctx2 := C.go_openssl_EVP_MD_CTX_new()
-+	if ctx2 == nil {
-+		C.go_openssl_EVP_MD_CTX_free(ctx)
-+		return nil, newOpenSSLError("EVP_MD_CTX_new")
-+	}
-+	cloned := &evpHash{
-+		ctx:          ctx,
-+		ctx2:         ctx2,
-+		size:         h.size,
-+		blockSize:    h.blockSize,
-+		marshallable: h.marshallable,
-+	}
-+	runtime.SetFinalizer(cloned, (*evpHash).finalize)
-+	return cloned, nil
++	runtime.KeepAlive(h)
++	return h2
 +}
 +
 +// hashState returns a pointer to the internal hash structure.
 +//
 +// The EVP_MD_CTX memory layout has changed in OpenSSL 3
 +// and the property holding the internal structure is no longer md_data but algctx.
-+func (h *evpHash) hashState() unsafe.Pointer {
-+	if !h.marshallable {
-+		panic("openssl: hash state is not marshallable")
-+	}
++func hashState(ctx C.GO_EVP_MD_CTX_PTR) unsafe.Pointer {
 +	switch vMajor {
 +	case 1:
 +		// https://github.com/openssl/openssl/blob/0418e993c717a6863f206feaa40673a261de7395/crypto/evp/evp_local.h#L12.
@@ -3715,7 +3893,7 @@ index 00000000000000..6fd3a518906004
 +			_       C.ulong
 +			md_data unsafe.Pointer
 +		}
-+		return (*mdCtx)(unsafe.Pointer(h.ctx)).md_data
++		return (*mdCtx)(unsafe.Pointer(ctx)).md_data
 +	case 3:
 +		// https://github.com/openssl/openssl/blob/5675a5aaf6a2e489022bcfc18330dae9263e598e/crypto/evp/evp_local.h#L16.
 +		type mdCtx struct {
@@ -3724,49 +3902,98 @@ index 00000000000000..6fd3a518906004
 +			_      [3]unsafe.Pointer
 +			algctx unsafe.Pointer
 +		}
-+		return (*mdCtx)(unsafe.Pointer(h.ctx)).algctx
++		return (*mdCtx)(unsafe.Pointer(ctx)).algctx
 +	default:
 +		panic(errUnsupportedVersion())
 +	}
 +}
 +
-+// NewMD4 returns a new MD4 hash.
-+// The returned hash doesn't implement encoding.BinaryMarshaler and
-+// encoding.BinaryUnmarshaler.
-+func NewMD4() hash.Hash {
-+	return &md4Hash{
-+		evpHash: newEvpHash(crypto.MD4),
++func (d *evpHash) MarshalBinary() ([]byte, error) {
++	if !d.alg.marshallable {
++		return nil, errors.New("openssl: hash state is not marshallable")
 +	}
++	buf := make([]byte, 0, d.alg.marshalledSize)
++	return d.AppendBinary(buf)
 +}
 +
-+type md4Hash struct {
-+	*evpHash
-+	out [16]byte
-+}
-+
-+func (h *md4Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *md4Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
++func (d *evpHash) AppendBinary(buf []byte) ([]byte, error) {
++	defer runtime.KeepAlive(d)
++	d.init()
++	if !d.alg.marshallable {
++		return nil, errors.New("openssl: hash state is not marshallable")
 +	}
-+	return &md4Hash{evpHash: c}, nil
++	state := hashState(d.ctx)
++	if state == nil {
++		return nil, errors.New("openssl: can't retrieve hash state")
++	}
++	var appender interface {
++		AppendBinary([]byte) ([]byte, error)
++	}
++	switch d.alg.ch {
++	case crypto.MD5:
++		appender = (*md5State)(state)
++	case crypto.SHA1:
++		appender = (*sha1State)(state)
++	case crypto.SHA224:
++		appender = (*sha256State)(state)
++	case crypto.SHA256:
++		appender = (*sha256State)(state)
++	case crypto.SHA384:
++		appender = (*sha512State)(state)
++	case crypto.SHA512:
++		appender = (*sha512State)(state)
++	case crypto.SHA512_224:
++		appender = (*sha512State)(state)
++	case crypto.SHA512_256:
++		appender = (*sha512State)(state)
++	default:
++		panic("openssl: unsupported hash function: " + strconv.Itoa(int(d.alg.ch)))
++	}
++	buf = append(buf, d.alg.magic[:]...)
++	return appender.AppendBinary(buf)
 +}
 +
-+// NewMD5 returns a new MD5 hash.
-+func NewMD5() hash.Hash {
-+	h := md5Hash{evpHash: newEvpHash(crypto.MD5)}
-+	if h.marshallable {
-+		return &md5Marshal{h}
++func (d *evpHash) UnmarshalBinary(b []byte) error {
++	defer runtime.KeepAlive(d)
++	d.init()
++	if !d.alg.marshallable {
++		return errors.New("openssl: hash state is not marshallable")
 +	}
-+	return &h
++	if len(b) < len(d.alg.magic) || string(b[:len(d.alg.magic)]) != string(d.alg.magic[:]) {
++		return errors.New("openssl: invalid hash state identifier")
++	}
++	if len(b) != d.alg.marshalledSize {
++		return errors.New("openssl: invalid hash state size")
++	}
++	state := hashState(d.ctx)
++	if state == nil {
++		return errors.New("openssl: can't retrieve hash state")
++	}
++	b = b[len(d.alg.magic):]
++	var unmarshaler interface {
++		UnmarshalBinary([]byte) error
++	}
++	switch d.alg.ch {
++	case crypto.MD5:
++		unmarshaler = (*md5State)(state)
++	case crypto.SHA1:
++		unmarshaler = (*sha1State)(state)
++	case crypto.SHA224:
++		unmarshaler = (*sha256State)(state)
++	case crypto.SHA256:
++		unmarshaler = (*sha256State)(state)
++	case crypto.SHA384:
++		unmarshaler = (*sha512State)(state)
++	case crypto.SHA512:
++		unmarshaler = (*sha512State)(state)
++	case crypto.SHA512_224:
++		unmarshaler = (*sha512State)(state)
++	case crypto.SHA512_256:
++		unmarshaler = (*sha512State)(state)
++	default:
++		panic("openssl: unsupported hash function: " + strconv.Itoa(int(d.alg.ch)))
++	}
++	return unmarshaler.UnmarshalBinary(b)
 +}
 +
 +// md5State layout is taken from
@@ -3778,53 +4005,12 @@ index 00000000000000..6fd3a518906004
 +	nx     uint32
 +}
 +
-+type md5Hash struct {
-+	*evpHash
-+	out [16]byte
-+}
-+
-+func (h *md5Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *md5Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &md5Hash{evpHash: c}, nil
-+}
-+
 +const (
 +	md5Magic         = "md5\x01"
 +	md5MarshaledSize = len(md5Magic) + 4*4 + 64 + 8
 +)
 +
-+type md5Marshal struct {
-+	md5Hash
-+}
-+
-+func (h *md5Marshal) MarshalBinary() ([]byte, error) {
-+	buf := make([]byte, 0, md5MarshaledSize)
-+	return h.AppendBinary(buf)
-+}
-+
-+func (h *md5Marshal) UnmarshalBinary(b []byte) error {
-+	if len(b) < len(md5Magic) || string(b[:len(md5Magic)]) != md5Magic {
-+		return errors.New("crypto/md5: invalid hash state identifier")
-+	}
-+	if len(b) != md5MarshaledSize {
-+		return errors.New("crypto/md5: invalid hash state size")
-+	}
-+	d := (*md5State)(h.hashState())
-+	if d == nil {
-+		return errors.New("crypto/md5: can't retrieve hash state")
-+	}
-+	b = b[len(md5Magic):]
++func (d *md5State) UnmarshalBinary(b []byte) error {
 +	b, d.h[0] = consumeUint32(b)
 +	b, d.h[1] = consumeUint32(b)
 +	b, d.h[2] = consumeUint32(b)
@@ -3837,13 +4023,7 @@ index 00000000000000..6fd3a518906004
 +	return nil
 +}
 +
-+func (h *md5Marshal) AppendBinary(buf []byte) ([]byte, error) {
-+	d := (*md5State)(h.hashState())
-+	if d == nil {
-+		return nil, errors.New("crypto/md5: can't retrieve hash state")
-+	}
-+
-+	buf = append(buf, md5Magic...)
++func (d *md5State) AppendBinary(buf []byte) ([]byte, error) {
 +	buf = appendUint32(buf, d.h[0])
 +	buf = appendUint32(buf, d.h[1])
 +	buf = appendUint32(buf, d.h[2])
@@ -3852,36 +4032,6 @@ index 00000000000000..6fd3a518906004
 +	buf = append(buf, make([]byte, len(d.x)-int(d.nx))...)
 +	buf = appendUint64(buf, uint64(d.nl)>>3|uint64(d.nh)<<29)
 +	return buf, nil
-+}
-+
-+// NewSHA1 returns a new SHA1 hash.
-+func NewSHA1() hash.Hash {
-+	h := sha1Hash{evpHash: newEvpHash(crypto.SHA1)}
-+	if h.marshallable {
-+		return &sha1Marshal{h}
-+	}
-+	return &h
-+}
-+
-+type sha1Hash struct {
-+	*evpHash
-+	out [20]byte
-+}
-+
-+func (h *sha1Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *sha1Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &sha1Hash{evpHash: c}, nil
 +}
 +
 +// sha1State layout is taken from
@@ -3898,27 +4048,7 @@ index 00000000000000..6fd3a518906004
 +	sha1MarshaledSize = len(sha1Magic) + 5*4 + 64 + 8
 +)
 +
-+type sha1Marshal struct {
-+	sha1Hash
-+}
-+
-+func (h *sha1Marshal) MarshalBinary() ([]byte, error) {
-+	buf := make([]byte, 0, sha1MarshaledSize)
-+	return h.AppendBinary(buf)
-+}
-+
-+func (h *sha1Marshal) UnmarshalBinary(b []byte) error {
-+	if len(b) < len(sha1Magic) || string(b[:len(sha1Magic)]) != sha1Magic {
-+		return errors.New("crypto/sha1: invalid hash state identifier")
-+	}
-+	if len(b) != sha1MarshaledSize {
-+		return errors.New("crypto/sha1: invalid hash state size")
-+	}
-+	d := (*sha1State)(h.hashState())
-+	if d == nil {
-+		return errors.New("crypto/sha1: can't retrieve hash state")
-+	}
-+	b = b[len(sha1Magic):]
++func (d *sha1State) UnmarshalBinary(b []byte) error {
 +	b, d.h[0] = consumeUint32(b)
 +	b, d.h[1] = consumeUint32(b)
 +	b, d.h[2] = consumeUint32(b)
@@ -3932,12 +4062,7 @@ index 00000000000000..6fd3a518906004
 +	return nil
 +}
 +
-+func (h *sha1Marshal) AppendBinary(buf []byte) ([]byte, error) {
-+	d := (*sha1State)(h.hashState())
-+	if d == nil {
-+		return nil, errors.New("crypto/sha1: can't retrieve hash state")
-+	}
-+	buf = append(buf, sha1Magic...)
++func (d *sha1State) AppendBinary(buf []byte) ([]byte, error) {
 +	buf = appendUint32(buf, d.h[0])
 +	buf = appendUint32(buf, d.h[1])
 +	buf = appendUint32(buf, d.h[2])
@@ -3947,66 +4072,6 @@ index 00000000000000..6fd3a518906004
 +	buf = append(buf, make([]byte, len(d.x)-int(d.nx))...)
 +	buf = appendUint64(buf, uint64(d.nl)>>3|uint64(d.nh)<<29)
 +	return buf, nil
-+}
-+
-+// NewSHA224 returns a new SHA224 hash.
-+func NewSHA224() hash.Hash {
-+	h := sha224Hash{evpHash: newEvpHash(crypto.SHA224)}
-+	if h.marshallable {
-+		return &sha224Marshal{h}
-+	}
-+	return &h
-+}
-+
-+type sha224Hash struct {
-+	*evpHash
-+	out [224 / 8]byte
-+}
-+
-+func (h *sha224Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *sha224Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &sha224Hash{evpHash: c}, nil
-+}
-+
-+// NewSHA256 returns a new SHA256 hash.
-+func NewSHA256() hash.Hash {
-+	h := sha256Hash{evpHash: newEvpHash(crypto.SHA256)}
-+	if h.marshallable {
-+		return &sha256Marshal{h}
-+	}
-+	return &h
-+}
-+
-+type sha256Hash struct {
-+	*evpHash
-+	out [256 / 8]byte
-+}
-+
-+func (h *sha256Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *sha256Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &sha256Hash{evpHash: c}, nil
 +}
 +
 +const (
@@ -4024,36 +4089,7 @@ index 00000000000000..6fd3a518906004
 +	nx     uint32
 +}
 +
-+type sha224Marshal struct {
-+	sha224Hash
-+}
-+
-+type sha256Marshal struct {
-+	sha256Hash
-+}
-+
-+func (h *sha224Marshal) MarshalBinary() ([]byte, error) {
-+	buf := make([]byte, 0, marshaledSize256)
-+	return h.AppendBinary(buf)
-+}
-+
-+func (h *sha256Marshal) MarshalBinary() ([]byte, error) {
-+	buf := make([]byte, 0, marshaledSize256)
-+	return h.AppendBinary(buf)
-+}
-+
-+func (h *sha224Marshal) UnmarshalBinary(b []byte) error {
-+	if len(b) < len(magic224) || string(b[:len(magic224)]) != magic224 {
-+		return errors.New("crypto/sha256: invalid hash state identifier")
-+	}
-+	if len(b) != marshaledSize256 {
-+		return errors.New("crypto/sha256: invalid hash state size")
-+	}
-+	d := (*sha256State)(h.hashState())
-+	if d == nil {
-+		return errors.New("crypto/sha256: can't retrieve hash state")
-+	}
-+	b = b[len(magic224):]
++func (d *sha256State) UnmarshalBinary(b []byte) error {
 +	b, d.h[0] = consumeUint32(b)
 +	b, d.h[1] = consumeUint32(b)
 +	b, d.h[2] = consumeUint32(b)
@@ -4070,40 +4106,7 @@ index 00000000000000..6fd3a518906004
 +	return nil
 +}
 +
-+func (h *sha256Marshal) UnmarshalBinary(b []byte) error {
-+	if len(b) < len(magic256) || string(b[:len(magic256)]) != magic256 {
-+		return errors.New("crypto/sha256: invalid hash state identifier")
-+	}
-+	if len(b) != marshaledSize256 {
-+		return errors.New("crypto/sha256: invalid hash state size")
-+	}
-+	d := (*sha256State)(h.hashState())
-+	if d == nil {
-+		return errors.New("crypto/sha256: can't retrieve hash state")
-+	}
-+	b = b[len(magic256):]
-+	b, d.h[0] = consumeUint32(b)
-+	b, d.h[1] = consumeUint32(b)
-+	b, d.h[2] = consumeUint32(b)
-+	b, d.h[3] = consumeUint32(b)
-+	b, d.h[4] = consumeUint32(b)
-+	b, d.h[5] = consumeUint32(b)
-+	b, d.h[6] = consumeUint32(b)
-+	b, d.h[7] = consumeUint32(b)
-+	b = b[copy(d.x[:], b):]
-+	_, n := consumeUint64(b)
-+	d.nl = uint32(n << 3)
-+	d.nh = uint32(n >> 29)
-+	d.nx = uint32(n) % 64
-+	return nil
-+}
-+
-+func (h *sha224Marshal) AppendBinary(buf []byte) ([]byte, error) {
-+	d := (*sha256State)(h.hashState())
-+	if d == nil {
-+		return nil, errors.New("crypto/sha256: can't retrieve hash state")
-+	}
-+	buf = append(buf, magic224...)
++func (d *sha256State) AppendBinary(buf []byte) ([]byte, error) {
 +	buf = appendUint32(buf, d.h[0])
 +	buf = appendUint32(buf, d.h[1])
 +	buf = appendUint32(buf, d.h[2])
@@ -4116,86 +4119,6 @@ index 00000000000000..6fd3a518906004
 +	buf = append(buf, make([]byte, len(d.x)-int(d.nx))...)
 +	buf = appendUint64(buf, uint64(d.nl)>>3|uint64(d.nh)<<29)
 +	return buf, nil
-+}
-+
-+func (h *sha256Marshal) AppendBinary(buf []byte) ([]byte, error) {
-+	d := (*sha256State)(h.hashState())
-+	if d == nil {
-+		return nil, errors.New("crypto/sha256: can't retrieve hash state")
-+	}
-+	buf = append(buf, magic256...)
-+	buf = appendUint32(buf, d.h[0])
-+	buf = appendUint32(buf, d.h[1])
-+	buf = appendUint32(buf, d.h[2])
-+	buf = appendUint32(buf, d.h[3])
-+	buf = appendUint32(buf, d.h[4])
-+	buf = appendUint32(buf, d.h[5])
-+	buf = appendUint32(buf, d.h[6])
-+	buf = appendUint32(buf, d.h[7])
-+	buf = append(buf, d.x[:d.nx]...)
-+	buf = append(buf, make([]byte, len(d.x)-int(d.nx))...)
-+	buf = appendUint64(buf, uint64(d.nl)>>3|uint64(d.nh)<<29)
-+	return buf, nil
-+}
-+
-+// NewSHA384 returns a new SHA384 hash.
-+func NewSHA384() hash.Hash {
-+	h := sha384Hash{evpHash: newEvpHash(crypto.SHA384)}
-+	if h.marshallable {
-+		return &sha384Marshal{h}
-+	}
-+	return &h
-+}
-+
-+type sha384Hash struct {
-+	*evpHash
-+	out [384 / 8]byte
-+}
-+
-+func (h *sha384Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *sha384Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &sha384Hash{evpHash: c}, nil
-+}
-+
-+// NewSHA512 returns a new SHA512 hash.
-+func NewSHA512() hash.Hash {
-+	h := sha512Hash{evpHash: newEvpHash(crypto.SHA512)}
-+	if h.marshallable {
-+		return &sha512Marshal{h}
-+	}
-+	return &h
-+}
-+
-+type sha512Hash struct {
-+	*evpHash
-+	out [512 / 8]byte
-+}
-+
-+func (h *sha512Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *sha512Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &sha512Hash{evpHash: c}, nil
 +}
 +
 +// sha512State layout is taken from
@@ -4215,39 +4138,12 @@ index 00000000000000..6fd3a518906004
 +	marshaledSize512 = len(magic512) + 8*8 + 128 + 8
 +)
 +
-+type sha384Marshal struct {
-+	sha384Hash
-+}
-+
-+type sha512Marshal struct {
-+	sha512Hash
-+}
-+
-+func (h *sha384Marshal) MarshalBinary() ([]byte, error) {
++func (d *sha512State) MarshalBinary() ([]byte, error) {
 +	buf := make([]byte, 0, marshaledSize512)
-+	return h.AppendBinary(buf)
++	return d.AppendBinary(buf)
 +}
 +
-+func (h *sha512Marshal) MarshalBinary() ([]byte, error) {
-+	buf := make([]byte, 0, marshaledSize512)
-+	return h.AppendBinary(buf)
-+}
-+
-+func (h *sha384Marshal) UnmarshalBinary(b []byte) error {
-+	if len(b) < len(magic512) {
-+		return errors.New("crypto/sha512: invalid hash state identifier")
-+	}
-+	if string(b[:len(magic384)]) != magic384 {
-+		return errors.New("crypto/sha512: invalid hash state identifier")
-+	}
-+	if len(b) != marshaledSize512 {
-+		return errors.New("crypto/sha512: invalid hash state size")
-+	}
-+	d := (*sha512State)(h.hashState())
-+	if d == nil {
-+		return errors.New("crypto/sha512: can't retrieve hash state")
-+	}
-+	b = b[len(magic512):]
++func (d *sha512State) UnmarshalBinary(b []byte) error {
 +	b, d.h[0] = consumeUint64(b)
 +	b, d.h[1] = consumeUint64(b)
 +	b, d.h[2] = consumeUint64(b)
@@ -4264,43 +4160,7 @@ index 00000000000000..6fd3a518906004
 +	return nil
 +}
 +
-+func (h *sha512Marshal) UnmarshalBinary(b []byte) error {
-+	if len(b) < len(magic512) {
-+		return errors.New("crypto/sha512: invalid hash state identifier")
-+	}
-+	if string(b[:len(magic512)]) != magic512 {
-+		return errors.New("crypto/sha512: invalid hash state identifier")
-+	}
-+	if len(b) != marshaledSize512 {
-+		return errors.New("crypto/sha512: invalid hash state size")
-+	}
-+	d := (*sha512State)(h.hashState())
-+	if d == nil {
-+		return errors.New("crypto/sha512: can't retrieve hash state")
-+	}
-+	b = b[len(magic512):]
-+	b, d.h[0] = consumeUint64(b)
-+	b, d.h[1] = consumeUint64(b)
-+	b, d.h[2] = consumeUint64(b)
-+	b, d.h[3] = consumeUint64(b)
-+	b, d.h[4] = consumeUint64(b)
-+	b, d.h[5] = consumeUint64(b)
-+	b, d.h[6] = consumeUint64(b)
-+	b, d.h[7] = consumeUint64(b)
-+	b = b[copy(d.x[:], b):]
-+	_, n := consumeUint64(b)
-+	d.nl = n << 3
-+	d.nh = n >> 61
-+	d.nx = uint32(n) % 128
-+	return nil
-+}
-+
-+func (h *sha384Marshal) AppendBinary(buf []byte) ([]byte, error) {
-+	d := (*sha512State)(h.hashState())
-+	if d == nil {
-+		return nil, errors.New("crypto/sha512: can't retrieve hash state")
-+	}
-+	buf = append(buf, magic384...)
++func (d *sha512State) AppendBinary(buf []byte) ([]byte, error) {
 +	buf = appendUint64(buf, d.h[0])
 +	buf = appendUint64(buf, d.h[1])
 +	buf = appendUint64(buf, d.h[2])
@@ -4313,138 +4173,6 @@ index 00000000000000..6fd3a518906004
 +	buf = append(buf, make([]byte, len(d.x)-int(d.nx))...)
 +	buf = appendUint64(buf, d.nl>>3|d.nh<<61)
 +	return buf, nil
-+}
-+
-+func (h *sha512Marshal) AppendBinary(buf []byte) ([]byte, error) {
-+	d := (*sha512State)(h.hashState())
-+	if d == nil {
-+		return nil, errors.New("crypto/sha512: can't retrieve hash state")
-+	}
-+	buf = append(buf, magic512...)
-+	buf = appendUint64(buf, d.h[0])
-+	buf = appendUint64(buf, d.h[1])
-+	buf = appendUint64(buf, d.h[2])
-+	buf = appendUint64(buf, d.h[3])
-+	buf = appendUint64(buf, d.h[4])
-+	buf = appendUint64(buf, d.h[5])
-+	buf = appendUint64(buf, d.h[6])
-+	buf = appendUint64(buf, d.h[7])
-+	buf = append(buf, d.x[:d.nx]...)
-+	buf = append(buf, make([]byte, len(d.x)-int(d.nx))...)
-+	buf = appendUint64(buf, d.nl>>3|d.nh<<61)
-+	return buf, nil
-+}
-+
-+// NewSHA3_224 returns a new SHA3-224 hash.
-+func NewSHA3_224() hash.Hash {
-+	return &sha3_224Hash{
-+		evpHash: newEvpHash(crypto.SHA3_224),
-+	}
-+}
-+
-+type sha3_224Hash struct {
-+	*evpHash
-+	out [224 / 8]byte
-+}
-+
-+func (h *sha3_224Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *sha3_224Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &sha3_224Hash{evpHash: c}, nil
-+}
-+
-+// NewSHA3_256 returns a new SHA3-256 hash.
-+func NewSHA3_256() hash.Hash {
-+	return &sha3_256Hash{
-+		evpHash: newEvpHash(crypto.SHA3_256),
-+	}
-+}
-+
-+type sha3_256Hash struct {
-+	*evpHash
-+	out [256 / 8]byte
-+}
-+
-+func (h *sha3_256Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *sha3_256Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &sha3_256Hash{evpHash: c}, nil
-+}
-+
-+// NewSHA3_384 returns a new SHA3-384 hash.
-+func NewSHA3_384() hash.Hash {
-+	return &sha3_384Hash{
-+		evpHash: newEvpHash(crypto.SHA3_384),
-+	}
-+}
-+
-+type sha3_384Hash struct {
-+	*evpHash
-+	out [384 / 8]byte
-+}
-+
-+func (h *sha3_384Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *sha3_384Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &sha3_384Hash{evpHash: c}, nil
-+}
-+
-+// NewSHA3_512 returns a new SHA3-512 hash.
-+func NewSHA3_512() hash.Hash {
-+	return &sha3_512Hash{
-+		evpHash: newEvpHash(crypto.SHA3_512),
-+	}
-+}
-+
-+type sha3_512Hash struct {
-+	*evpHash
-+	out [512 / 8]byte
-+}
-+
-+func (h *sha3_512Hash) Sum(in []byte) []byte {
-+	h.sum(h.out[:])
-+	return append(in, h.out[:]...)
-+}
-+
-+// Clone returns a new [hash.Hash] object that is a deep clone of itself.
-+// The duplicate object contains all state and data contained in the
-+// original object at the point of duplication.
-+func (h *sha3_512Hash) Clone() (hash.Hash, error) {
-+	c, err := h.clone()
-+	if err != nil {
-+		return nil, err
-+	}
-+	return &sha3_512Hash{evpHash: c}, nil
 +}
 +
 +// appendUint64 appends x into b as a big endian byte sequence.
@@ -6088,138 +5816,6 @@ index 00000000000000..5a948eafdbc6a7
 +    return 1;
 +}
 \ No newline at end of file
-diff --git a/src/vendor/github.com/golang-fips/openssl/v2/port_evp_md5_sha1.c b/src/vendor/github.com/golang-fips/openssl/v2/port_evp_md5_sha1.c
-new file mode 100644
-index 00000000000000..50d49b1f103351
---- /dev/null
-+++ b/src/vendor/github.com/golang-fips/openssl/v2/port_evp_md5_sha1.c
-@@ -0,0 +1,126 @@
-+// The following is a partial backport of crypto/evp/m_md5_sha1.c,
-+// commit cbc8a839959418d8a2c2e3ec6bdf394852c9501e on the
-+// OpenSSL_1_1_0-stable branch.  The ctrl function has been removed.
-+
-+/*
-+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
-+ *
-+ * Licensed under the OpenSSL license (the "License").  You may not use
-+ * this file except in compliance with the License.  You can obtain a copy
-+ * in the file LICENSE in the source distribution or at
-+ * https://www.openssl.org/source/license.html
-+ */
-+
-+#include "goopenssl.h"
-+
-+#define NID_md5_sha1            114
-+
-+#define MD5_CBLOCK      64
-+#define MD5_LBLOCK      (MD5_CBLOCK/4)
-+#define MD5_DIGEST_LENGTH 16
-+#define SHA_LBLOCK      16
-+#define SHA_DIGEST_LENGTH 20
-+
-+#define EVP_PKEY_NULL_method    NULL,NULL,{0,0,0,0}
-+
-+// Change: MD5_LONG and SHA_LONG have been expanded to unsigned int,
-+// which is always 32 bits. This avoids adding some obscure logic
-+// to support 16-bit platforms.
-+
-+# define MD5_LONG unsigned int
-+# define SHA_LONG unsigned int
-+
-+typedef struct env_md_st EVP_MD;
-+typedef struct env_md_ctx_st EVP_MD_CTX;
-+
-+struct env_md_ctx_st {
-+    void *digest;
-+    void *engine;             
-+    unsigned long flags;
-+    void *md_data;
-+    void *pctx;
-+    void *update;
-+} /* EVP_MD_CTX */ ;
-+
-+struct env_md_st {
-+    int type;
-+    int pkey_type;
-+    int md_size;
-+    unsigned long flags;
-+    int (*init) (EVP_MD_CTX *ctx);
-+    int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
-+    int (*final) (EVP_MD_CTX *ctx, unsigned char *md);
-+    void *copy;
-+    void *cleanup;
-+    void *sign;
-+    void *verify;
-+    int required_pkey_type[5];
-+    int block_size;
-+    int ctx_size;
-+    void *md_ctrl;
-+} /* EVP_MD */ ;
-+
-+typedef struct MD5state_st {
-+    MD5_LONG A, B, C, D;
-+    MD5_LONG Nl, Nh;
-+    MD5_LONG data[MD5_LBLOCK];
-+    MD5_LONG num;
-+} MD5_CTX;
-+
-+typedef struct SHAstate_st {
-+    SHA_LONG h0, h1, h2, h3, h4;
-+    SHA_LONG Nl, Nh;
-+    SHA_LONG data[SHA_LBLOCK];
-+    SHA_LONG num;
-+} SHA_CTX;
-+
-+struct md5_sha1_ctx {
-+    MD5_CTX md5;
-+    SHA_CTX sha1;
-+};
-+
-+static int md5_sha1_init(EVP_MD_CTX *ctx) {
-+    struct md5_sha1_ctx *mctx = ctx->md_data;
-+    if (!go_openssl_MD5_Init(&mctx->md5))
-+        return 0;
-+    return go_openssl_SHA1_Init(&mctx->sha1);
-+}
-+
-+static int md5_sha1_update(EVP_MD_CTX *ctx, const void *data,
-+                                           size_t count) {
-+    struct md5_sha1_ctx *mctx = ctx->md_data;
-+    if (!go_openssl_MD5_Update(&mctx->md5, data, count))
-+        return 0;
-+    return go_openssl_SHA1_Update(&mctx->sha1, data, count);
-+}
-+
-+static int md5_sha1_final(EVP_MD_CTX *ctx, unsigned char *md) {
-+    struct md5_sha1_ctx *mctx = ctx->md_data;
-+    if (!go_openssl_MD5_Final(md, &mctx->md5))
-+        return 0;
-+    return go_openssl_SHA1_Final(md + MD5_DIGEST_LENGTH, &mctx->sha1);
-+}
-+
-+// Change: Removed:
-+// static int ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
-+
-+static const EVP_MD md5_sha1_md = {
-+    NID_md5_sha1,
-+    NID_md5_sha1,
-+    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH,
-+    0,
-+    md5_sha1_init,
-+    md5_sha1_update,
-+    md5_sha1_final,
-+    NULL,
-+    NULL,
-+    EVP_PKEY_NULL_method, // Change: inserted
-+    MD5_CBLOCK,
-+    sizeof(EVP_MD *) + sizeof(struct md5_sha1_ctx),
-+    NULL, // Change: was ctrl
-+};
-+
-+// Change: Apply name mangling.
-+const GO_EVP_MD_PTR go_openssl_EVP_md5_sha1_backport(void) {
-+    return (const GO_EVP_MD_PTR)&md5_sha1_md;
-+}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/rand.go b/src/vendor/github.com/golang-fips/openssl/v2/rand.go
 new file mode 100644
 index 00000000000000..9fd709635c3b40
@@ -6734,10 +6330,10 @@ index 00000000000000..da5c7636173775
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/shims.h b/src/vendor/github.com/golang-fips/openssl/v2/shims.h
 new file mode 100644
-index 00000000000000..c8f599f71c0b20
+index 00000000000000..437312ad795fc3
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/shims.h
-@@ -0,0 +1,416 @@
+@@ -0,0 +1,413 @@
 +#include <stdlib.h> // size_t
 +#include <stdint.h> // uint64_t
 +
@@ -6970,13 +6566,8 @@ index 00000000000000..c8f599f71c0b20
 +DEFINEFUNC(int, EVP_DigestVerifyInit, (GO_EVP_MD_CTX_PTR ctx, GO_EVP_PKEY_CTX_PTR *pctx, const GO_EVP_MD_PTR type, GO_ENGINE_PTR e, GO_EVP_PKEY_PTR pkey), (ctx, pctx, type, e, pkey)) \
 +DEFINEFUNC(int, EVP_DigestVerifyFinal, (GO_EVP_MD_CTX_PTR ctx, const unsigned char *sig, size_t siglen), (ctx, sig, siglen)) \
 +DEFINEFUNC_1_1_1(int, EVP_DigestVerify, (GO_EVP_MD_CTX_PTR ctx, const unsigned char *sigret, size_t siglen, const unsigned char *tbs, size_t tbslen), (ctx, sigret, siglen, tbs, tbslen)) \
-+DEFINEFUNC_LEGACY_1_0(int, MD5_Init, (GO_MD5_CTX_PTR c), (c)) \
-+DEFINEFUNC_LEGACY_1_0(int, MD5_Update, (GO_MD5_CTX_PTR c, const void *data, size_t len), (c, data, len)) \
-+DEFINEFUNC_LEGACY_1_0(int, MD5_Final, (unsigned char *md, GO_MD5_CTX_PTR c), (md, c)) \
-+DEFINEFUNC_LEGACY_1_0(int, SHA1_Init, (GO_SHA_CTX_PTR c), (c)) \
-+DEFINEFUNC_LEGACY_1_0(int, SHA1_Update, (GO_SHA_CTX_PTR c, const void *data, size_t len), (c, data, len)) \
-+DEFINEFUNC_LEGACY_1_0(int, SHA1_Final, (unsigned char *md, GO_SHA_CTX_PTR c), (md, c)) \
 +DEFINEFUNC_1_1(const GO_EVP_MD_PTR, EVP_md5_sha1, (void), ()) \
++DEFINEFUNC(const GO_EVP_MD_PTR, EVP_ripemd160, (void), ()) \
 +DEFINEFUNC(const GO_EVP_MD_PTR, EVP_md4, (void), ()) \
 +DEFINEFUNC(const GO_EVP_MD_PTR, EVP_md5, (void), ()) \
 +DEFINEFUNC(const GO_EVP_MD_PTR, EVP_sha1, (void), ()) \
@@ -6984,6 +6575,8 @@ index 00000000000000..c8f599f71c0b20
 +DEFINEFUNC(const GO_EVP_MD_PTR, EVP_sha256, (void), ()) \
 +DEFINEFUNC(const GO_EVP_MD_PTR, EVP_sha384, (void), ()) \
 +DEFINEFUNC(const GO_EVP_MD_PTR, EVP_sha512, (void), ()) \
++DEFINEFUNC_1_1_1(const GO_EVP_MD_PTR, EVP_sha512_224, (void), ()) \
++DEFINEFUNC_1_1_1(const GO_EVP_MD_PTR, EVP_sha512_256, (void), ()) \
 +DEFINEFUNC_1_1_1(const GO_EVP_MD_PTR, EVP_sha3_224, (void), ()) \
 +DEFINEFUNC_1_1_1(const GO_EVP_MD_PTR, EVP_sha3_256, (void), ()) \
 +DEFINEFUNC_1_1_1(const GO_EVP_MD_PTR, EVP_sha3_384, (void), ()) \
@@ -7326,7 +6919,7 @@ index 00000000000000..93281d6cffc352
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/tls1prf.go b/src/vendor/github.com/golang-fips/openssl/v2/tls1prf.go
 new file mode 100644
-index 00000000000000..f342f221ea0c92
+index 00000000000000..33134548830d3e
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/tls1prf.go
 @@ -0,0 +1,160 @@
@@ -7367,7 +6960,7 @@ index 00000000000000..f342f221ea0c92
 +		// that the caller wants to use TLS 1.0/1.1 PRF.
 +		// OpenSSL detects this case by checking if the hash
 +		// function is MD5SHA1.
-+		md = cryptoHashToMD(crypto.MD5SHA1)
++		md = loadHash(crypto.MD5SHA1).md
 +	} else {
 +		h, err := hashFuncHash(fh)
 +		if err != nil {
@@ -9297,10 +8890,10 @@ index 00000000000000..586e9ae2ebb0c9
 +}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/cng/hash.go b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/hash.go
 new file mode 100644
-index 00000000000000..87b1c95dc7f911
+index 00000000000000..a674496f18a3af
 --- /dev/null
 +++ b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/hash.go
-@@ -0,0 +1,306 @@
+@@ -0,0 +1,312 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT License.
 +
@@ -9318,6 +8911,9 @@ index 00000000000000..87b1c95dc7f911
 +
 +	"github.com/microsoft/go-crypto-winnative/internal/bcrypt"
 +)
++
++// maxHashSize is the size of SHA512 and SHA3_512, the largest hashes we support.
++const maxHashSize = 64
 +
 +// SupportsHash returns true if a hash.Hash implementation is supported for h.
 +func SupportsHash(h crypto.Hash) bool {
@@ -9387,27 +8983,6 @@ index 00000000000000..87b1c95dc7f911
 +	return
 +}
 +
-+func SHA3_256(p []byte) (sum [32]byte) {
-+	if err := hashOneShot(bcrypt.SHA3_256_ALGORITHM, p, sum[:]); err != nil {
-+		panic("bcrypt: SHA3_256 failed")
-+	}
-+	return
-+}
-+
-+func SHA3_384(p []byte) (sum [48]byte) {
-+	if err := hashOneShot(bcrypt.SHA3_384_ALGORITHM, p, sum[:]); err != nil {
-+		panic("bcrypt: SHA3_384 failed")
-+	}
-+	return
-+}
-+
-+func SHA3_512(p []byte) (sum [64]byte) {
-+	if err := hashOneShot(bcrypt.SHA3_512_ALGORITHM, p, sum[:]); err != nil {
-+		panic("bcrypt: SHA3_512 failed")
-+	}
-+	return
-+}
-+
 +// NewMD4 returns a new MD4 hash.
 +func NewMD4() hash.Hash {
 +	return newHashX(bcrypt.MD4_ALGORITHM, bcrypt.ALG_NONE_FLAG, nil)
@@ -9436,21 +9011,6 @@ index 00000000000000..87b1c95dc7f911
 +// NewSHA512 returns a new SHA512 hash.
 +func NewSHA512() hash.Hash {
 +	return newHashX(bcrypt.SHA512_ALGORITHM, bcrypt.ALG_NONE_FLAG, nil)
-+}
-+
-+// NewSHA3_256 returns a new SHA256 hash.
-+func NewSHA3_256() hash.Hash {
-+	return newHashX(bcrypt.SHA3_256_ALGORITHM, bcrypt.ALG_NONE_FLAG, nil)
-+}
-+
-+// NewSHA3_384 returns a new SHA384 hash.
-+func NewSHA3_384() hash.Hash {
-+	return newHashX(bcrypt.SHA3_384_ALGORITHM, bcrypt.ALG_NONE_FLAG, nil)
-+}
-+
-+// NewSHA3_512 returns a new SHA512 hash.
-+func NewSHA3_512() hash.Hash {
-+	return newHashX(bcrypt.SHA3_512_ALGORITHM, bcrypt.ALG_NONE_FLAG, nil)
 +}
 +
 +type hashAlgorithm struct {
@@ -9484,11 +9044,24 @@ index 00000000000000..87b1c95dc7f911
 +	return hx.alg.id
 +}
 +
-+type hashX struct {
-+	alg  *hashAlgorithm
-+	_ctx bcrypt.HASH_HANDLE // access it using withCtx
++// cloneHash is an interface that defines a Clone method.
++//
++// hash.CloneHash will probably be added in Go 1.25, see https://golang.org/issue/69521,
++// but we need it now.
++type cloneHash interface {
++	hash.Hash
++	// Clone returns a separate Hash instance with the same state as h.
++	Clone() hash.Hash
++}
 +
-+	buf []byte
++var _ hash.Hash = (*hashX)(nil)
++var _ cloneHash = (*hashX)(nil)
++
++// hashX implements [hash.Hash].
++type hashX struct {
++	alg *hashAlgorithm
++	ctx bcrypt.HASH_HANDLE
++
 +	key []byte
 +}
 +
@@ -9499,86 +9072,70 @@ index 00000000000000..87b1c95dc7f911
 +		panic(err)
 +	}
 +	h := &hashX{alg: alg, key: bytes.Clone(key)}
-+	// Don't allocate hx.buf nor call bcrypt.CreateHash yet,
-+	// which would be wasteful if the caller only wants to know
-+	// the hash type. This is a common pattern in this package,
-+	// as some functions accept a `func() hash.Hash` parameter
-+	// and call it just to know the hash type.
-+	runtime.SetFinalizer(h, (*hashX).finalize)
++	// Don't call bcrypt.CreateHash yet, it would be wasteful
++	// if the caller only wants to know the hash type. This
++	// is a common pattern in this package, as some functions
++	// accept a `func() hash.Hash` parameter and call it just
++	// to know the hash type.
 +	return h
 +}
 +
 +func (h *hashX) finalize() {
-+	if h._ctx != 0 {
-+		bcrypt.DestroyHash(h._ctx)
-+	}
++	bcrypt.DestroyHash(h.ctx)
 +}
 +
-+func (h *hashX) withCtx(fn func(ctx bcrypt.HASH_HANDLE) error) error {
++func (h *hashX) init() {
 +	defer runtime.KeepAlive(h)
-+	if h._ctx == 0 {
-+		err := bcrypt.CreateHash(h.alg.handle, &h._ctx, nil, h.key, 0)
-+		if err != nil {
-+			panic(err)
-+		}
++	if h.ctx != 0 {
++		return
 +	}
-+	return fn(h._ctx)
++	err := bcrypt.CreateHash(h.alg.handle, &h.ctx, nil, h.key, bcrypt.HASH_REUSABLE_FLAG)
++	if err != nil {
++		panic(err)
++	}
++	runtime.SetFinalizer(h, (*hashX).finalize)
 +}
 +
-+func (h *hashX) Clone() (hash.Hash, error) {
++func (h *hashX) Clone() hash.Hash {
++	defer runtime.KeepAlive(h)
 +	h2 := &hashX{alg: h.alg, key: bytes.Clone(h.key)}
-+	err := h.withCtx(func(ctx bcrypt.HASH_HANDLE) error {
-+		return bcrypt.DuplicateHash(ctx, &h2._ctx, nil, 0)
-+	})
-+	if err != nil {
-+		return nil, err
++	if h.ctx != 0 {
++		hashClone(h.ctx, &h2.ctx)
++		runtime.SetFinalizer(h2, (*hashX).finalize)
 +	}
-+	runtime.SetFinalizer(h2, (*hashX).finalize)
-+	return h2, nil
++	return h2
 +}
 +
 +func (h *hashX) Reset() {
-+	if h._ctx != 0 {
-+		bcrypt.DestroyHash(h._ctx)
-+		h._ctx = 0
++	defer runtime.KeepAlive(h)
++	if h.ctx != 0 {
++		hashReset(h.ctx, h.Size())
 +	}
 +}
 +
 +func (h *hashX) Write(p []byte) (n int, err error) {
-+	err = h.withCtx(func(ctx bcrypt.HASH_HANDLE) error {
-+		for n < len(p) && err == nil {
-+			nn := len32(p[n:])
-+			err = bcrypt.HashData(h._ctx, p[n:n+nn], 0)
-+			n += nn
-+		}
-+		return err
-+	})
-+	if err != nil {
-+		// hash.Hash interface mandates Write should never return an error.
-+		panic(err)
-+	}
++	defer runtime.KeepAlive(h)
++	h.init()
++	hashData(h.ctx, p)
 +	return len(p), nil
 +}
 +
 +func (h *hashX) WriteString(s string) (int, error) {
-+	// TODO: use unsafe.StringData once we drop support
-+	// for go1.19 and earlier.
-+	hdr := (*struct {
-+		Data *byte
-+		Len  int
-+	})(unsafe.Pointer(&s))
-+	return h.Write(unsafe.Slice(hdr.Data, len(s)))
++	defer runtime.KeepAlive(h)
++	return h.Write(unsafe.Slice(unsafe.StringData(s), len(s)))
 +}
 +
 +func (h *hashX) WriteByte(c byte) error {
-+	err := h.withCtx(func(ctx bcrypt.HASH_HANDLE) error {
-+		return bcrypt.HashDataRaw(h._ctx, &c, 1, 0)
-+	})
-+	if err != nil {
-+		// hash.Hash interface mandates Write should never return an error.
-+		panic(err)
-+	}
++	defer runtime.KeepAlive(h)
++	h.init()
++	hashByte(h.ctx, c)
 +	return nil
++}
++
++func (h *hashX) Sum(in []byte) []byte {
++	defer runtime.KeepAlive(h)
++	h.init()
++	return hashSum(h.ctx, h.Size(), in)
 +}
 +
 +func (h *hashX) Size() int {
@@ -9589,23 +9146,65 @@ index 00000000000000..87b1c95dc7f911
 +	return int(h.alg.blockSize)
 +}
 +
-+func (h *hashX) Sum(in []byte) []byte {
++// hashData writes p to ctx. It panics on error.
++func hashData(ctx bcrypt.HASH_HANDLE, p []byte) {
++	var n int
++	var err error
++	for n < len(p) && err == nil {
++		nn := len32(p[n:])
++		err = bcrypt.HashData(ctx, p[n:n+nn], 0)
++		n += nn
++	}
++	if err != nil {
++		panic(err)
++	}
++}
++
++// hashByte writes c to ctx. It panics on error.
++func hashByte(ctx bcrypt.HASH_HANDLE, c byte) {
++	err := bcrypt.HashDataRaw(ctx, &c, 1, 0)
++	if err != nil {
++		panic(err)
++	}
++}
++
++// hashSum writes the hash of ctx to in and returns the result.
++// size is the size of the hash output.
++// It panics on error.
++func hashSum(ctx bcrypt.HASH_HANDLE, size int, in []byte) []byte {
 +	var ctx2 bcrypt.HASH_HANDLE
-+	err := h.withCtx(func(ctx bcrypt.HASH_HANDLE) error {
-+		return bcrypt.DuplicateHash(ctx, &ctx2, nil, 0)
-+	})
++	err := bcrypt.DuplicateHash(ctx, &ctx2, nil, 0)
 +	if err != nil {
 +		panic(err)
 +	}
 +	defer bcrypt.DestroyHash(ctx2)
-+	if h.buf == nil {
-+		h.buf = make([]byte, h.alg.size)
-+	}
-+	err = bcrypt.FinishHash(ctx2, h.buf, 0)
++	buf := make([]byte, size, maxHashSize) // explicit cap to allow stack allocation
++	err = bcrypt.FinishHash(ctx2, buf, 0)
 +	if err != nil {
 +		panic(err)
 +	}
-+	return append(in, h.buf...)
++	return append(in, buf...)
++}
++
++// hashReset resets the hash state of ctx.
++// size is the size of the hash output.
++// It panics on error.
++func hashReset(ctx bcrypt.HASH_HANDLE, size int) {
++	// bcrypt.FinishHash expects the output buffer to match the hash size.
++	// We don't care about the output, so we just pass a stack-allocated buffer
++	// that is large enough to hold the largest hash size we support.
++	var discard [maxHashSize]byte
++	if err := bcrypt.FinishHash(ctx, discard[:size], 0); err != nil {
++		panic(err)
++	}
++}
++
++// hashClone clones ctx into ctx2. It panics on error.
++func hashClone(ctx bcrypt.HASH_HANDLE, ctx2 *bcrypt.HASH_HANDLE) {
++	err := bcrypt.DuplicateHash(ctx, ctx2, nil, 0)
++	if err != nil {
++		panic(err)
++	}
 +}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/cng/hkdf.go b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/hkdf.go
 new file mode 100644
@@ -10587,6 +10186,296 @@ index 00000000000000..0269f9cf86539e
 +	}
 +	return ""
 +}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/cng/sha3.go b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/sha3.go
+new file mode 100644
+index 00000000000000..d7aa193e00e653
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/sha3.go
+@@ -0,0 +1,284 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build windows
++// +build windows
++
++package cng
++
++import (
++	"hash"
++	"runtime"
++	"unsafe"
++
++	"github.com/microsoft/go-crypto-winnative/internal/bcrypt"
++)
++
++// SumSHA3_256 returns the SHA3-256 checksum of the data.
++func SumSHA3_256(p []byte) (sum [32]byte) {
++	if err := hashOneShot(bcrypt.SHA3_256_ALGORITHM, p, sum[:]); err != nil {
++		panic("bcrypt: SHA3_256 failed")
++	}
++	return
++}
++
++// SumSHA3_384 returns the SHA3-384 checksum of the data.
++func SumSHA3_384(p []byte) (sum [48]byte) {
++	if err := hashOneShot(bcrypt.SHA3_384_ALGORITHM, p, sum[:]); err != nil {
++		panic("bcrypt: SHA3_384 failed")
++	}
++	return
++}
++
++// SumSHA3_512 returns the SHA3-512 checksum of the data.
++func SumSHA3_512(p []byte) (sum [64]byte) {
++	if err := hashOneShot(bcrypt.SHA3_512_ALGORITHM, p, sum[:]); err != nil {
++		panic("bcrypt: SHA3_512 failed")
++	}
++	return
++}
++
++// SumSHAKE128 applies the SHAKE128 extendable output function to data and
++// returns an output of the given length in bytes.
++func SumSHAKE128(data []byte, length int) []byte {
++	out := make([]byte, length)
++	if err := hashOneShot(bcrypt.CSHAKE128_ALGORITHM, data, out); err != nil {
++		panic("bcrypt: CSHAKE128_ALGORITHM failed")
++	}
++	return out
++}
++
++// SumSHAKE256 applies the SHAKE256 extendable output function to data and
++// returns an output of the given length in bytes.
++func SumSHAKE256(data []byte, length int) []byte {
++	out := make([]byte, length)
++	if err := hashOneShot(bcrypt.CSHAKE256_ALGORITHM, data, out); err != nil {
++		panic("bcrypt: CSHAKE256_ALGORITHM failed")
++	}
++	return out
++}
++
++// SupportsSHAKE128 returns true if the SHAKE128 extendable output function is
++// supported.
++func SupportsSHAKE128() bool {
++	_, err := loadHash(bcrypt.CSHAKE128_ALGORITHM, bcrypt.ALG_NONE_FLAG)
++	return err == nil
++}
++
++// SupportsSHAKE256 returns true if the SHAKE256 extendable output function is
++// supported.
++func SupportsSHAKE256() bool {
++	_, err := loadHash(bcrypt.CSHAKE256_ALGORITHM, bcrypt.ALG_NONE_FLAG)
++	return err == nil
++}
++
++var _ hash.Hash = (*DigestSHA3)(nil)
++var _ cloneHash = (*DigestSHA3)(nil)
++
++// DigestSHA3 is the [sha3.SHA3] implementation using the CNG API.
++type DigestSHA3 struct {
++	alg *hashAlgorithm
++	ctx bcrypt.HASH_HANDLE
++}
++
++// newDigestSHA3 returns a new hash.Hash using the specified algorithm.
++func newDigestSHA3(id string) *DigestSHA3 {
++	alg, err := loadHash(id, bcrypt.ALG_NONE_FLAG)
++	if err != nil {
++		panic(err)
++	}
++	h := &DigestSHA3{alg: alg}
++	// Don't call bcrypt.CreateHash yet, it would be wasteful
++	// if the caller only wants to know the hash type. This
++	// is a common pattern in this package, as some functions
++	// accept a `func() hash.Hash` parameter and call it just
++	// to know the hash type.
++	return h
++}
++
++func (h *DigestSHA3) finalize() {
++	bcrypt.DestroyHash(h.ctx)
++}
++
++func (h *DigestSHA3) init() {
++	defer runtime.KeepAlive(h)
++	if h.ctx != 0 {
++		return
++	}
++	err := bcrypt.CreateHash(h.alg.handle, &h.ctx, nil, nil, bcrypt.HASH_REUSABLE_FLAG)
++	if err != nil {
++		panic(err)
++	}
++	runtime.SetFinalizer(h, (*DigestSHA3).finalize)
++}
++
++func (h *DigestSHA3) Clone() hash.Hash {
++	defer runtime.KeepAlive(h)
++	h2 := &DigestSHA3{alg: h.alg}
++	if h.ctx != 0 {
++		hashClone(h.ctx, &h2.ctx)
++		runtime.SetFinalizer(h2, (*DigestSHA3).finalize)
++	}
++	return h2
++}
++
++func (h *DigestSHA3) Reset() {
++	defer runtime.KeepAlive(h)
++	if h.ctx != 0 {
++		hashReset(h.ctx, h.Size())
++	}
++}
++
++func (h *DigestSHA3) Write(p []byte) (n int, err error) {
++	defer runtime.KeepAlive(h)
++	h.init()
++	hashData(h.ctx, p)
++	return len(p), nil
++}
++
++func (h *DigestSHA3) WriteString(s string) (int, error) {
++	defer runtime.KeepAlive(h)
++	return h.Write(unsafe.Slice(unsafe.StringData(s), len(s)))
++}
++
++func (h *DigestSHA3) WriteByte(c byte) error {
++	defer runtime.KeepAlive(h)
++	h.init()
++	hashByte(h.ctx, c)
++	return nil
++}
++
++func (h *DigestSHA3) Sum(in []byte) []byte {
++	defer runtime.KeepAlive(h)
++	h.init()
++	return hashSum(h.ctx, h.Size(), in)
++}
++
++func (h *DigestSHA3) Size() int {
++	return int(h.alg.size)
++}
++
++func (h *DigestSHA3) BlockSize() int {
++	return int(h.alg.blockSize)
++}
++
++// NewSHA3_256 returns a new SHA256 hash.
++func NewSHA3_256() *DigestSHA3 {
++	return newDigestSHA3(bcrypt.SHA3_256_ALGORITHM)
++}
++
++// NewSHA3_384 returns a new SHA384 hash.
++func NewSHA3_384() *DigestSHA3 {
++	return newDigestSHA3(bcrypt.SHA3_384_ALGORITHM)
++}
++
++// NewSHA3_512 returns a new SHA512 hash.
++func NewSHA3_512() *DigestSHA3 {
++	return newDigestSHA3(bcrypt.SHA3_512_ALGORITHM)
++}
++
++// SHAKE is an instance of a SHAKE extendable output function.
++type SHAKE struct {
++	ctx       bcrypt.HASH_HANDLE
++	blockSize uint32
++}
++
++func newShake(id string, N, S []byte) *SHAKE {
++	alg, err := loadHash(id, bcrypt.ALG_NONE_FLAG)
++	if err != nil {
++		panic(err)
++	}
++	h := &SHAKE{blockSize: alg.blockSize}
++	err = bcrypt.CreateHash(alg.handle, &h.ctx, nil, nil, bcrypt.HASH_REUSABLE_FLAG)
++	if err != nil {
++		panic(err)
++	}
++	if len(N) != 0 {
++		if err := bcrypt.SetProperty(bcrypt.HANDLE(h.ctx), utf16PtrFromString(bcrypt.FUNCTION_NAME_STRING), N, 0); err != nil {
++			panic(err)
++		}
++	}
++	if len(S) != 0 {
++		if err := bcrypt.SetProperty(bcrypt.HANDLE(h.ctx), utf16PtrFromString(bcrypt.CUSTOMIZATION_STRING), S, 0); err != nil {
++			panic(err)
++		}
++	}
++	runtime.SetFinalizer(h, (*SHAKE).finalize)
++	return h
++}
++
++// NewSHAKE128 creates a new SHAKE128 XOF.
++func NewSHAKE128() *SHAKE {
++	return newShake(bcrypt.CSHAKE128_ALGORITHM, nil, nil)
++}
++
++// NewSHAKE256 creates a new SHAKE256 XOF.
++func NewSHAKE256() *SHAKE {
++	return newShake(bcrypt.CSHAKE256_ALGORITHM, nil, nil)
++}
++
++// NewCSHAKE128 creates a new cSHAKE128 XOF.
++//
++// N is used to define functions based on cSHAKE, it can be empty when plain
++// cSHAKE is desired. S is a customization byte string used for domain
++// separation. When N and S are both empty, this is equivalent to NewSHAKE128.
++func NewCSHAKE128(N, S []byte) *SHAKE {
++	return newShake(bcrypt.CSHAKE128_ALGORITHM, N, S)
++}
++
++// NewCSHAKE256 creates a new cSHAKE256 XOF.
++//
++// N is used to define functions based on cSHAKE, it can be empty when plain
++// cSHAKE is desired. S is a customization byte string used for domain
++// separation. When N and S are both empty, this is equivalent to NewSHAKE256.
++func NewCSHAKE256(N, S []byte) *SHAKE {
++	return newShake(bcrypt.CSHAKE256_ALGORITHM, N, S)
++}
++
++func (h *SHAKE) finalize() {
++	bcrypt.DestroyHash(h.ctx)
++}
++
++// Write absorbs more data into the XOF's state.
++//
++// It panics if any output has already been read.
++func (s *SHAKE) Write(p []byte) (n int, err error) {
++	if len(p) == 0 {
++		return 0, nil
++	}
++	defer runtime.KeepAlive(s)
++	hashData(s.ctx, p)
++	return len(p), nil
++}
++
++// Read squeezes more output from the XOF.
++//
++// Any call to Write after a call to Read will panic.
++func (s *SHAKE) Read(p []byte) (n int, err error) {
++	if len(p) == 0 {
++		return 0, nil
++	}
++	defer runtime.KeepAlive(s)
++	for n < len(p) && err == nil {
++		nn := len32(p[n:])
++		err = bcrypt.FinishHash(s.ctx, p[n:n+nn], bcrypt.HASH_DONT_RESET_FLAG)
++		n += nn
++	}
++	if err != nil {
++		panic(err)
++	}
++	return len(p), nil
++}
++
++// Reset resets the XOF to its initial state.
++func (s *SHAKE) Reset() {
++	defer runtime.KeepAlive(s)
++	// SHAKE has a variable size, CNG doesn't change the size of the hash
++	// when resetting, so we can pass a small value here.
++	hashReset(s.ctx, 1)
++}
++
++// BlockSize returns the rate of the XOF.
++func (s *SHAKE) BlockSize() int {
++	return int(s.blockSize)
++}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/cng/tls1prf.go b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/tls1prf.go
 new file mode 100644
 index 00000000000000..5a3fb01606ef95
@@ -10683,10 +10572,10 @@ index 00000000000000..5a3fb01606ef95
 +}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/bcrypt_windows.go b/src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/bcrypt_windows.go
 new file mode 100644
-index 00000000000000..090c74a894e170
+index 00000000000000..7d34e6661d3086
 --- /dev/null
 +++ b/src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/bcrypt_windows.go
-@@ -0,0 +1,359 @@
+@@ -0,0 +1,368 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT License.
 +
@@ -10711,6 +10600,8 @@ index 00000000000000..090c74a894e170
 +	SHA3_256_ALGORITHM   = "SHA3-256"
 +	SHA3_384_ALGORITHM   = "SHA3-384"
 +	SHA3_512_ALGORITHM   = "SHA3-512"
++	CSHAKE128_ALGORITHM  = "CSHAKE128"
++	CSHAKE256_ALGORITHM  = "CSHAKE256"
 +	AES_ALGORITHM        = "AES"
 +	RC4_ALGORITHM        = "RC4"
 +	RSA_ALGORITHM        = "RSA"
@@ -10736,17 +10627,19 @@ index 00000000000000..090c74a894e170
 +)
 +
 +const (
-+	HASH_LENGTH       = "HashDigestLength"
-+	HASH_BLOCK_LENGTH = "HashBlockLength"
-+	CHAINING_MODE     = "ChainingMode"
-+	CHAIN_MODE_ECB    = "ChainingModeECB"
-+	CHAIN_MODE_CBC    = "ChainingModeCBC"
-+	CHAIN_MODE_GCM    = "ChainingModeGCM"
-+	KEY_LENGTH        = "KeyLength"
-+	KEY_LENGTHS       = "KeyLengths"
-+	SIGNATURE_LENGTH  = "SignatureLength"
-+	BLOCK_LENGTH      = "BlockLength"
-+	ECC_CURVE_NAME    = "ECCCurveName"
++	HASH_LENGTH          = "HashDigestLength"
++	HASH_BLOCK_LENGTH    = "HashBlockLength"
++	CHAINING_MODE        = "ChainingMode"
++	CHAIN_MODE_ECB       = "ChainingModeECB"
++	CHAIN_MODE_CBC       = "ChainingModeCBC"
++	CHAIN_MODE_GCM       = "ChainingModeGCM"
++	KEY_LENGTH           = "KeyLength"
++	KEY_LENGTHS          = "KeyLengths"
++	SIGNATURE_LENGTH     = "SignatureLength"
++	BLOCK_LENGTH         = "BlockLength"
++	ECC_CURVE_NAME       = "ECCCurveName"
++	FUNCTION_NAME_STRING = "FunctionNameString"
++	CUSTOMIZATION_STRING = "CustomizationString"
 +)
 +
 +const (
@@ -10800,6 +10693,11 @@ index 00000000000000..090c74a894e170
 +
 +const (
 +	USE_SYSTEM_PREFERRED_RNG = 0x00000002
++)
++
++const (
++	HASH_DONT_RESET_FLAG = 0x00000001
++	HASH_REUSABLE_FLAG   = 0x00000020
 +)
 +
 +const (
@@ -10987,7 +10885,7 @@ index 00000000000000..090c74a894e170
 +	Count           [4]uint8
 +}
 +
-+func Encrypt(hKey KEY_HANDLE, plaintext []byte, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (s error) {
++func Encrypt(hKey KEY_HANDLE, plaintext []byte, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (ntstatus error) {
 +	var pInput *byte
 +	if len(plaintext) > 0 {
 +		pInput = &plaintext[0]
@@ -11000,42 +10898,42 @@ index 00000000000000..090c74a894e170
 +	return _Encrypt(hKey, pInput, uint32(len(plaintext)), pPaddingInfo, pbIV, pbOutput, pcbResult, dwFlags)
 +}
 +
-+//sys	GetFipsAlgorithmMode(enabled *bool) (s error) = bcrypt.BCryptGetFipsAlgorithmMode
-+//sys	SetProperty(hObject HANDLE, pszProperty *uint16, pbInput []byte, dwFlags uint32) (s error) = bcrypt.BCryptSetProperty
-+//sys	GetProperty(hObject HANDLE, pszProperty *uint16, pbOutput []byte, pcbResult *uint32, dwFlags uint32) (s error) = bcrypt.BCryptGetProperty
-+//sys	OpenAlgorithmProvider(phAlgorithm *ALG_HANDLE, pszAlgId *uint16, pszImplementation *uint16, dwFlags AlgorithmProviderFlags) (s error) = bcrypt.BCryptOpenAlgorithmProvider
-+//sys	CloseAlgorithmProvider(hAlgorithm ALG_HANDLE, dwFlags uint32) (s error) = bcrypt.BCryptCloseAlgorithmProvider
++//sys	GetFipsAlgorithmMode(enabled *bool) (ntstatus error) = bcrypt.BCryptGetFipsAlgorithmMode
++//sys	SetProperty(hObject HANDLE, pszProperty *uint16, pbInput []byte, dwFlags uint32) (ntstatus error) = bcrypt.BCryptSetProperty
++//sys	GetProperty(hObject HANDLE, pszProperty *uint16, pbOutput []byte, pcbResult *uint32, dwFlags uint32) (ntstatus error) = bcrypt.BCryptGetProperty
++//sys	OpenAlgorithmProvider(phAlgorithm *ALG_HANDLE, pszAlgId *uint16, pszImplementation *uint16, dwFlags AlgorithmProviderFlags) (ntstatus error) = bcrypt.BCryptOpenAlgorithmProvider
++//sys	CloseAlgorithmProvider(hAlgorithm ALG_HANDLE, dwFlags uint32) (ntstatus error) = bcrypt.BCryptCloseAlgorithmProvider
 +
 +// SHA and HMAC
 +
-+//sys	Hash(hAlgorithm ALG_HANDLE, pbSecret []byte, pbInput []byte, pbOutput []byte) (s error) = bcrypt.BCryptHash
-+//sys	CreateHash(hAlgorithm ALG_HANDLE, phHash *HASH_HANDLE, pbHashObject []byte, pbSecret []byte, dwFlags uint32) (s error) = bcrypt.BCryptCreateHash
-+//sys	DestroyHash(hHash HASH_HANDLE) (s error) = bcrypt.BCryptDestroyHash
-+//sys   HashData(hHash HASH_HANDLE, pbInput []byte, dwFlags uint32) (s error) = bcrypt.BCryptHashData
-+//sys   HashDataRaw(hHash HASH_HANDLE, pbInput *byte, cbInput uint32, dwFlags uint32) (s error) = bcrypt.BCryptHashData
-+//sys   DuplicateHash(hHash HASH_HANDLE,  phNewHash *HASH_HANDLE, pbHashObject []byte, dwFlags uint32) (s error) = bcrypt.BCryptDuplicateHash
-+//sys   FinishHash(hHash HASH_HANDLE, pbOutput []byte, dwFlags uint32) (s error) = bcrypt.BCryptFinishHash
++//sys	Hash(hAlgorithm ALG_HANDLE, pbSecret []byte, pbInput []byte, pbOutput []byte) (ntstatus error) = bcrypt.BCryptHash
++//sys	CreateHash(hAlgorithm ALG_HANDLE, phHash *HASH_HANDLE, pbHashObject []byte, pbSecret []byte, dwFlags uint32) (ntstatus error) = bcrypt.BCryptCreateHash
++//sys	DestroyHash(hHash HASH_HANDLE) (ntstatus error) = bcrypt.BCryptDestroyHash
++//sys   HashData(hHash HASH_HANDLE, pbInput []byte, dwFlags uint32) (ntstatus error) = bcrypt.BCryptHashData
++//sys   HashDataRaw(hHash HASH_HANDLE, pbInput *byte, cbInput uint32, dwFlags uint32) (ntstatus error) = bcrypt.BCryptHashData
++//sys   DuplicateHash(hHash HASH_HANDLE,  phNewHash *HASH_HANDLE, pbHashObject []byte, dwFlags uint32) (ntstatus error) = bcrypt.BCryptDuplicateHash
++//sys   FinishHash(hHash HASH_HANDLE, pbOutput []byte, dwFlags uint32) (ntstatus error) = bcrypt.BCryptFinishHash
 +
 +// Rand
 +
-+//sys   GenRandom(hAlgorithm ALG_HANDLE, pbBuffer []byte, dwFlags uint32) (s error) = bcrypt.BCryptGenRandom
++//sys   GenRandom(hAlgorithm ALG_HANDLE, pbBuffer []byte, dwFlags uint32) (ntstatus error) = bcrypt.BCryptGenRandom
 +
 +// Keys
 +
-+//sys   generateSymmetricKey(hAlgorithm ALG_HANDLE, phKey *KEY_HANDLE, pbKeyObject []byte, pbSecret *byte, cbSecret uint32, dwFlags uint32) (s error) = bcrypt.BCryptGenerateSymmetricKey
-+//sys   GenerateKeyPair(hAlgorithm ALG_HANDLE, phKey *KEY_HANDLE, dwLength uint32, dwFlags uint32) (s error) = bcrypt.BCryptGenerateKeyPair
-+//sys   FinalizeKeyPair(hKey KEY_HANDLE, dwFlags uint32) (s error) = bcrypt.BCryptFinalizeKeyPair
-+//sys   ImportKeyPair (hAlgorithm ALG_HANDLE, hImportKey KEY_HANDLE, pszBlobType *uint16, phKey *KEY_HANDLE, pbInput []byte, dwFlags uint32) (s error) = bcrypt.BCryptImportKeyPair
-+//sys   ExportKey(hKey KEY_HANDLE, hExportKey KEY_HANDLE, pszBlobType *uint16, pbOutput []byte, pcbResult *uint32, dwFlags uint32) (s error) = bcrypt.BCryptExportKey
-+//sys   DestroyKey(hKey KEY_HANDLE) (s error) = bcrypt.BCryptDestroyKey
-+//sys   _Encrypt(hKey KEY_HANDLE, pbInput *byte, cbInput uint32, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (s error) = bcrypt.BCryptEncrypt
-+//sys   Decrypt(hKey KEY_HANDLE, pbInput []byte, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (s error) = bcrypt.BCryptDecrypt
-+//sys   SignHash (hKey KEY_HANDLE, pPaddingInfo unsafe.Pointer, pbInput []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (s error) = bcrypt.BCryptSignHash
-+//sys   VerifySignature(hKey KEY_HANDLE, pPaddingInfo unsafe.Pointer, pbHash []byte, pbSignature []byte, dwFlags PadMode) (s error) = bcrypt.BCryptVerifySignature
-+//sys   SecretAgreement(hPrivKey KEY_HANDLE, hPubKey KEY_HANDLE, phAgreedSecret *SECRET_HANDLE, dwFlags uint32) (s error) = bcrypt.BCryptSecretAgreement
-+//sys   DeriveKey(hSharedSecret SECRET_HANDLE, pwszKDF *uint16, pParameterList *BufferDesc, pbDerivedKey []byte, pcbResult *uint32, dwFlags uint32) (s error) = bcrypt.BCryptDeriveKey
-+//sys   KeyDerivation(hKey KEY_HANDLE, pParameterList *BufferDesc, pbDerivedKey []byte, pcbResult *uint32, dwFlags uint32) (s error) = bcrypt.BCryptKeyDerivation
-+//sys   DestroySecret(hSecret SECRET_HANDLE) (s error) = bcrypt.BCryptDestroySecret
++//sys   generateSymmetricKey(hAlgorithm ALG_HANDLE, phKey *KEY_HANDLE, pbKeyObject []byte, pbSecret *byte, cbSecret uint32, dwFlags uint32) (ntstatus error) = bcrypt.BCryptGenerateSymmetricKey
++//sys   GenerateKeyPair(hAlgorithm ALG_HANDLE, phKey *KEY_HANDLE, dwLength uint32, dwFlags uint32) (ntstatus error) = bcrypt.BCryptGenerateKeyPair
++//sys   FinalizeKeyPair(hKey KEY_HANDLE, dwFlags uint32) (ntstatus error) = bcrypt.BCryptFinalizeKeyPair
++//sys   ImportKeyPair (hAlgorithm ALG_HANDLE, hImportKey KEY_HANDLE, pszBlobType *uint16, phKey *KEY_HANDLE, pbInput []byte, dwFlags uint32) (ntstatus error) = bcrypt.BCryptImportKeyPair
++//sys   ExportKey(hKey KEY_HANDLE, hExportKey KEY_HANDLE, pszBlobType *uint16, pbOutput []byte, pcbResult *uint32, dwFlags uint32) (ntstatus error) = bcrypt.BCryptExportKey
++//sys   DestroyKey(hKey KEY_HANDLE) (ntstatus error) = bcrypt.BCryptDestroyKey
++//sys   _Encrypt(hKey KEY_HANDLE, pbInput *byte, cbInput uint32, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (ntstatus error) = bcrypt.BCryptEncrypt
++//sys   Decrypt(hKey KEY_HANDLE, pbInput []byte, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (ntstatus error) = bcrypt.BCryptDecrypt
++//sys   SignHash (hKey KEY_HANDLE, pPaddingInfo unsafe.Pointer, pbInput []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (ntstatus error) = bcrypt.BCryptSignHash
++//sys   VerifySignature(hKey KEY_HANDLE, pPaddingInfo unsafe.Pointer, pbHash []byte, pbSignature []byte, dwFlags PadMode) (ntstatus error) = bcrypt.BCryptVerifySignature
++//sys   SecretAgreement(hPrivKey KEY_HANDLE, hPubKey KEY_HANDLE, phAgreedSecret *SECRET_HANDLE, dwFlags uint32) (ntstatus error) = bcrypt.BCryptSecretAgreement
++//sys   DeriveKey(hSharedSecret SECRET_HANDLE, pwszKDF *uint16, pParameterList *BufferDesc, pbDerivedKey []byte, pcbResult *uint32, dwFlags uint32) (ntstatus error) = bcrypt.BCryptDeriveKey
++//sys   KeyDerivation(hKey KEY_HANDLE, pParameterList *BufferDesc, pbDerivedKey []byte, pcbResult *uint32, dwFlags uint32) (ntstatus error) = bcrypt.BCryptKeyDerivation
++//sys   DestroySecret(hSecret SECRET_HANDLE) (ntstatus error) = bcrypt.BCryptDestroySecret
 +
 +func GenerateSymmetricKey(hAlgorithm ALG_HANDLE, phKey *KEY_HANDLE, pbKeyObject []byte, pbSecret []byte, dwFlags uint32) error {
 +	cbLen := uint32(len(pbSecret))
@@ -11046,12 +10944,63 @@ index 00000000000000..090c74a894e170
 +	}
 +	return generateSymmetricKey(hAlgorithm, phKey, pbKeyObject, &pbSecret[0], cbLen, dwFlags)
 +}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/ntstatus_windows.go b/src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/ntstatus_windows.go
+new file mode 100644
+index 00000000000000..ec2eb01aa3cd8a
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/ntstatus_windows.go
+@@ -0,0 +1,45 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++package bcrypt
++
++import (
++	"strconv"
++	"syscall"
++	"unicode/utf16"
++)
++
++const (
++	FORMAT_MESSAGE_FROM_HMODULE   = 2048
++	FORMAT_MESSAGE_FROM_SYSTEM    = 4096
++	FORMAT_MESSAGE_ARGUMENT_ARRAY = 8192
++
++	LANG_ENGLISH       = 0x09
++	SUBLANG_ENGLISH_US = 0x01
++)
++
++type NTStatus uint32
++
++func (s NTStatus) Errno() syscall.Errno {
++	return rtlNtStatusToDosErrorNoTeb(s)
++}
++
++func langID(pri, sub uint16) uint32 { return uint32(sub)<<10 | uint32(pri) }
++
++func (s NTStatus) Error() string {
++	b := make([]uint16, 300)
++	n, err := formatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_FROM_HMODULE|FORMAT_MESSAGE_ARGUMENT_ARRAY, modntdll.Handle(), uint32(s), langID(LANG_ENGLISH, SUBLANG_ENGLISH_US), b, nil)
++	if err != nil {
++		return "NTSTATUS 0x" + strconv.FormatUint(uint64(s), 16)
++	}
++	// trim terminating \r and \n
++	for ; n > 0 && (b[n-1] == '\n' || b[n-1] == '\r'); n-- {
++	}
++	return string(utf16.Decode(b[:n]))
++}
++
++// NT Native APIs
++//sys	rtlNtStatusToDosErrorNoTeb(ntstatus NTStatus) (ret syscall.Errno) = ntdll.RtlNtStatusToDosErrorNoTeb
++
++// windows api calls
++//sys	formatMessage(flags uint32, msgsrc uintptr, msgid uint32, langid uint32, buf []uint16, args *byte) (n uint32, err error) = FormatMessageW
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/zsyscall_windows.go b/src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/zsyscall_windows.go
 new file mode 100644
-index 00000000000000..3c6a5764eb92ec
+index 00000000000000..5d049f025b0301
 --- /dev/null
 +++ b/src/vendor/github.com/microsoft/go-crypto-winnative/internal/bcrypt/zsyscall_windows.go
-@@ -0,0 +1,389 @@
+@@ -0,0 +1,412 @@
 +// Code generated by 'go generate'; DO NOT EDIT.
 +
 +package bcrypt
@@ -11091,7 +11040,9 @@ index 00000000000000..3c6a5764eb92ec
 +}
 +
 +var (
-+	modbcrypt = syscall.NewLazyDLL(sysdll.Add("bcrypt.dll"))
++	modbcrypt   = syscall.NewLazyDLL(sysdll.Add("bcrypt.dll"))
++	modkernel32 = syscall.NewLazyDLL(sysdll.Add("kernel32.dll"))
++	modntdll    = syscall.NewLazyDLL(sysdll.Add("ntdll.dll"))
 +
 +	procBCryptCloseAlgorithmProvider = modbcrypt.NewProc("BCryptCloseAlgorithmProvider")
 +	procBCryptCreateHash             = modbcrypt.NewProc("BCryptCreateHash")
@@ -11119,17 +11070,19 @@ index 00000000000000..3c6a5764eb92ec
 +	procBCryptSetProperty            = modbcrypt.NewProc("BCryptSetProperty")
 +	procBCryptSignHash               = modbcrypt.NewProc("BCryptSignHash")
 +	procBCryptVerifySignature        = modbcrypt.NewProc("BCryptVerifySignature")
++	procFormatMessageW               = modkernel32.NewProc("FormatMessageW")
++	procRtlNtStatusToDosErrorNoTeb   = modntdll.NewProc("RtlNtStatusToDosErrorNoTeb")
 +)
 +
-+func CloseAlgorithmProvider(hAlgorithm ALG_HANDLE, dwFlags uint32) (s error) {
++func CloseAlgorithmProvider(hAlgorithm ALG_HANDLE, dwFlags uint32) (ntstatus error) {
 +	r0, _, _ := syscall.Syscall(procBCryptCloseAlgorithmProvider.Addr(), 2, uintptr(hAlgorithm), uintptr(dwFlags), 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func CreateHash(hAlgorithm ALG_HANDLE, phHash *HASH_HANDLE, pbHashObject []byte, pbSecret []byte, dwFlags uint32) (s error) {
++func CreateHash(hAlgorithm ALG_HANDLE, phHash *HASH_HANDLE, pbHashObject []byte, pbSecret []byte, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbHashObject) > 0 {
 +		_p0 = &pbHashObject[0]
@@ -11140,12 +11093,12 @@ index 00000000000000..3c6a5764eb92ec
 +	}
 +	r0, _, _ := syscall.Syscall9(procBCryptCreateHash.Addr(), 7, uintptr(hAlgorithm), uintptr(unsafe.Pointer(phHash)), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbHashObject)), uintptr(unsafe.Pointer(_p1)), uintptr(len(pbSecret)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func Decrypt(hKey KEY_HANDLE, pbInput []byte, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (s error) {
++func Decrypt(hKey KEY_HANDLE, pbInput []byte, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbInput) > 0 {
 +		_p0 = &pbInput[0]
@@ -11160,60 +11113,60 @@ index 00000000000000..3c6a5764eb92ec
 +	}
 +	r0, _, _ := syscall.Syscall12(procBCryptDecrypt.Addr(), 10, uintptr(hKey), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbInput)), uintptr(pPaddingInfo), uintptr(unsafe.Pointer(_p1)), uintptr(len(pbIV)), uintptr(unsafe.Pointer(_p2)), uintptr(len(pbOutput)), uintptr(unsafe.Pointer(pcbResult)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func DeriveKey(hSharedSecret SECRET_HANDLE, pwszKDF *uint16, pParameterList *BufferDesc, pbDerivedKey []byte, pcbResult *uint32, dwFlags uint32) (s error) {
++func DeriveKey(hSharedSecret SECRET_HANDLE, pwszKDF *uint16, pParameterList *BufferDesc, pbDerivedKey []byte, pcbResult *uint32, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbDerivedKey) > 0 {
 +		_p0 = &pbDerivedKey[0]
 +	}
 +	r0, _, _ := syscall.Syscall9(procBCryptDeriveKey.Addr(), 7, uintptr(hSharedSecret), uintptr(unsafe.Pointer(pwszKDF)), uintptr(unsafe.Pointer(pParameterList)), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbDerivedKey)), uintptr(unsafe.Pointer(pcbResult)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func DestroyHash(hHash HASH_HANDLE) (s error) {
++func DestroyHash(hHash HASH_HANDLE) (ntstatus error) {
 +	r0, _, _ := syscall.Syscall(procBCryptDestroyHash.Addr(), 1, uintptr(hHash), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func DestroyKey(hKey KEY_HANDLE) (s error) {
++func DestroyKey(hKey KEY_HANDLE) (ntstatus error) {
 +	r0, _, _ := syscall.Syscall(procBCryptDestroyKey.Addr(), 1, uintptr(hKey), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func DestroySecret(hSecret SECRET_HANDLE) (s error) {
++func DestroySecret(hSecret SECRET_HANDLE) (ntstatus error) {
 +	r0, _, _ := syscall.Syscall(procBCryptDestroySecret.Addr(), 1, uintptr(hSecret), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func DuplicateHash(hHash HASH_HANDLE, phNewHash *HASH_HANDLE, pbHashObject []byte, dwFlags uint32) (s error) {
++func DuplicateHash(hHash HASH_HANDLE, phNewHash *HASH_HANDLE, pbHashObject []byte, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbHashObject) > 0 {
 +		_p0 = &pbHashObject[0]
 +	}
 +	r0, _, _ := syscall.Syscall6(procBCryptDuplicateHash.Addr(), 5, uintptr(hHash), uintptr(unsafe.Pointer(phNewHash)), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbHashObject)), uintptr(dwFlags), 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func _Encrypt(hKey KEY_HANDLE, pbInput *byte, cbInput uint32, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (s error) {
++func _Encrypt(hKey KEY_HANDLE, pbInput *byte, cbInput uint32, pPaddingInfo unsafe.Pointer, pbIV []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbIV) > 0 {
 +		_p0 = &pbIV[0]
@@ -11224,76 +11177,76 @@ index 00000000000000..3c6a5764eb92ec
 +	}
 +	r0, _, _ := syscall.Syscall12(procBCryptEncrypt.Addr(), 10, uintptr(hKey), uintptr(unsafe.Pointer(pbInput)), uintptr(cbInput), uintptr(pPaddingInfo), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbIV)), uintptr(unsafe.Pointer(_p1)), uintptr(len(pbOutput)), uintptr(unsafe.Pointer(pcbResult)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func ExportKey(hKey KEY_HANDLE, hExportKey KEY_HANDLE, pszBlobType *uint16, pbOutput []byte, pcbResult *uint32, dwFlags uint32) (s error) {
++func ExportKey(hKey KEY_HANDLE, hExportKey KEY_HANDLE, pszBlobType *uint16, pbOutput []byte, pcbResult *uint32, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbOutput) > 0 {
 +		_p0 = &pbOutput[0]
 +	}
 +	r0, _, _ := syscall.Syscall9(procBCryptExportKey.Addr(), 7, uintptr(hKey), uintptr(hExportKey), uintptr(unsafe.Pointer(pszBlobType)), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbOutput)), uintptr(unsafe.Pointer(pcbResult)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func FinalizeKeyPair(hKey KEY_HANDLE, dwFlags uint32) (s error) {
++func FinalizeKeyPair(hKey KEY_HANDLE, dwFlags uint32) (ntstatus error) {
 +	r0, _, _ := syscall.Syscall(procBCryptFinalizeKeyPair.Addr(), 2, uintptr(hKey), uintptr(dwFlags), 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func FinishHash(hHash HASH_HANDLE, pbOutput []byte, dwFlags uint32) (s error) {
++func FinishHash(hHash HASH_HANDLE, pbOutput []byte, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbOutput) > 0 {
 +		_p0 = &pbOutput[0]
 +	}
 +	r0, _, _ := syscall.Syscall6(procBCryptFinishHash.Addr(), 4, uintptr(hHash), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbOutput)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func GenRandom(hAlgorithm ALG_HANDLE, pbBuffer []byte, dwFlags uint32) (s error) {
++func GenRandom(hAlgorithm ALG_HANDLE, pbBuffer []byte, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbBuffer) > 0 {
 +		_p0 = &pbBuffer[0]
 +	}
 +	r0, _, _ := syscall.Syscall6(procBCryptGenRandom.Addr(), 4, uintptr(hAlgorithm), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbBuffer)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func GenerateKeyPair(hAlgorithm ALG_HANDLE, phKey *KEY_HANDLE, dwLength uint32, dwFlags uint32) (s error) {
++func GenerateKeyPair(hAlgorithm ALG_HANDLE, phKey *KEY_HANDLE, dwLength uint32, dwFlags uint32) (ntstatus error) {
 +	r0, _, _ := syscall.Syscall6(procBCryptGenerateKeyPair.Addr(), 4, uintptr(hAlgorithm), uintptr(unsafe.Pointer(phKey)), uintptr(dwLength), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func generateSymmetricKey(hAlgorithm ALG_HANDLE, phKey *KEY_HANDLE, pbKeyObject []byte, pbSecret *byte, cbSecret uint32, dwFlags uint32) (s error) {
++func generateSymmetricKey(hAlgorithm ALG_HANDLE, phKey *KEY_HANDLE, pbKeyObject []byte, pbSecret *byte, cbSecret uint32, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbKeyObject) > 0 {
 +		_p0 = &pbKeyObject[0]
 +	}
 +	r0, _, _ := syscall.Syscall9(procBCryptGenerateSymmetricKey.Addr(), 7, uintptr(hAlgorithm), uintptr(unsafe.Pointer(phKey)), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbKeyObject)), uintptr(unsafe.Pointer(pbSecret)), uintptr(cbSecret), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func GetFipsAlgorithmMode(enabled *bool) (s error) {
++func GetFipsAlgorithmMode(enabled *bool) (ntstatus error) {
 +	var _p0 uint32
 +	if *enabled {
 +		_p0 = 1
@@ -11301,24 +11254,24 @@ index 00000000000000..3c6a5764eb92ec
 +	r0, _, _ := syscall.Syscall(procBCryptGetFipsAlgorithmMode.Addr(), 1, uintptr(unsafe.Pointer(&_p0)), 0, 0)
 +	*enabled = _p0 != 0
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func GetProperty(hObject HANDLE, pszProperty *uint16, pbOutput []byte, pcbResult *uint32, dwFlags uint32) (s error) {
++func GetProperty(hObject HANDLE, pszProperty *uint16, pbOutput []byte, pcbResult *uint32, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbOutput) > 0 {
 +		_p0 = &pbOutput[0]
 +	}
 +	r0, _, _ := syscall.Syscall6(procBCryptGetProperty.Addr(), 6, uintptr(hObject), uintptr(unsafe.Pointer(pszProperty)), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbOutput)), uintptr(unsafe.Pointer(pcbResult)), uintptr(dwFlags))
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func Hash(hAlgorithm ALG_HANDLE, pbSecret []byte, pbInput []byte, pbOutput []byte) (s error) {
++func Hash(hAlgorithm ALG_HANDLE, pbSecret []byte, pbInput []byte, pbOutput []byte) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbSecret) > 0 {
 +		_p0 = &pbSecret[0]
@@ -11333,84 +11286,84 @@ index 00000000000000..3c6a5764eb92ec
 +	}
 +	r0, _, _ := syscall.Syscall9(procBCryptHash.Addr(), 7, uintptr(hAlgorithm), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbSecret)), uintptr(unsafe.Pointer(_p1)), uintptr(len(pbInput)), uintptr(unsafe.Pointer(_p2)), uintptr(len(pbOutput)), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func HashDataRaw(hHash HASH_HANDLE, pbInput *byte, cbInput uint32, dwFlags uint32) (s error) {
++func HashDataRaw(hHash HASH_HANDLE, pbInput *byte, cbInput uint32, dwFlags uint32) (ntstatus error) {
 +	r0, _, _ := syscall.Syscall6(procBCryptHashData.Addr(), 4, uintptr(hHash), uintptr(unsafe.Pointer(pbInput)), uintptr(cbInput), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func HashData(hHash HASH_HANDLE, pbInput []byte, dwFlags uint32) (s error) {
++func HashData(hHash HASH_HANDLE, pbInput []byte, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbInput) > 0 {
 +		_p0 = &pbInput[0]
 +	}
 +	r0, _, _ := syscall.Syscall6(procBCryptHashData.Addr(), 4, uintptr(hHash), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbInput)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func ImportKeyPair(hAlgorithm ALG_HANDLE, hImportKey KEY_HANDLE, pszBlobType *uint16, phKey *KEY_HANDLE, pbInput []byte, dwFlags uint32) (s error) {
++func ImportKeyPair(hAlgorithm ALG_HANDLE, hImportKey KEY_HANDLE, pszBlobType *uint16, phKey *KEY_HANDLE, pbInput []byte, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbInput) > 0 {
 +		_p0 = &pbInput[0]
 +	}
 +	r0, _, _ := syscall.Syscall9(procBCryptImportKeyPair.Addr(), 7, uintptr(hAlgorithm), uintptr(hImportKey), uintptr(unsafe.Pointer(pszBlobType)), uintptr(unsafe.Pointer(phKey)), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbInput)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func KeyDerivation(hKey KEY_HANDLE, pParameterList *BufferDesc, pbDerivedKey []byte, pcbResult *uint32, dwFlags uint32) (s error) {
++func KeyDerivation(hKey KEY_HANDLE, pParameterList *BufferDesc, pbDerivedKey []byte, pcbResult *uint32, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbDerivedKey) > 0 {
 +		_p0 = &pbDerivedKey[0]
 +	}
 +	r0, _, _ := syscall.Syscall6(procBCryptKeyDerivation.Addr(), 6, uintptr(hKey), uintptr(unsafe.Pointer(pParameterList)), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbDerivedKey)), uintptr(unsafe.Pointer(pcbResult)), uintptr(dwFlags))
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func OpenAlgorithmProvider(phAlgorithm *ALG_HANDLE, pszAlgId *uint16, pszImplementation *uint16, dwFlags AlgorithmProviderFlags) (s error) {
++func OpenAlgorithmProvider(phAlgorithm *ALG_HANDLE, pszAlgId *uint16, pszImplementation *uint16, dwFlags AlgorithmProviderFlags) (ntstatus error) {
 +	r0, _, _ := syscall.Syscall6(procBCryptOpenAlgorithmProvider.Addr(), 4, uintptr(unsafe.Pointer(phAlgorithm)), uintptr(unsafe.Pointer(pszAlgId)), uintptr(unsafe.Pointer(pszImplementation)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func SecretAgreement(hPrivKey KEY_HANDLE, hPubKey KEY_HANDLE, phAgreedSecret *SECRET_HANDLE, dwFlags uint32) (s error) {
++func SecretAgreement(hPrivKey KEY_HANDLE, hPubKey KEY_HANDLE, phAgreedSecret *SECRET_HANDLE, dwFlags uint32) (ntstatus error) {
 +	r0, _, _ := syscall.Syscall6(procBCryptSecretAgreement.Addr(), 4, uintptr(hPrivKey), uintptr(hPubKey), uintptr(unsafe.Pointer(phAgreedSecret)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func SetProperty(hObject HANDLE, pszProperty *uint16, pbInput []byte, dwFlags uint32) (s error) {
++func SetProperty(hObject HANDLE, pszProperty *uint16, pbInput []byte, dwFlags uint32) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbInput) > 0 {
 +		_p0 = &pbInput[0]
 +	}
 +	r0, _, _ := syscall.Syscall6(procBCryptSetProperty.Addr(), 5, uintptr(hObject), uintptr(unsafe.Pointer(pszProperty)), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbInput)), uintptr(dwFlags), 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func SignHash(hKey KEY_HANDLE, pPaddingInfo unsafe.Pointer, pbInput []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (s error) {
++func SignHash(hKey KEY_HANDLE, pPaddingInfo unsafe.Pointer, pbInput []byte, pbOutput []byte, pcbResult *uint32, dwFlags PadMode) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbInput) > 0 {
 +		_p0 = &pbInput[0]
@@ -11421,12 +11374,12 @@ index 00000000000000..3c6a5764eb92ec
 +	}
 +	r0, _, _ := syscall.Syscall9(procBCryptSignHash.Addr(), 8, uintptr(hKey), uintptr(pPaddingInfo), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbInput)), uintptr(unsafe.Pointer(_p1)), uintptr(len(pbOutput)), uintptr(unsafe.Pointer(pcbResult)), uintptr(dwFlags), 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
 +	return
 +}
 +
-+func VerifySignature(hKey KEY_HANDLE, pPaddingInfo unsafe.Pointer, pbHash []byte, pbSignature []byte, dwFlags PadMode) (s error) {
++func VerifySignature(hKey KEY_HANDLE, pPaddingInfo unsafe.Pointer, pbHash []byte, pbSignature []byte, dwFlags PadMode) (ntstatus error) {
 +	var _p0 *byte
 +	if len(pbHash) > 0 {
 +		_p0 = &pbHash[0]
@@ -11437,8 +11390,27 @@ index 00000000000000..3c6a5764eb92ec
 +	}
 +	r0, _, _ := syscall.Syscall9(procBCryptVerifySignature.Addr(), 7, uintptr(hKey), uintptr(pPaddingInfo), uintptr(unsafe.Pointer(_p0)), uintptr(len(pbHash)), uintptr(unsafe.Pointer(_p1)), uintptr(len(pbSignature)), uintptr(dwFlags), 0, 0)
 +	if r0 != 0 {
-+		s = syscall.Errno(r0)
++		ntstatus = NTStatus(r0)
 +	}
++	return
++}
++
++func formatMessage(flags uint32, msgsrc uintptr, msgid uint32, langid uint32, buf []uint16, args *byte) (n uint32, err error) {
++	var _p0 *uint16
++	if len(buf) > 0 {
++		_p0 = &buf[0]
++	}
++	r0, _, e1 := syscall.Syscall9(procFormatMessageW.Addr(), 7, uintptr(flags), uintptr(msgsrc), uintptr(msgid), uintptr(langid), uintptr(unsafe.Pointer(_p0)), uintptr(len(buf)), uintptr(unsafe.Pointer(args)), 0, 0)
++	n = uint32(r0)
++	if n == 0 {
++		err = errnoErr(e1)
++	}
++	return
++}
++
++func rtlNtStatusToDosErrorNoTeb(ntstatus NTStatus) (ret syscall.Errno) {
++	r0, _, _ := syscall.Syscall(procRtlNtStatusToDosErrorNoTeb.Addr(), 1, uintptr(ntstatus), 0, 0)
++	ret = syscall.Errno(r0)
 +	return
 +}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/internal/subtle/aliasing.go b/src/vendor/github.com/microsoft/go-crypto-winnative/internal/subtle/aliasing.go
@@ -11541,15 +11513,15 @@ index 00000000000000..1722410e5af193
 +	return getSystemDirectory() + "\\" + dll
 +}
 diff --git a/src/vendor/modules.txt b/src/vendor/modules.txt
-index 1c8de570cc2f1f..9df7e15cd2ddde 100644
+index 1c8de570cc2f1f..5b05c5eed355ca 100644
 --- a/src/vendor/modules.txt
 +++ b/src/vendor/modules.txt
 @@ -1,3 +1,14 @@
-+# github.com/golang-fips/openssl/v2 v2.0.4-0.20241211125030-65f2a3ae34cf
++# github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337
 +## explicit; go 1.22
 +github.com/golang-fips/openssl/v2
 +github.com/golang-fips/openssl/v2/bbig
-+# github.com/microsoft/go-crypto-winnative v0.0.0-20241212090637-6d419040e383
++# github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37
 +## explicit; go 1.22
 +github.com/microsoft/go-crypto-winnative/cng
 +github.com/microsoft/go-crypto-winnative/cng/bbig
