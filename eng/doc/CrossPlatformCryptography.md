@@ -45,39 +45,29 @@ This section includes the following packages:
 * [crypto/sha3](https://pkg.go.dev/golang.org/x/crypto/sha3)
 * [crypto/hmac](https://pkg.go.dev/crypto/hmac)
 
-|Algorithm                  |Windows   |Linux                |
-|---------------------------|----------|---------------------|
-|MD5                        | ✔️       | ✔️                 |
-|SHA-1                      | ✔️       | ✔️                 |
-|SHA-2-224                  | ❌       | ✔️                 |
-|SHA-2-256                  | ✔️       | ✔️                 |
-|SHA-2-384                  | ✔️       | ✔️                 |
-|SHA-2-512                  | ✔️       | ✔️                 |
-|SHA-2-512_224              | ✔️       | ✔️ <sup>1, 2</sup> |
-|SHA-2-512_256              | ❌       | ✔️ <sup>1, 2</sup> |
-|SHA-3-224                  | ❌       | ❌                 |
-|SHA-3-256                  | ❌       | ❌                 |
-|SHA-3-384                  | ❌       | ❌                 |
-|SHA-3-512                  | ❌       | ❌                 |
-|SHAKE-128                  | ❌       | ❌                 |
-|SHAKE-256                  | ❌       | ❌                 |
-|CSHAKE-128                 | ❌       | ❌                 |
-|CSHAKE-256                 | ❌       | ❌                 |
-|HMAC-MD5                   | ✔️       | ✔️                 |
-|HMAC-SHA-1                 | ✔️       | ✔️                 |
-|HMAC-SHA-2-224             | ❌       | ✔️                 |
-|HMAC-SHA-2-256             | ✔️       | ✔️                 |
-|HMAC-SHA-2-384             | ✔️       | ✔️                 |
-|HMAC-SHA-2-512             | ✔️       | ✔️                 |
-|HMAC-SHA-2-512_224         | ✔️       | ✔️ <sup>1, 2</sup> |
-|HMAC-SHA-2-512_256         | ❌       | ✔️ <sup>1, 2</sup> |
-|HMAC-SHA-3-224             | ❌       | ❌                 |
-|HMAC-SHA-3-256             | ❌       | ❌                 |
-|HMAC-SHA-3-384             | ❌       | ❌                 |
-|HMAC-SHA-3-512             | ❌       | ❌                 |
+|Algorithm                  |Windows            |Linux                |
+|---------------------------|-------------------|---------------------|
+| MD5                       | ✔️                | ✔️                 |
+| SHA-1                     | ✔️                | ✔️                 |
+| SHA-2-224                 | ❌                | ✔️                 |
+| SHA-2-256                 | ✔️                | ✔️                 |
+| SHA-2-384                 | ✔️                | ✔️                 |
+| SHA-2-512                 | ✔️                | ✔️                 |
+| SHA-2-512_224             | ❌                | ✔️ <sup>1, 2</sup> |
+| SHA-2-512_256             | ❌                | ✔️ <sup>1, 2</sup> |
+| SHA-3-224                 | ❌                | ❌                 |
+| SHA-3-256                 | ❌                | ❌                 |
+| SHA-3-384                 | ❌                | ❌                 |
+| SHA-3-512                 | ❌                | ❌                 |
+| SHAKE-128                 | ❌                | ❌                 |
+| SHAKE-256                 | ❌                | ❌                 |
+| CSHAKE-128                | ❌                | ❌                 |
+| CSHAKE-256                | ❌                | ❌                 |
+| HMAC                      | ✔️ <sup>3</sup>   | ✔️ <sup>3</sup>    |
 
 <sup>1</sup>Available starting in Microsoft Go 1.24.
 <sup>2</sup>Requires OpenSSL 1.1.1 or later.
+<sup>3</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
 
 ## Symmetric encryption
 
@@ -117,3 +107,51 @@ This section includes the following packages:
 * Tag Sizes
   
   AES-GCM works with 16-byte tags.
+
+## Asymmetric encryption
+
+This section includes the following subsections:
+
+* [RSA](#rsa)
+
+### RSA
+
+This section includes the following packages:
+
+* [crypto/rsa](https://pkg.go.dev/crypto/rsa)
+
+| Padding Mode                      | Windows              | Linux               |
+|-----------------------------------|----------------------|---------------------|
+| OAEP (MD5)                        | ✔️                   | ✔️                 |
+| OAEP (SHA-1)                      | ✔️                   | ✔️                 |
+| OAEP (SHA-2)                      | ✔️ <sup>1</sup>      | ✔️ <sup>1</sup>    |
+| OAEP (SHA-3)                      | ❌                   | ❌                 |
+| PSS (MD5)                         | ✔️                   | ✔️                 |
+| PSS (SHA-1)                       | ✔️                   | ✔️                 |
+| PSS (SHA-2)                       | ✔️ <sup>1</sup>      | ✔️ <sup>1</sup>    |
+| PSS (SHA-3)                       | ❌                   | ❌                 |
+| PKCS1v15 Signature (Unhashed)     | ✔️                   | ✔️                 |
+| PKCS1v15 Signature (RIPMED160)    | ❌                   | ✔️                 |
+| PKCS1v15 Signature (MD4)          | ❌                   | ✔️                 |
+| PKCS1v15 Signature (MD5)          | ✔️                   | ✔️                 |
+| PKCS1v15 Signature (MD5-SHA1)     | ✔️                   | ✔️                 |
+| PKCS1v15 Signature (SHA-1)        | ✔️                   | ✔️                 |
+| PKCS1v15 Signature (SHA-2)        | ✔️ <sup>1</sup>      | ✔️ <sup>1</sup>    |
+| PKCS1v15 Signature (SHA-3)        | ❌                   | ❌                 |
+
+<sup>1</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
+
+#### RSA key sizes
+
+[rsa.GenerateKey](https://pkg.go.dev/crypto/rsa#GenerateKey) only supports the following key sizes (in bits): 2048, 3072, 4096.
+
+Multiprime RSA keys are not supported.
+
+#### PSS salt length
+
+On Windows, when verifying a PSS signature, [rsa.PSSSaltLengthAuto](https://pkg.go.dev/crypto/rsa#pkg-constants) is not supported.
+
+### Random number generation
+
+For those padding modes that require random numbers, only the [rand.Reader](https://pkg.go.dev/crypto/rand#Reader) is supported.
+
