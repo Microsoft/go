@@ -88,22 +88,21 @@ This section includes the following packages:
 * [crypto/des](https://pkg.go.dev/crypto/des)
 * [crypto/rc4](https://pkg.go.dev/crypto/rc4)
 
-| Cipher + Mode | Windows  | Linux               |
-|---------------|----------|---------------------|
-| AES-ECB       | ✔️       | ✔️                 |
-| AES-CBC       | ✔️       | ✔️                 |
-| AES-CTR       | ❌       | ✔️                 |
-| AES-CFB       | ❌       | ❌                 |
-| AES-OFB       | ❌       | ❌                 |
-| AES-GCM       | ✔️       | ✔️                 |
-| DES-CBC       | ✔️       | ⚠️ <sup>1, 2</sup> |
-| DES-ECB       | ✔️       | ⚠️ <sup>1, 2</sup> |
-| 3DES-ECB      | ✔️       | ⚠️ <sup>2</sup>    |
-| 3DES-CBC      | ✔️       | ⚠️ <sup>2</sup>    |
-| RC4           | ✔️       | ⚠️ <sup>1, 2</sup> |
+| Cipher + Mode | Windows  | Linux            |
+|---------------|----------|------------------|
+| AES-ECB       | ✔️       | ✔️              |
+| AES-CBC       | ✔️       | ✔️              |
+| AES-CTR       | ❌       | ✔️              |
+| AES-CFB       | ❌       | ❌              |
+| AES-OFB       | ❌       | ❌              |
+| AES-GCM       | ✔️       | ✔️              |
+| DES-CBC       | ✔️       | ✔️ <sup>1</sup> |
+| DES-ECB       | ✔️       | ✔️ <sup>1</sup> |
+| 3DES-ECB      | ✔️       | ✔️              |
+| 3DES-CBC      | ✔️       | ✔️              |
+| RC4           | ✔️       | ✔️ <sup>1</sup> |
 
-<sup>1</sup>Not supported by the SymCrypt provider for OpenSSL.
-<sup>2</sup>When using the built-in OpenSSL providers, this requires the legacy provider to be enabled.
+<sup>1</sup>When using OpenSSL 3, requires the legacy provider to be enabled.
 
 ### AES-GCM keys, nonces, and tags
 
