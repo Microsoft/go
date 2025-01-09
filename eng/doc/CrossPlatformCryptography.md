@@ -113,6 +113,9 @@ This section includes the following packages:
 This section includes the following subsections:
 
 * [RSA](#rsa)
+* [ECDSA](#ecdsa)
+* [ECDH](#ecdh)
+* [DSA](#dsa)
 
 ### RSA
 
@@ -131,27 +134,99 @@ This section includes the following packages:
 | PSS (SHA-2)                       | ✔️ <sup>1</sup>      | ✔️ <sup>1</sup>    |
 | PSS (SHA-3)                       | ❌                   | ❌                 |
 | PKCS1v15 Signature (Unhashed)     | ✔️                   | ✔️                 |
-| PKCS1v15 Signature (RIPMED160)    | ❌                   | ✔️                 |
-| PKCS1v15 Signature (MD4)          | ❌                   | ✔️                 |
+| PKCS1v15 Signature (RIPMED160)    | ❌ <sup>2</sup>      | ✔️ <sup>2</sup>    |
+| PKCS1v15 Signature (MD4)          | ❌ <sup>2</sup>      | ✔️ <sup>2</sup>    |
 | PKCS1v15 Signature (MD5)          | ✔️                   | ✔️                 |
-| PKCS1v15 Signature (MD5-SHA1)     | ✔️                   | ✔️                 |
+| PKCS1v15 Signature (MD5-SHA1)     | ✔️ <sup>2</sup>      | ✔️ <sup>2</sup>    |
 | PKCS1v15 Signature (SHA-1)        | ✔️                   | ✔️                 |
 | PKCS1v15 Signature (SHA-2)        | ✔️ <sup>1</sup>      | ✔️ <sup>1</sup>    |
 | PKCS1v15 Signature (SHA-3)        | ❌                   | ❌                 |
 
 <sup>1</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
+<sup>2</sup>Available starting in Microsoft Go 1.24.
 
 #### RSA key sizes
 
 [rsa.GenerateKey](https://pkg.go.dev/crypto/rsa#GenerateKey) only supports the following key sizes (in bits): 2048, 3072, 4096.
 
-Multiprime RSA keys are not supported.
+Multi-prime RSA keys are not supported.
+
+The RSA key size is subject to the limitations of the underlying cryptographic library. For example, on Windows and when using SCOSSL, the key size should be multiple of 8.
 
 #### PSS salt length
 
 On Windows, when verifying a PSS signature, [rsa.PSSSaltLengthAuto](https://pkg.go.dev/crypto/rsa#pkg-constants) is not supported.
 
-### Random number generation
+#### Random number generation
 
-For those padding modes that require random numbers, only the [rand.Reader](https://pkg.go.dev/crypto/rand#Reader) is supported.
+For those operations that require random numbers, only the [rand.Reader](https://pkg.go.dev/crypto/rand#Reader) is supported.
 
+### ECDSA
+
+This section includes the following packages:
+
+* [crypto/ecdsa](https://pkg.go.dev/crypto/ecdsa)
+* [crypto/elliptic](https://pkg.go.dev/crypto/elliptic)
+
+| Elliptic Curve            | Windows     | Linux        |
+|---------------------------|-------------|--------------|
+| NIST P-224 (secp224r1)    | ✔️          | ✔️          |
+| NIST P-256 (secp256r1)    | ✔️          | ✔️          |
+| NIST P-384 (secp384r1)    | ✔️          | ✔️          |
+| NIST P-521 (secp521r1)    | ✔️          | ✔️          |
+
+#### Random number generation
+
+For those operations that require random numbers, only the [rand.Reader](https://pkg.go.dev/crypto/rand#Reader) is supported.
+
+### ECDH
+
+This section includes the following packages:
+
+* [crypto/ecdh](https://pkg.go.dev/crypto/ecdsa)
+
+| Elliptic Curve            | Windows     | Linux        |
+|---------------------------|-------------|--------------|
+| NIST P-224 (secp224r1)    | ✔️          | ✔️          |
+| NIST P-256 (secp256r1)    | ✔️          | ✔️          |
+| NIST P-384 (secp384r1)    | ✔️          | ✔️          |
+| NIST P-521 (secp521r1)    | ✔️          | ✔️          |
+| X25519 (curve25519)       | ❌          | ❌          |
+
+#### Random number generation
+
+For those operations that require random numbers, only the [rand.Reader](https://pkg.go.dev/crypto/rand#Reader) is supported.
+
+### DSA
+
+| Parameters    | Windows     | Linux        |
+|---------------|-------------|--------------|
+| L1024N160     | ✔️          | ✔️          |
+| L2048N224     | ❌          | ✔️          |
+| L2048N256     | ✔️          | ✔️          |
+| L3072N256     | ✔️          | ✔️          |
+
+## KDF
+
+This section includes the following packages:
+
+* [crypto/hkdf](https://pkg.go.dev/crypto/hkdf)
+* [crypto/pbkdf2](https://pkg.go.dev/crypto/pbkdf2)
+
+| Functions     | Windows          | Linux             |
+|---------------|------------------|-------------------|
+| PBKDF2        | ✔️ <sup>1</sup>  | ✔️ <sup>1</sup>  |
+| HKDF          | ✔️ <sup>1</sup>  | ✔️ <sup>1</sup>  |
+
+<sup>1</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
+
+## ML-KEM
+
+This section includes the following packages:
+
+* [crypto/mlkem](https://pkg.go.dev/crypto/mlkem)
+
+| Parameters    | Windows     | Linux        |
+|---------------|-------------|--------------|
+|768            | ❌          | ❌          |
+|1024           | ❌          | ❌          |
