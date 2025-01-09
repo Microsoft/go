@@ -14,6 +14,26 @@ This article identifies the features that are supported on each platform.
 
 This article assumes you have a working familiarity with cryptography in Go.
 
+## Platform support
+
+Microsoft Go supports the following platforms:
+
+### Windows
+
+On Windows, Microsoft Go uses the [Cryptography API: Next Generation](https://learn.microsoft.com/en-us/windows/win32/seccng/cng-portal) library, CNG from now on, for cryptographic operations.
+CNG is available since Windows Vista and Windows Server 2008 and it doesn't require any additional installation nor configuration.
+
+### Linux
+
+On Linux, Microsoft Go uses the [OpenSSL crypto library](https://docs.openssl.org/3.0/man7/crypto/) library, OpenSSL from now on, for cryptographic operations.
+OpenSSL is normally available on Linux distributions, but it may not be installed by default.
+If it is not installed, you can install it using the package manager of your distribution.
+
+OpenSSL 3 implements all the cryptographic algorithms using [Providers](https://docs.openssl.org/3.0/man7/crypto/#providers).
+Microsoft Go officially supports the built-in providers and the [SymCrypt provider](https://github.com/microsoft/SymCrypt-OpenSSL), SCOSSL from now on.
+The minimum SCOSSL version required is v1.6.1.
+The following tables assume that the SCOSSL provider is used together with the built-in providers.
+
 ## Hash and Message Authentication Algorithms
 
 This section includes the following packages:
@@ -25,34 +45,39 @@ This section includes the following packages:
 * [crypto/sha3](https://pkg.go.dev/golang.org/x/crypto/sha3)
 * [crypto/hmac](https://pkg.go.dev/crypto/hmac)
 
-|Algorithm                  |Windows   |Linux             |
-|---------------------------|----------|------------------|
-|MD5                        | ✔️       | ✔️ <sup>1</sup> |
-|SHA-1                      | ✔️       | ✔️              |
-|SHA-2-224                  | ❌       | ✔️              |
-|SHA-2-256                  | ✔️       | ✔️              |
-|SHA-2-384                  | ✔️       | ✔️              |
-|SHA-2-512                  | ✔️       | ✔️              |
-|SHA-3-224                  | ❌       | ❌              |
-|SHA-3-256                  | ❌       | ❌              |
-|SHA-3-384                  | ❌       | ❌              |
-|SHA-3-512                  | ❌       | ❌              |
-|SHAKE-128                  | ❌       | ❌              |
-|SHAKE-256                  | ❌       | ❌              |
-|CSHAKE-128                 | ❌       | ❌              |
-|CSHAKE-256                 | ❌       | ❌              |
-|HMAC-MD5                   | ✔️       | ✔️              |
-|HMAC-SHA-1                 | ✔️       | ✔️              |
-|HMAC-SHA-2-224             | ❌       | ✔️              |
-|HMAC-SHA-2-256             | ✔️       | ✔️              |
-|HMAC-SHA-2-384             | ✔️       | ✔️              |
-|HMAC-SHA-2-512             | ✔️       | ✔️              |
-|HMAC-SHA-3-224             | ❌       | ❌              |
-|HMAC-SHA-3-256             | ❌       | ❌              |
-|HMAC-SHA-3-384             | ❌       | ❌              |
-|HMAC-SHA-3-512             | ❌       | ❌              |
+|Algorithm                  |Windows   |Linux                |
+|---------------------------|----------|---------------------|
+|MD5                        | ✔️       | ✔️                 |
+|SHA-1                      | ✔️       | ✔️                 |
+|SHA-2-224                  | ❌       | ✔️                 |
+|SHA-2-256                  | ✔️       | ✔️                 |
+|SHA-2-384                  | ✔️       | ✔️                 |
+|SHA-2-512                  | ✔️       | ✔️                 |
+|SHA-2-512_224              | ✔️       | ✔️ <sup>1, 2</sup> |
+|SHA-2-512_256              | ❌       | ✔️ <sup>1, 2</sup> |
+|SHA-3-224                  | ❌       | ❌                 |
+|SHA-3-256                  | ❌       | ❌                 |
+|SHA-3-384                  | ❌       | ❌                 |
+|SHA-3-512                  | ❌       | ❌                 |
+|SHAKE-128                  | ❌       | ❌                 |
+|SHAKE-256                  | ❌       | ❌                 |
+|CSHAKE-128                 | ❌       | ❌                 |
+|CSHAKE-256                 | ❌       | ❌                 |
+|HMAC-MD5                   | ✔️       | ✔️                 |
+|HMAC-SHA-1                 | ✔️       | ✔️                 |
+|HMAC-SHA-2-224             | ❌       | ✔️                 |
+|HMAC-SHA-2-256             | ✔️       | ✔️                 |
+|HMAC-SHA-2-384             | ✔️       | ✔️                 |
+|HMAC-SHA-2-512             | ✔️       | ✔️                 |
+|HMAC-SHA-2-512_224         | ✔️       | ✔️ <sup>1, 2</sup> |
+|HMAC-SHA-2-512_256         | ❌       | ✔️ <sup>1, 2</sup> |
+|HMAC-SHA-3-224             | ❌       | ❌                 |
+|HMAC-SHA-3-256             | ❌       | ❌                 |
+|HMAC-SHA-3-384             | ❌       | ❌                 |
+|HMAC-SHA-3-512             | ❌       | ❌                 |
 
-<sup>1</sup>When using the built-in OpenSSL providers, this requires the legacy provider to be enabled.
+<sup>1</sup>Available starting in Microsoft Go 1.24.
+<sup>2</sup>Requires OpenSSL 1.1.1 or later.
 
 ## Symmetric encryption
 
