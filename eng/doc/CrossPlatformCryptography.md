@@ -1,6 +1,6 @@
 # Cross-Platform Cryptography in Microsoft Go
 
-Cryptographic operations in Microsoft Go are done by operating system (OS) libraries. This dependency has advantages:
+Cryptographic operations in Microsoft Go are delegated to the operating system (OS) libraries. This dependency has advantages:
 
 * Go apps benefit from OS reliability. Keeping cryptography libraries safe from vulnerabilities is a high priority for OS vendors. To do that, they provide updates that system administrators should be applying.
 * Go apps have access to FIPS-validated algorithms if the OS libraries are FIPS-validated.
@@ -25,7 +25,7 @@ CNG is available since Windows Vista and Windows Server 2008 and it doesn't requ
 
 ### Linux
 
-On Linux, Microsoft Go uses the [OpenSSL crypto library](https://docs.openssl.org/3.0/man7/crypto/) library, OpenSSL from now on, for cryptographic operations.
+On Linux, Microsoft Go uses the [OpenSSL crypto library](https://docs.openssl.org/3.0/man7/crypto/), OpenSSL from now on, for cryptographic operations.
 OpenSSL is normally available on Linux distributions, but it may not be installed by default.
 If it is not installed, you can install it using the package manager of your distribution.
 
