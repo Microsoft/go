@@ -312,7 +312,7 @@ This section includes the following packages:
 
 | Name            | Windows     | Linux        |
 |-----------------|-------------|--------------|
-| CurveP2         | ✔️          | ✔️          |
+| CurveP256       | ✔️          | ✔️          |
 | CurveP384       | ✔️          | ✔️          |
 | CurveP521       | ✔️          | ✔️          |
 | X25519          | ❌          | ❌          |
