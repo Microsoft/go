@@ -331,6 +331,6 @@ This section includes the following packages:
 | ECDSAWithP256AndSHA256    | ✔️          | ✔️          |
 | ECDSAWithP384AndSHA384    | ✔️          | ✔️          |
 | ECDSAWithP521AndSHA512    | ✔️          | ✔️          |
-| Ed25519                   | ✔️          | ✔️          |
+| Ed25519                   | ❌          | ✔️          |
 | PKCS1WithSHA1             | ✔️          | ✔️          |
 | ECDSAWithSHA1             | ✔️          | ✔️          |
