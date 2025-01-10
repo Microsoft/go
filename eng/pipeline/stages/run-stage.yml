@@ -149,13 +149,16 @@ stages:
 
           # Initialize stage 0 toolset ahead of time so we can track timing data separately from the
           # build operations. When we call this script again later, it won't download Go again.
-          - pwsh: |
-              . eng/utilities.ps1
-              Download-Stage0
-            env:
-              ${{ if eq(parameters.builder.os, 'darwin') }}:
-                MS_USE_PATH_GO: '1'
-            displayName: Init stage 0 Go toolset
+          - ${{ if eq(parameters.builder.os, 'darwin') }}:
+            - task: GoTool@0
+              inputs:
+                version: '1.23.3'
+              displayName: Init upstream stage 0 Go toolset
+          - ${{ else }}:
+            - pwsh: |
+                . eng/utilities.ps1
+                Download-Stage0
+              displayName: Init stage 0 Go toolset
 
           - template: ../steps/init-submodule-task.yml
 

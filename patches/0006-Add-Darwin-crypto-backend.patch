@@ -12,7 +12,7 @@ Subject: [PATCH] Add Darwin crypto backend
  src/crypto/ed25519/ed25519_test.go            |   3 +-
  .../internal/backend/bbig/big_darwin.go       |  12 +
  src/crypto/internal/backend/common.go         |  36 +-
- src/crypto/internal/backend/darwin_darwin.go  | 326 ++++++++++++++++++
+ src/crypto/internal/backend/darwin_darwin.go  | 328 ++++++++++++++++++
  src/crypto/internal/backend/fips140/darwin.go |  11 +
  src/crypto/rsa/boring.go                      |   7 +-
  src/crypto/rsa/darwin.go                      |  71 ++++
@@ -27,7 +27,7 @@ Subject: [PATCH] Add Darwin crypto backend
  src/internal/goexperiment/flags.go            |   1 +
  src/net/lookup_test.go                        |   3 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 23 files changed, 529 insertions(+), 15 deletions(-)
+ 23 files changed, 531 insertions(+), 15 deletions(-)
  create mode 100644 src/crypto/internal/backend/bbig/big_darwin.go
  create mode 100644 src/crypto/internal/backend/darwin_darwin.go
  create mode 100644 src/crypto/internal/backend/fips140/darwin.go
@@ -240,10 +240,10 @@ index 91223c0ef0f810..d27bfee89e2534 100644
  }
 diff --git a/src/crypto/internal/backend/darwin_darwin.go b/src/crypto/internal/backend/darwin_darwin.go
 new file mode 100644
-index 00000000000000..45ec6c83d669c7
+index 00000000000000..10c4a39570b22b
 --- /dev/null
 +++ b/src/crypto/internal/backend/darwin_darwin.go
-@@ -0,0 +1,326 @@
+@@ -0,0 +1,328 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -289,12 +289,14 @@ index 00000000000000..45ec6c83d669c7
 +func NewSHA384() hash.Hash { return xcrypto.NewSHA384() }
 +func NewSHA512() hash.Hash { return xcrypto.NewSHA512() }
 +
-+func MD5(p []byte) (sum [16]byte)    { return xcrypto.MD5(p) }
-+func SHA1(p []byte) (sum [20]byte)   { return xcrypto.SHA1(p) }
-+func SHA224(p []byte) (sum [28]byte) { return xcrypto.SHA224(p) }
-+func SHA256(p []byte) (sum [32]byte) { return xcrypto.SHA256(p) }
-+func SHA384(p []byte) (sum [48]byte) { return xcrypto.SHA384(p) }
-+func SHA512(p []byte) (sum [64]byte) { return xcrypto.SHA512(p) }
++func MD5(p []byte) (sum [16]byte)        { return xcrypto.MD5(p) }
++func SHA1(p []byte) (sum [20]byte)       { return xcrypto.SHA1(p) }
++func SHA224(p []byte) (sum [28]byte)     { return xcrypto.SHA224(p) }
++func SHA256(p []byte) (sum [32]byte)     { return xcrypto.SHA256(p) }
++func SHA384(p []byte) (sum [48]byte)     { return xcrypto.SHA384(p) }
++func SHA512(p []byte) (sum [64]byte)     { return xcrypto.SHA512(p) }
++func SHA512_224(p []byte) (sum [28]byte) { panic("cryptobackend: not available") }
++func SHA512_256(p []byte) (sum [32]byte) { panic("cryptobackend: not available") }
 +
 +func NewHMAC(h func() hash.Hash, key []byte) hash.Hash {
 +	return xcrypto.NewHMAC(h, key)
@@ -520,11 +522,11 @@ index 00000000000000..45ec6c83d669c7
 +	return xcrypto.GenerateKeyEd25519(), nil
 +}
 +
-+func NewPrivateKeyEd25119(priv []byte) (PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
 +	return xcrypto.NewPrivateKeyEd25519(priv)
 +}
 +
-+func NewPublicKeyEd25119(pub []byte) (PublicKeyEd25519, error) {
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
 +	return xcrypto.NewPublicKeyEd25519(pub)
 +}
 +

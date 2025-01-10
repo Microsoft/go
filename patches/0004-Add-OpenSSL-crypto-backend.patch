@@ -9,7 +9,7 @@ Subject: [PATCH] Add OpenSSL crypto backend
  src/cmd/link/internal/ld/lib.go               |   1 +
  .../internal/backend/bbig/big_openssl.go      |  12 +
  .../internal/backend/fips140/openssl.go       |  41 +++
- src/crypto/internal/backend/openssl_linux.go  | 331 ++++++++++++++++++
+ src/crypto/internal/backend/openssl_linux.go  | 345 ++++++++++++++++++
  src/crypto/rsa/rsa_test.go                    |   3 +
  src/go.mod                                    |   1 +
  src/go.sum                                    |   2 +
@@ -19,7 +19,7 @@ Subject: [PATCH] Add OpenSSL crypto backend
  .../goexperiment/exp_opensslcrypto_on.go      |   9 +
  src/internal/goexperiment/flags.go            |   1 +
  src/os/exec/exec_test.go                      |   9 +
- 15 files changed, 436 insertions(+), 5 deletions(-)
+ 15 files changed, 450 insertions(+), 5 deletions(-)
  create mode 100644 src/crypto/internal/backend/bbig/big_openssl.go
  create mode 100644 src/crypto/internal/backend/fips140/openssl.go
  create mode 100644 src/crypto/internal/backend/openssl_linux.go
@@ -27,7 +27,7 @@ Subject: [PATCH] Add OpenSSL crypto backend
  create mode 100644 src/internal/goexperiment/exp_opensslcrypto_on.go
 
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 06bd01bc5bb995..9561bf2bca9a9d 100644
+index 0c992118f4287b..0de6e80fd985a3 100644
 --- a/src/cmd/dist/test.go
 +++ b/src/cmd/dist/test.go
 @@ -1324,12 +1324,11 @@ func (t *tester) registerCgoTests(heading string) {
@@ -142,10 +142,10 @@ index 00000000000000..118efa3a492a7d
 +}
 diff --git a/src/crypto/internal/backend/openssl_linux.go b/src/crypto/internal/backend/openssl_linux.go
 new file mode 100644
-index 00000000000000..d3a663737a1ce3
+index 00000000000000..44d91d5b7ba3d5
 --- /dev/null
 +++ b/src/crypto/internal/backend/openssl_linux.go
-@@ -0,0 +1,331 @@
+@@ -0,0 +1,345 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -233,19 +233,23 @@ index 00000000000000..d3a663737a1ce3
 +	return openssl.SupportsHash(h)
 +}
 +
-+func NewMD5() hash.Hash    { return openssl.NewMD5() }
-+func NewSHA1() hash.Hash   { return openssl.NewSHA1() }
-+func NewSHA224() hash.Hash { return openssl.NewSHA224() }
-+func NewSHA256() hash.Hash { return openssl.NewSHA256() }
-+func NewSHA384() hash.Hash { return openssl.NewSHA384() }
-+func NewSHA512() hash.Hash { return openssl.NewSHA512() }
++func NewMD5() hash.Hash        { return openssl.NewMD5() }
++func NewSHA1() hash.Hash       { return openssl.NewSHA1() }
++func NewSHA224() hash.Hash     { return openssl.NewSHA224() }
++func NewSHA256() hash.Hash     { return openssl.NewSHA256() }
++func NewSHA384() hash.Hash     { return openssl.NewSHA384() }
++func NewSHA512() hash.Hash     { return openssl.NewSHA512() }
++func NewSHA512_224() hash.Hash { return openssl.NewSHA512_224() }
++func NewSHA512_256() hash.Hash { return openssl.NewSHA512_256() }
 +
-+func MD5(p []byte) (sum [16]byte)    { return openssl.MD5(p) }
-+func SHA1(p []byte) (sum [20]byte)   { return openssl.SHA1(p) }
-+func SHA224(p []byte) (sum [28]byte) { return openssl.SHA224(p) }
-+func SHA256(p []byte) (sum [32]byte) { return openssl.SHA256(p) }
-+func SHA384(p []byte) (sum [48]byte) { return openssl.SHA384(p) }
-+func SHA512(p []byte) (sum [64]byte) { return openssl.SHA512(p) }
++func MD5(p []byte) (sum [16]byte)        { return openssl.MD5(p) }
++func SHA1(p []byte) (sum [20]byte)       { return openssl.SHA1(p) }
++func SHA224(p []byte) (sum [28]byte)     { return openssl.SHA224(p) }
++func SHA256(p []byte) (sum [32]byte)     { return openssl.SHA256(p) }
++func SHA384(p []byte) (sum [48]byte)     { return openssl.SHA384(p) }
++func SHA512(p []byte) (sum [64]byte)     { return openssl.SHA512(p) }
++func SHA512_224(p []byte) (sum [28]byte) { return openssl.SHA512_224(p) }
++func SHA512_256(p []byte) (sum [32]byte) { return openssl.SHA512_256(p) }
 +
 +func NewHMAC(h func() hash.Hash, key []byte) hash.Hash { return openssl.NewHMAC(h, key) }
 +
@@ -411,12 +415,22 @@ index 00000000000000..d3a663737a1ce3
 +	return openssl.GenerateKeyEd25519()
 +}
 +
++// Deprecated: use NewPrivateKeyEd25519 instead.
 +func NewPrivateKeyEd25119(priv []byte) (PrivateKeyEd25519, error) {
-+	return openssl.NewPrivateKeyEd25119(priv)
++	return openssl.NewPrivateKeyEd25519(priv)
 +}
 +
++// Deprecated: use NewPublicKeyEd25519 instead.
 +func NewPublicKeyEd25119(pub []byte) (PublicKeyEd25519, error) {
-+	return openssl.NewPublicKeyEd25119(pub)
++	return openssl.NewPublicKeyEd25519(pub)
++}
++
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
++	return openssl.NewPrivateKeyEd25519(priv)
++}
++
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
++	return openssl.NewPublicKeyEd25519(pub)
 +}
 +
 +func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
@@ -492,7 +506,7 @@ index f9543d9cc89e7b..f07c75821aab13 100644
  
  	msg := []byte{0xed, 0x36, 0x90, 0x8d, 0xbe, 0xfc, 0x35, 0x40, 0x70, 0x4f, 0xf5, 0x9d, 0x6e, 0xc2, 0xeb, 0xf5, 0x27, 0xae, 0x65, 0xb0, 0x59, 0x29, 0x45, 0x25, 0x8c, 0xc1, 0x91, 0x22}
 diff --git a/src/go.mod b/src/go.mod
-index 7a1318dcac32ba..186ced4a1123a8 100644
+index 7a1318dcac32ba..f12d9b4d9172ab 100644
 --- a/src/go.mod
 +++ b/src/go.mod
 @@ -3,6 +3,7 @@ module std
@@ -504,7 +518,7 @@ index 7a1318dcac32ba..186ced4a1123a8 100644
  	golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1
  )
 diff --git a/src/go.sum b/src/go.sum
-index 9e661352f16e0b..0a58eccb57a869 100644
+index 9e661352f16e0b..e51f0f57540a83 100644
 --- a/src/go.sum
 +++ b/src/go.sum
 @@ -1,3 +1,5 @@
@@ -514,7 +528,7 @@ index 9e661352f16e0b..0a58eccb57a869 100644
  golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
  golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1 h1:+Yk1FZ5E+/ewA0nOO/HRYs9E4yeqpGOShuSAdzCNNoQ=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index de88160bcf3a1c..339cb53d8a1468 100644
+index b39db00839ab43..392f8d8c52c4b6 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -509,12 +509,14 @@ var depsRules = `
