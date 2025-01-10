@@ -7,7 +7,7 @@ Subject: [PATCH] Add CNG crypto backend
  src/crypto/ecdsa/badlinkname.go               |  17 +
  src/crypto/internal/backend/backend_test.go   |   4 +-
  src/crypto/internal/backend/bbig/big_cng.go   |  12 +
- src/crypto/internal/backend/cng_windows.go    | 316 ++++++++++++++++++
+ src/crypto/internal/backend/cng_windows.go    | 320 ++++++++++++++++++
  src/crypto/internal/backend/common.go         |   9 +-
  src/crypto/internal/backend/fips140/cng.go    |  33 ++
  src/crypto/rsa/pss_test.go                    |   2 +-
@@ -18,7 +18,7 @@ Subject: [PATCH] Add CNG crypto backend
  .../goexperiment/exp_cngcrypto_off.go         |   9 +
  src/internal/goexperiment/exp_cngcrypto_on.go |   9 +
  src/internal/goexperiment/flags.go            |   1 +
- 14 files changed, 416 insertions(+), 5 deletions(-)
+ 14 files changed, 420 insertions(+), 5 deletions(-)
  create mode 100644 src/crypto/ecdsa/badlinkname.go
  create mode 100644 src/crypto/internal/backend/bbig/big_cng.go
  create mode 100644 src/crypto/internal/backend/cng_windows.go
@@ -84,10 +84,10 @@ index 00000000000000..92623031fd87d0
 +var Dec = bbig.Dec
 diff --git a/src/crypto/internal/backend/cng_windows.go b/src/crypto/internal/backend/cng_windows.go
 new file mode 100644
-index 00000000000000..c37247c8a2c7c6
+index 00000000000000..495260a08dd029
 --- /dev/null
 +++ b/src/crypto/internal/backend/cng_windows.go
-@@ -0,0 +1,316 @@
+@@ -0,0 +1,320 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -134,19 +134,23 @@ index 00000000000000..c37247c8a2c7c6
 +	return cng.SupportsHash(h)
 +}
 +
-+func NewMD5() hash.Hash    { return cng.NewMD5() }
-+func NewSHA1() hash.Hash   { return cng.NewSHA1() }
-+func NewSHA224() hash.Hash { panic("cngcrypto: not available") }
-+func NewSHA256() hash.Hash { return cng.NewSHA256() }
-+func NewSHA384() hash.Hash { return cng.NewSHA384() }
-+func NewSHA512() hash.Hash { return cng.NewSHA512() }
++func NewMD5() hash.Hash        { return cng.NewMD5() }
++func NewSHA1() hash.Hash       { return cng.NewSHA1() }
++func NewSHA224() hash.Hash     { panic("cngcrypto: not available") }
++func NewSHA256() hash.Hash     { return cng.NewSHA256() }
++func NewSHA384() hash.Hash     { return cng.NewSHA384() }
++func NewSHA512() hash.Hash     { return cng.NewSHA512() }
++func NewSHA512_224() hash.Hash { panic("cngcrypto: not available") }
++func NewSHA512_256() hash.Hash { panic("cngcrypto: not available") }
 +
-+func MD5(p []byte) (sum [16]byte)    { return cng.MD5(p) }
-+func SHA1(p []byte) (sum [20]byte)   { return cng.SHA1(p) }
-+func SHA224(p []byte) (sum [28]byte) { panic("cngcrypto: not available") }
-+func SHA256(p []byte) (sum [32]byte) { return cng.SHA256(p) }
-+func SHA384(p []byte) (sum [48]byte) { return cng.SHA384(p) }
-+func SHA512(p []byte) (sum [64]byte) { return cng.SHA512(p) }
++func MD5(p []byte) (sum [16]byte)        { return cng.MD5(p) }
++func SHA1(p []byte) (sum [20]byte)       { return cng.SHA1(p) }
++func SHA224(p []byte) (sum [28]byte)     { panic("cngcrypto: not available") }
++func SHA256(p []byte) (sum [32]byte)     { return cng.SHA256(p) }
++func SHA384(p []byte) (sum [48]byte)     { return cng.SHA384(p) }
++func SHA512(p []byte) (sum [64]byte)     { return cng.SHA512(p) }
++func SHA512_224(p []byte) (sum [28]byte) { panic("cngcrypto: not available") }
++func SHA512_256(p []byte) (sum [32]byte) { panic("cngcrypto: not available") }
 +
 +func NewHMAC(h func() hash.Hash, key []byte) hash.Hash {
 +	return cng.NewHMAC(h, key)
@@ -349,11 +353,11 @@ index 00000000000000..c37247c8a2c7c6
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPrivateKeyEd25119(priv []byte) (*PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25519(priv []byte) (*PrivateKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPublicKeyEd25119(pub []byte) (*PublicKeyEd25519, error) {
++func NewPublicKeyEd25519(pub []byte) (*PublicKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
@@ -483,7 +487,7 @@ index a4af0a2144870a..7d7115cff81cea 100644
  		t.Fatal(err)
  	}
 diff --git a/src/go.mod b/src/go.mod
-index 186ced4a1123a8..e9da0eb1301b93 100644
+index f12d9b4d9172ab..96bdcd421e1129 100644
 --- a/src/go.mod
 +++ b/src/go.mod
 @@ -4,6 +4,7 @@ go 1.24
@@ -495,7 +499,7 @@ index 186ced4a1123a8..e9da0eb1301b93 100644
  	golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1
  )
 diff --git a/src/go.sum b/src/go.sum
-index 0a58eccb57a869..b464f023942b74 100644
+index e51f0f57540a83..abebb59dcd7739 100644
 --- a/src/go.sum
 +++ b/src/go.sum
 @@ -1,5 +1,7 @@
@@ -507,7 +511,7 @@ index 0a58eccb57a869..b464f023942b74 100644
  golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
  golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1 h1:+Yk1FZ5E+/ewA0nOO/HRYs9E4yeqpGOShuSAdzCNNoQ=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index 339cb53d8a1468..1fcadbf6c19d79 100644
+index 392f8d8c52c4b6..997244c84e57c5 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -515,6 +515,10 @@ var depsRules = `

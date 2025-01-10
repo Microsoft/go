@@ -34,7 +34,7 @@ Subject: [PATCH] Add crypto backend foundation
  .../internal/backend/fips140/isrequirefips.go |   9 +
  .../internal/backend/fips140/norequirefips.go |   9 +
  .../backend/fips140/nosystemcrypto.go         |  11 +
- src/crypto/internal/backend/nobackend.go      | 229 ++++++++++++++++++
+ src/crypto/internal/backend/nobackend.go      | 233 ++++++++++++++++++
  src/crypto/internal/backend/stub.s            |  10 +
  src/crypto/internal/cryptotest/allocations.go |   2 +-
  .../internal/cryptotest/implementations.go    |   2 +-
@@ -67,11 +67,11 @@ Subject: [PATCH] Add crypto backend foundation
  src/crypto/tls/handshake_client_tls13.go      |  16 +-
  src/crypto/tls/handshake_server.go            |  10 +-
  src/crypto/tls/handshake_server_tls13.go      |  27 ++-
- src/crypto/tls/internal/fips140tls/fipstls.go |   3 +-
+ src/crypto/tls/internal/fips140tls/fipstls.go |   3 
  src/crypto/tls/internal/tls13/doc.go          |  18 ++
  src/crypto/tls/internal/tls13/tls13.go        | 182 ++++++++++++++
  src/crypto/tls/key_schedule.go                |   2 +-
- src/crypto/tls/prf.go                         |  41 ++++
+ src/crypto/tls/prf.go                         |  41 +++
  src/go/build/deps_test.go                     |   9 +-
  src/hash/boring_test.go                       |   9 +
  src/hash/example_test.go                      |   2 +
@@ -79,7 +79,7 @@ Subject: [PATCH] Add crypto backend foundation
  src/hash/notboring_test.go                    |   9 +
  src/net/smtp/smtp_test.go                     |  72 ++++--
  src/runtime/runtime_boring.go                 |   5 +
- 75 files changed, 1422 insertions(+), 93 deletions(-)
+ 75 files changed, 1426 insertions(+), 93 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ed25519/boring.go
@@ -595,7 +595,7 @@ index 039bd82ed21f9f..69a97d9bf250be 100644
  	panic("boringcrypto: not available")
 diff --git a/src/crypto/ed25519/boring.go b/src/crypto/ed25519/boring.go
 new file mode 100644
-index 00000000000000..3a7d7b76c8d8d7
+index 00000000000000..cce33e4d6cc927
 --- /dev/null
 +++ b/src/crypto/ed25519/boring.go
 @@ -0,0 +1,71 @@
@@ -638,7 +638,7 @@ index 00000000000000..3a7d7b76c8d8d7
 +
 +	b = new(boringPub)
 +	copy(b.orig[:], pub)
-+	key, err := boring.NewPublicKeyEd25119(b.orig[:])
++	key, err := boring.NewPublicKeyEd25519(b.orig[:])
 +	if err != nil {
 +		return nil, err
 +	}
@@ -662,7 +662,7 @@ index 00000000000000..3a7d7b76c8d8d7
 +
 +	b = new(boringPriv)
 +	copy(b.orig[:], priv)
-+	key, err := boring.NewPrivateKeyEd25119(b.orig[:])
++	key, err := boring.NewPrivateKeyEd25519(b.orig[:])
 +	if err != nil {
 +		return nil, err
 +	}
@@ -671,7 +671,7 @@ index 00000000000000..3a7d7b76c8d8d7
 +	return key, nil
 +}
 diff --git a/src/crypto/ed25519/ed25519.go b/src/crypto/ed25519/ed25519.go
-index c1f8ff784e4a5c..308d814ff6302b 100644
+index c1f8ff784e4a5c..6476bfbe896d6c 100644
 --- a/src/crypto/ed25519/ed25519.go
 +++ b/src/crypto/ed25519/ed25519.go
 @@ -17,6 +17,7 @@ package ed25519
@@ -772,7 +772,7 @@ index c1f8ff784e4a5c..308d814ff6302b 100644
 +		0x22, 0xab, 0xbe, 0xe6, 0x85, 0xfd, 0xa4, 0x42, 0x0f, 0x88, 0x34,
 +		0xb1, 0x08, 0xc3, 0xbd, 0xae, 0x36, 0x9e, 0xf5, 0x49, 0xfa,
 +	}
-+	pub, err := boring.NewPublicKeyEd25119(pkey)
++	pub, err := boring.NewPublicKeyEd25519(pkey)
 +	if err != nil {
 +		return false
 +	}
@@ -1153,10 +1153,10 @@ index 00000000000000..83691d7dd42d51
 +}
 diff --git a/src/crypto/internal/backend/nobackend.go b/src/crypto/internal/backend/nobackend.go
 new file mode 100644
-index 00000000000000..71e0ec9dc25a02
+index 00000000000000..3ebb6d5e4b4bb5
 --- /dev/null
 +++ b/src/crypto/internal/backend/nobackend.go
-@@ -0,0 +1,229 @@
+@@ -0,0 +1,233 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -1185,19 +1185,23 @@ index 00000000000000..71e0ec9dc25a02
 +
 +func SupportsHash(h crypto.Hash) bool { panic("cryptobackend: not available") }
 +
-+func NewMD5() hash.Hash    { panic("cryptobackend: not available") }
-+func NewSHA1() hash.Hash   { panic("cryptobackend: not available") }
-+func NewSHA224() hash.Hash { panic("cryptobackend: not available") }
-+func NewSHA256() hash.Hash { panic("cryptobackend: not available") }
-+func NewSHA384() hash.Hash { panic("cryptobackend: not available") }
-+func NewSHA512() hash.Hash { panic("cryptobackend: not available") }
++func NewMD5() hash.Hash        { panic("cryptobackend: not available") }
++func NewSHA1() hash.Hash       { panic("cryptobackend: not available") }
++func NewSHA224() hash.Hash     { panic("cryptobackend: not available") }
++func NewSHA256() hash.Hash     { panic("cryptobackend: not available") }
++func NewSHA384() hash.Hash     { panic("cryptobackend: not available") }
++func NewSHA512() hash.Hash     { panic("cryptobackend: not available") }
++func NewSHA512_224() hash.Hash { panic("cryptobackend: not available") }
++func NewSHA512_256() hash.Hash { panic("cryptobackend: not available") }
 +
-+func MD5(p []byte) (sum [16]byte)    { panic("cryptobackend: not available") }
-+func SHA1(p []byte) (sum [20]byte)   { panic("cryptobackend: not available") }
-+func SHA224(p []byte) (sum [28]byte) { panic("cryptobackend: not available") }
-+func SHA256(p []byte) (sum [32]byte) { panic("cryptobackend: not available") }
-+func SHA384(p []byte) (sum [48]byte) { panic("cryptobackend: not available") }
-+func SHA512(p []byte) (sum [64]byte) { panic("cryptobackend: not available") }
++func MD5(p []byte) (sum [16]byte)        { panic("cryptobackend: not available") }
++func SHA1(p []byte) (sum [20]byte)       { panic("cryptobackend: not available") }
++func SHA224(p []byte) (sum [28]byte)     { panic("cryptobackend: not available") }
++func SHA256(p []byte) (sum [32]byte)     { panic("cryptobackend: not available") }
++func SHA384(p []byte) (sum [48]byte)     { panic("cryptobackend: not available") }
++func SHA512(p []byte) (sum [64]byte)     { panic("cryptobackend: not available") }
++func SHA512_224(p []byte) (sum [28]byte) { panic("cryptobackend: not available") }
++func SHA512_256(p []byte) (sum [32]byte) { panic("cryptobackend: not available") }
 +
 +func NewHMAC(h func() hash.Hash, key []byte) hash.Hash { panic("cryptobackend: not available") }
 +
@@ -1336,11 +1340,11 @@ index 00000000000000..71e0ec9dc25a02
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPrivateKeyEd25119(priv []byte) (*PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25519(priv []byte) (*PrivateKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPublicKeyEd25119(pub []byte) (*PublicKeyEd25519, error) {
++func NewPublicKeyEd25519(pub []byte) (*PublicKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
