@@ -45,25 +45,25 @@ This section includes the following packages:
 * [crypto/sha3](https://pkg.go.dev/golang.org/x/crypto/sha3)
 * [crypto/hmac](https://pkg.go.dev/crypto/hmac)
 
-|Algorithm                  |Windows            |Linux                |
-|---------------------------|-------------------|---------------------|
-| MD5                       | ✔️                | ✔️                 |
-| SHA-1                     | ✔️                | ✔️                 |
-| SHA-2-224                 | ❌                | ✔️                 |
-| SHA-2-256                 | ✔️                | ✔️                 |
-| SHA-2-384                 | ✔️                | ✔️                 |
-| SHA-2-512                 | ✔️                | ✔️                 |
-| SHA-2-512_224             | ❌                | ✔️ <sup>1, 2</sup> |
-| SHA-2-512_256             | ❌                | ✔️ <sup>1, 2</sup> |
-| SHA-3-224                 | ❌                | ❌                 |
-| SHA-3-256                 | ❌                | ❌                 |
-| SHA-3-384                 | ❌                | ❌                 |
-| SHA-3-512                 | ❌                | ❌                 |
-| SHAKE-128                 | ❌                | ❌                 |
-| SHAKE-256                 | ❌                | ❌                 |
-| CSHAKE-128                | ❌                | ❌                 |
-| CSHAKE-256                | ❌                | ❌                 |
-| HMAC                      | ✔️ <sup>3</sup>   | ✔️ <sup>3</sup>    |
+|Algorithm                  |Windows             |Linux                |
+|---------------------------|--------------------|---------------------|
+| MD5                       | ✔️                 | ✔️                 |
+| SHA-1                     | ✔️                 | ✔️                 |
+| SHA-2-224                 | ❌                 | ✔️                 |
+| SHA-2-256                 | ✔️                 | ✔️                 |
+| SHA-2-384                 | ✔️                 | ✔️                 |
+| SHA-2-512                 | ✔️                 | ✔️                 |
+| SHA-2-512_224             | ❌                 | ✔️<sup>1, 2</sup>  |
+| SHA-2-512_256             | ❌                 | ✔️<sup>1, 2</sup>  |
+| SHA-3-224                 | ❌                 | ❌                 |
+| SHA-3-256                 | ❌                 | ❌                 |
+| SHA-3-384                 | ❌                 | ❌                 |
+| SHA-3-512                 | ❌                 | ❌                 |
+| SHAKE-128                 | ❌                 | ❌                 |
+| SHAKE-256                 | ❌                 | ❌                 |
+| CSHAKE-128                | ❌                 | ❌                 |
+| CSHAKE-256                | ❌                 | ❌                 |
+| HMAC<sup>3</sup>          | ✔️                 | ✔️                 |
 
 <sup>1</sup>Available starting in Microsoft Go 1.24.
 
@@ -88,11 +88,11 @@ This section includes the following packages:
 | AES-CFB       | ❌       | ❌              |
 | AES-OFB       | ❌       | ❌              |
 | AES-GCM       | ✔️       | ✔️              |
-| DES-CBC       | ✔️       | ⚠️ <sup>1</sup> |
-| DES-ECB       | ✔️       | ⚠️ <sup>1</sup> |
+| DES-CBC       | ✔️       | ⚠️<sup>1</sup>  |
+| DES-ECB       | ✔️       | ⚠️<sup>1</sup>  |
 | 3DES-ECB      | ✔️       | ✔️              |
 | 3DES-CBC      | ✔️       | ✔️              |
-| RC4           | ✔️       | ⚠️ <sup>1</sup> |
+| RC4           | ✔️       | ⚠️<sup>1</sup>  |
 
 <sup>1</sup>When using OpenSSL 3, requires the legacy provider to be enabled.
 
@@ -126,24 +126,24 @@ This section includes the following packages:
 
 * [crypto/rsa](https://pkg.go.dev/crypto/rsa)
 
-| Padding Mode                      | Windows              | Linux               |
-|-----------------------------------|----------------------|---------------------|
-| OAEP (MD5)                        | ✔️                   | ✔️                 |
-| OAEP (SHA-1)                      | ✔️                   | ✔️                 |
-| OAEP (SHA-2)                      | ✔️ <sup>1</sup>      | ✔️ <sup>1</sup>    |
-| OAEP (SHA-3)                      | ❌                   | ❌                 |
-| PSS (MD5)                         | ✔️                   | ✔️                 |
-| PSS (SHA-1)                       | ✔️                   | ✔️                 |
-| PSS (SHA-2)                       | ✔️ <sup>1</sup>      | ✔️ <sup>1</sup>    |
-| PSS (SHA-3)                       | ❌                   | ❌                 |
-| PKCS1v15 Signature (Unhashed)     | ✔️                   | ✔️                 |
-| PKCS1v15 Signature (RIPMED160)    | ❌ <sup>2</sup>      | ✔️ <sup>2</sup>    |
-| PKCS1v15 Signature (MD4)          | ❌ <sup>2</sup>      | ✔️ <sup>2</sup>    |
-| PKCS1v15 Signature (MD5)          | ✔️                   | ✔️                 |
-| PKCS1v15 Signature (MD5-SHA1)     | ✔️ <sup>2</sup>      | ✔️ <sup>2</sup>    |
-| PKCS1v15 Signature (SHA-1)        | ✔️                   | ✔️                 |
-| PKCS1v15 Signature (SHA-2)        | ✔️ <sup>1</sup>      | ✔️ <sup>1</sup>    |
-| PKCS1v15 Signature (SHA-3)        | ❌                   | ❌                 |
+| Padding Mode                           | Windows              | Linux               |
+|----------------------------------------|----------------------|---------------------|
+| OAEP (MD5)                             | ✔️                   | ✔️                 |
+| OAEP (SHA-1)                           | ✔️                   | ✔️                 |
+| OAEP (SHA-2)<sup>1</sup>               | ✔️                   | ✔️                 |
+| OAEP (SHA-3)                           | ❌                   | ❌                 |
+| PSS (MD5)                              | ✔️                   | ✔️                 |
+| PSS (SHA-1)                            | ✔️                   | ✔️                 |
+| PSS (SHA-2)<sup>1</sup>                | ✔️                   | ✔️                 |
+| PSS (SHA-3)                            | ❌                   | ❌                 |
+| PKCS1v15 Signature (Unhashed)          | ✔️                   | ✔️                 |
+| PKCS1v15 Signature (RIPMED160)         | ❌                   | ✔️<sup>2</sup>     |
+| PKCS1v15 Signature (MD4)               | ❌                   | ✔️<sup>2</sup>     |
+| PKCS1v15 Signature (MD5)               | ✔️                   | ✔️                 |
+| PKCS1v15 Signature (MD5-SHA1)          | ✔️<sup>2</sup>       | ✔️<sup>2</sup>     |
+| PKCS1v15 Signature (SHA-1)             | ✔️                   | ✔️                 |
+| PKCS1v15 Signature (SHA-2)<sup>1</sup> | ✔️                   | ✔️                 |
+| PKCS1v15 Signature (SHA-3)             | ❌                  | ❌                 |
 
 <sup>1</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
 
@@ -277,18 +277,18 @@ This section includes the following packages:
 
 | Name                                              | Windows     | Linux             |
 |---------------------------------------------------|-------------|-------------------|
-| TLS_RSA_WITH_RC4_128_SHA                          | ✔️          | ⚠️ <sup>1</sup>  |
-| TLS_RSA_WITH_3DES_EDE_CBC_SHA                     | ✔️          | ⚠️ <sup>1</sup>  |
+| TLS_RSA_WITH_RC4_128_SHA                          | ✔️          | ⚠️<sup>1</sup>   |
+| TLS_RSA_WITH_3DES_EDE_CBC_SHA                     | ✔️          | ⚠️<sup>1</sup>   |
 | TLS_RSA_WITH_AES_128_CBC_SHA                      | ✔️          | ✔️               |
 | TLS_RSA_WITH_AES_256_CBC_SHA                      | ✔️          | ✔️               |
 | TLS_RSA_WITH_AES_128_CBC_SHA256                   | ✔️          | ✔️               |
 | TLS_RSA_WITH_AES_128_GCM_SHA256                   | ✔️          | ✔️               |
 | TLS_RSA_WITH_AES_256_GCM_SHA384                   | ✔️          | ✔️               |
-| TLS_ECDHE_ECDSA_WITH_RC4_128_SHA                  | ✔️          | ⚠️ <sup>1</sup>  |
+| TLS_ECDHE_ECDSA_WITH_RC4_128_SHA                  | ✔️          | ⚠️<sup>1</sup>   |
 | TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA              | ✔️          | ✔️               |
 | TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA              | ✔️          | ✔️               |
-| TLS_ECDHE_RSA_WITH_RC4_128_SHA                    | ✔️          | ⚠️ <sup>1</sup>  |
-| TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA               | ✔️          | ⚠️ <sup>1</sup>  |
+| TLS_ECDHE_RSA_WITH_RC4_128_SHA                    | ✔️          | ⚠️<sup>1</sup>   |
+| TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA               | ✔️          | ⚠️<sup>1</sup>   |
 | TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA                | ✔️          | ✔️               |
 | TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA                | ✔️          | ✔️               |
 | TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256           | ✔️          | ✔️               |
