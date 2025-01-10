@@ -268,10 +268,10 @@ This section includes the following packages:
 
 | Version        | Windows     | Linux   |
 |----------------|-------------|---------|
-| SSL 3.0        | ❌          | ❌          |
-| TLS 1.0        | ✔️          | ✔️          |
-| TLS 1.2        | ✔️          | ✔️          |
-| TLS 1.3        | ✔️          | ✔️          |
+| SSL 3.0        | ❌          | ❌     |
+| TLS 1.0        | ✔️          | ✔️     |
+| TLS 1.2        | ✔️          | ✔️     |
+| TLS 1.3        | ✔️          | ✔️     |
 
 ### Cipher Suites
 
