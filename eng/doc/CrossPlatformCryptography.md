@@ -66,7 +66,9 @@ This section includes the following packages:
 | HMAC                      | ✔️ <sup>3</sup>   | ✔️ <sup>3</sup>    |
 
 <sup>1</sup>Available starting in Microsoft Go 1.24.
+
 <sup>2</sup>Requires OpenSSL 1.1.1 or later.
+
 <sup>3</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
 
 ## Symmetric encryption
@@ -144,6 +146,7 @@ This section includes the following packages:
 | PKCS1v15 Signature (SHA-3)        | ❌                   | ❌                 |
 
 <sup>1</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
+
 <sup>2</sup>Available starting in Microsoft Go 1.24.
 
 #### RSA key sizes
