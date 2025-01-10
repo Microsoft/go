@@ -204,8 +204,8 @@ This section includes the following packages:
 
 * [crypto/ed25519](https://pkg.go.dev/crypto/ed25519)
 
-| Schemes     | Windows     | Linux        |
-|-------------|-------------|--------------|
+| Schemes     | Windows    | Linux         |
+|-------------|------------|---------------|
 | Ed25519     | ❌         | ✔️           |
 | Ed25519ctx  | ❌         | ❌           |
 | Ed25519ph   | ❌         | ❌           |
@@ -263,14 +263,12 @@ This section includes the following packages:
 
 ### TLS Versions
 
-| Version        | Windows          | Linux             |
-|----------------|------------------|-------------------|
-| SSL 3.0        | ❌               | ❌               |
-| TLS 1.0        | ✔️               | ✔️               |
-| TLS 1.2        | ✔️               | ✔️               |
-| TLS 1.3        | ⚠️ <sup>1</sup>  | ⚠️ <sup>1</sup>  |
-
-<sup>1</sup>The TLS 1.3 PRF is implemented using native Go code.
+| Version        | Windows     | Linux   |
+|----------------|-------------|---------|
+| SSL 3.0        | ❌          | ❌          |
+| TLS 1.0        | ✔️          | ✔️          |
+| TLS 1.2        | ✔️          | ✔️          |
+| TLS 1.3        | ✔️          | ✔️          |
 
 ### Cipher Suites
 
