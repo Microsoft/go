@@ -1,0 +1,15 @@
+# Copyright (c) Microsoft Corporation.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+# Variables that determine where to publish internal artifacts.
+
+variables:
+  - name: blobBackupAccount
+    value: golangartifactsbackup
+  - name: blobContainer
+    value: 'https://$(blobBackupAccount).blob.core.windows.net/microsoft'
+  - name: blobPrefix
+    value: '$(PublishBranchAlias)/$(Build.BuildNumber)'
+  - name: blobDestinationUrl
+    value: '$(blobContainer)/$(blobPrefix)'
