@@ -3,8 +3,11 @@ From: Quim Muntal <qmuntaldiaz@microsoft.com>
 Date: Mon, 23 May 2022 12:59:36 +0000
 Subject: [PATCH] Vendor crypto backends
 
-To reproduce, run 'go mod vendor' in 'go/src'.
+To reproduce changes in 'src/vendor', run 'go mod vendor' in 'src'.
 ---
+ src/crypto/internal/backend/deps_ignore.go    |  16 +
+ src/go.mod                                    |   5 +
+ src/go.sum                                    |   4 +
  .../golang-fips/openssl/v2/.gitignore         |   1 +
  .../golang-fips/openssl/v2/.gitleaks.toml     |   9 +
  .../github.com/golang-fips/openssl/v2/LICENSE |  20 +
@@ -69,7 +72,8 @@ To reproduce, run 'go mod vendor' in 'go/src'.
  .../internal/subtle/aliasing.go               |  32 +
  .../internal/sysdll/sys_windows.go            |  55 ++
  src/vendor/modules.txt                        |  11 +
- 64 files changed, 10969 insertions(+), 6 deletions(-)
+ 67 files changed, 11000 insertions(+)
+ create mode 100644 src/crypto/internal/backend/deps_ignore.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitignore
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitleaks.toml
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/LICENSE
@@ -134,6 +138,53 @@ To reproduce, run 'go mod vendor' in 'go/src'.
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/internal/subtle/aliasing.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/internal/sysdll/sys_windows.go
 
+diff --git a/src/crypto/internal/backend/deps_ignore.go b/src/crypto/internal/backend/deps_ignore.go
+new file mode 100644
+index 00000000000000..7e537a55af954e
+--- /dev/null
++++ b/src/crypto/internal/backend/deps_ignore.go
+@@ -0,0 +1,16 @@
++// Copyright 2025 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build ignore
++
++package backend
++
++import (
++	_ "github.com/golang-fips/openssl/v2"
++	_ "github.com/microsoft/go-crypto-winnative/cng"
++)
++
++// This file is here just to declare the external dependencies
++// that are used by the backend package. This allows to track
++// their versions in a single patch file.
+diff --git a/src/go.mod b/src/go.mod
+index 7a1318dcac32ba..4ca039fa96ba3c 100644
+--- a/src/go.mod
++++ b/src/go.mod
+@@ -11,3 +11,8 @@ require (
+ 	golang.org/x/sys v0.28.0 // indirect
+ 	golang.org/x/text v0.21.0 // indirect
+ )
++
++require (
++	github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337
++	github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37
++)
+diff --git a/src/go.sum b/src/go.sum
+index 9e661352f16e0b..abebb59dcd7739 100644
+--- a/src/go.sum
++++ b/src/go.sum
+@@ -1,3 +1,7 @@
++github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337 h1:OhuURhDVbg+f/BvlG+qT5sQVkutwhI0Kmsy7koQ4l9A=
++github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
++github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37 h1:KB8xmJcFSPlZFMg2mxz5b6DCE8k1qpHy2HFevAJLELI=
++github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37/go.mod h1:JkxQeL8dGcyCuKjn1Etz4NmQrOMImMy4BA9hptEfVFA=
+ golang.org/x/crypto v0.30.0 h1:RwoQn3GkWiMkzlX562cLB7OxWvjH1L8xutO2WoJcRoY=
+ golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
+ golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1 h1:+Yk1FZ5E+/ewA0nOO/HRYs9E4yeqpGOShuSAdzCNNoQ=
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/.gitignore b/src/vendor/github.com/golang-fips/openssl/v2/.gitignore
 new file mode 100644
 index 00000000000000..79b5594df7fa29
