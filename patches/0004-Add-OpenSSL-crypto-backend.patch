@@ -492,10 +492,10 @@ index 00000000000000..44d91d5b7ba3d5
 +	return openssl.VerifyDSA(pub, hashed, sig)
 +}
 diff --git a/src/crypto/rsa/rsa_test.go b/src/crypto/rsa/rsa_test.go
-index f9543d9cc89e7b..f07c75821aab13 100644
+index b527a355074482..906c469482030a 100644
 --- a/src/crypto/rsa/rsa_test.go
 +++ b/src/crypto/rsa/rsa_test.go
-@@ -846,6 +846,9 @@ func TestDecryptOAEP(t *testing.T) {
+@@ -863,6 +863,9 @@ func TestDecryptOAEP(t *testing.T) {
  }
  
  func Test2DecryptOAEP(t *testing.T) {
@@ -528,10 +528,10 @@ index 9e661352f16e0b..e51f0f57540a83 100644
  golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
  golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1 h1:+Yk1FZ5E+/ewA0nOO/HRYs9E4yeqpGOShuSAdzCNNoQ=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index b39db00839ab43..392f8d8c52c4b6 100644
+index 30811455e88418..3de94c93629e3d 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -509,12 +509,14 @@ var depsRules = `
+@@ -509,7 +509,7 @@ var depsRules = `
  	crypto/internal/boring/sig,
  	crypto/internal/boring/syso,
  	encoding/binary,
@@ -540,14 +540,16 @@ index b39db00839ab43..392f8d8c52c4b6 100644
  	crypto/internal/backend/fips140
  	< crypto/internal/fips140only
  	< crypto
- 	< crypto/subtle
+@@ -517,6 +517,8 @@ var depsRules = `
+ 	< crypto/sha3
+ 	< crypto/internal/fips140hash
  	< crypto/cipher
 +	< github.com/golang-fips/openssl/v2/internal/subtle
 +	< github.com/golang-fips/openssl/v2
  	< crypto/internal/boring
  	< crypto/internal/backend
  	< crypto/boring
-@@ -538,6 +540,7 @@ var depsRules = `
+@@ -540,6 +542,7 @@ var depsRules = `
  	# CRYPTO-MATH is crypto that exposes math/big APIs - no cgo, net; fmt now ok.
  
  	CRYPTO, FMT, math/big
@@ -555,7 +557,7 @@ index b39db00839ab43..392f8d8c52c4b6 100644
  	< crypto/internal/boring/bbig
  	< crypto/internal/backend/bbig
  	< crypto/rand
-@@ -842,7 +845,7 @@ var buildIgnore = []byte("\n//go:build ignore")
+@@ -844,7 +847,7 @@ var buildIgnore = []byte("\n//go:build ignore")
  
  func findImports(pkg string) ([]string, error) {
  	vpkg := pkg
@@ -564,7 +566,7 @@ index b39db00839ab43..392f8d8c52c4b6 100644
  		vpkg = "vendor/" + pkg
  	}
  	dir := filepath.Join(Default.GOROOT, "src", vpkg)
-@@ -852,7 +855,7 @@ func findImports(pkg string) ([]string, error) {
+@@ -854,7 +857,7 @@ func findImports(pkg string) ([]string, error) {
  	}
  	var imports []string
  	var haveImport = map[string]bool{}
