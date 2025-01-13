@@ -77,11 +77,11 @@ index 00000000000000..92623031fd87d0
 +var Dec = bbig.Dec
 diff --git a/src/crypto/internal/backend/cng_windows.go b/src/crypto/internal/backend/cng_windows.go
 new file mode 100644
-index 00000000000000..ec343f2e6f840d
+index 00000000000000..495260a08dd029
 --- /dev/null
 +++ b/src/crypto/internal/backend/cng_windows.go
 @@ -0,0 +1,320 @@
-+// Copyright 2025 The Go Authors. All rights reserved.
++// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
 +
