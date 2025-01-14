@@ -476,19 +476,19 @@ index 00000000000000..0f3aea733ac2a5
 +	return openssl.VerifyDSA(pub, hashed, sig)
 +}
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index 30811455e88418..3de94c93629e3d 100644
+index a46d6c034ca1e0..12086de2c2e766 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -509,7 +509,7 @@ var depsRules = `
+@@ -505,7 +505,7 @@ var depsRules = `
+ 	NONE < crypto/internal/boring/sig, crypto/internal/boring/syso;
+ 	sync/atomic < crypto/internal/boring/bcache;
+ 
+-	FIPS, internal/godebug, hash, embed,
++	FIPS, internal/godebug, hash, embed, encoding/binary,
  	crypto/internal/boring/sig,
  	crypto/internal/boring/syso,
- 	encoding/binary,
--	crypto/internal/boring/bcache
-+	crypto/internal/boring/bcache,
- 	crypto/internal/backend/fips140
- 	< crypto/internal/fips140only
- 	< crypto
-@@ -517,6 +517,8 @@ var depsRules = `
+ 	crypto/internal/boring/bcache,
+@@ -516,6 +516,8 @@ var depsRules = `
  	< crypto/sha3
  	< crypto/internal/fips140hash
  	< crypto/cipher
@@ -497,7 +497,7 @@ index 30811455e88418..3de94c93629e3d 100644
  	< crypto/internal/boring
  	< crypto/internal/backend
  	< crypto/boring
-@@ -540,6 +542,7 @@ var depsRules = `
+@@ -538,6 +540,7 @@ var depsRules = `
  	# CRYPTO-MATH is crypto that exposes math/big APIs - no cgo, net; fmt now ok.
  
  	CRYPTO, FMT, math/big
@@ -505,7 +505,7 @@ index 30811455e88418..3de94c93629e3d 100644
  	< crypto/internal/boring/bbig
  	< crypto/internal/backend/bbig
  	< crypto/rand
-@@ -844,7 +847,7 @@ var buildIgnore = []byte("\n//go:build ignore")
+@@ -842,7 +845,7 @@ var buildIgnore = []byte("\n//go:build ignore")
  
  func findImports(pkg string) ([]string, error) {
  	vpkg := pkg
@@ -514,7 +514,7 @@ index 30811455e88418..3de94c93629e3d 100644
  		vpkg = "vendor/" + pkg
  	}
  	dir := filepath.Join(Default.GOROOT, "src", vpkg)
-@@ -854,7 +857,7 @@ func findImports(pkg string) ([]string, error) {
+@@ -852,7 +855,7 @@ func findImports(pkg string) ([]string, error) {
  	}
  	var imports []string
  	var haveImport = map[string]bool{}
