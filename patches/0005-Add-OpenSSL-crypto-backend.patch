@@ -135,11 +135,11 @@ index 00000000000000..118efa3a492a7d
 +}
 diff --git a/src/crypto/internal/backend/openssl_linux.go b/src/crypto/internal/backend/openssl_linux.go
 new file mode 100644
-index 00000000000000..101b277a07408e
+index 00000000000000..44d91d5b7ba3d5
 --- /dev/null
 +++ b/src/crypto/internal/backend/openssl_linux.go
 @@ -0,0 +1,345 @@
-+// Copyright 2025 The Go Authors. All rights reserved.
++// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
 +
