@@ -25,6 +25,7 @@ Subject: [PATCH] Use crypto backends
  src/crypto/ed25519/boring.go                  |  71 +++++++
  src/crypto/ed25519/ed25519.go                 |  73 +++++++
  src/crypto/ed25519/notboring.go               |  16 ++
+ src/crypto/fips140/fips140.go                 |   3 +-
  src/crypto/hkdf/hkdf.go                       |  14 ++
  src/crypto/hkdf/hkdf_test.go                  |   2 +-
  src/crypto/hmac/hmac.go                       |   2 +-
@@ -60,18 +61,18 @@ Subject: [PATCH] Use crypto backends
  src/crypto/tls/handshake_client_tls13.go      |  16 +-
  src/crypto/tls/handshake_server.go            |  10 +-
  src/crypto/tls/handshake_server_tls13.go      |  27 ++-
- src/crypto/tls/internal/fips140tls/fipstls.go |   3 +-
+ src/crypto/tls/internal/fips140tls/fipstls.go |   4 +-
  src/crypto/tls/internal/tls13/doc.go          |  18 ++
  src/crypto/tls/internal/tls13/tls13.go        | 182 ++++++++++++++++++
  src/crypto/tls/key_schedule.go                |   2 +-
  src/crypto/tls/prf.go                         |  41 ++++
- src/go/build/deps_test.go                     |   3 +-
+ src/go/build/deps_test.go                     |   5 +-
  src/hash/boring_test.go                       |   9 +
  src/hash/example_test.go                      |   2 +
  src/hash/marshal_test.go                      |   9 +
  src/hash/notboring_test.go                    |   9 +
  src/net/smtp/smtp_test.go                     |  72 ++++---
- 67 files changed, 1009 insertions(+), 97 deletions(-)
+ 68 files changed, 1012 insertions(+), 100 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -846,6 +847,25 @@ index 00000000000000..b0cdd44d81c753
 +func boringPrivateKey(PrivateKey) (*boring.PrivateKeyEd25519, error) {
 +	panic("boringcrypto: not available")
 +}
+diff --git a/src/crypto/fips140/fips140.go b/src/crypto/fips140/fips140.go
+index 41d0d170cf9fc8..b6b413532d8104 100644
+--- a/src/crypto/fips140/fips140.go
++++ b/src/crypto/fips140/fips140.go
+@@ -5,6 +5,7 @@
+ package fips140
+ 
+ import (
++	bfips140 "crypto/internal/backend/fips140"
+ 	"crypto/internal/fips140"
+ 	"crypto/internal/fips140/check"
+ 	"internal/godebug"
+@@ -29,5 +30,5 @@ func Enabled() bool {
+ 	if fips140.Enabled && !check.Verified {
+ 		panic("crypto/fips140: FIPS 140-3 mode enabled, but integrity check didn't pass")
+ 	}
+-	return fips140.Enabled
++	return fips140.Enabled || bfips140.Enabled()
+ }
 diff --git a/src/crypto/hkdf/hkdf.go b/src/crypto/hkdf/hkdf.go
 index 6b02522866d57f..37e67ec184af5d 100644
 --- a/src/crypto/hkdf/hkdf.go
@@ -1938,23 +1958,23 @@ index 76fff6974e7403..3ef8b56e5c7898 100644
  			echTranscript.Sum(nil),
  			8,
 diff --git a/src/crypto/tls/internal/fips140tls/fipstls.go b/src/crypto/tls/internal/fips140tls/fipstls.go
-index 24d78d60cf5b64..a6bfd3f17c1911 100644
+index 24d78d60cf5b64..0b87185683ab8b 100644
 --- a/src/crypto/tls/internal/fips140tls/fipstls.go
 +++ b/src/crypto/tls/internal/fips140tls/fipstls.go
-@@ -6,6 +6,7 @@
+@@ -6,14 +6,14 @@
  package fips140tls
  
  import (
-+	bfips140 "crypto/internal/backend/fips140"
- 	"crypto/internal/fips140"
+-	"crypto/internal/fips140"
++	"crypto/fips140"
  	"sync/atomic"
  )
-@@ -13,7 +14,7 @@ import (
+ 
  var required atomic.Bool
  
  func init() {
 -	if fips140.Enabled {
-+	if fips140.Enabled || bfips140.Enabled() {
++	if fips140.Enabled() {
  		Force()
  	}
  }
@@ -2253,9 +2273,18 @@ index e7369542a73270..ff52175e4ac636 100644
  	}
  }
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index 8d175079a8c793..c2846667df81de 100644
+index 8d175079a8c793..48879720026837 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
+@@ -495,7 +495,7 @@ var depsRules = `
+ 
+ 	syscall < crypto/internal/backend/fips140;
+ 
+-	FIPS, internal/godebug < crypto/fips140;
++	FIPS, internal/godebug, crypto/internal/backend/fips140 < crypto/fips140;
+ 
+ 	crypto, hash !< FIPS;
+ 
 @@ -537,6 +537,7 @@ var depsRules = `
  	  crypto/pbkdf2,
  	  crypto/ecdh,
@@ -2269,7 +2298,7 @@ index 8d175079a8c793..c2846667df81de 100644
  	# TLS, Prince of Dependencies.
  
 -	FIPS, sync/atomic < crypto/tls/internal/fips140tls;
-+	FIPS, sync/atomic, crypto/internal/backend/fips140 < crypto/tls/internal/fips140tls;
++	crypto/fips140, sync/atomic < crypto/tls/internal/fips140tls;
  
  	crypto/internal/boring/sig, crypto/tls/internal/fips140tls < crypto/tls/fipsonly;
  
