@@ -4,6 +4,7 @@ Date: Mon, 23 May 2022 12:59:36 +0000
 Subject: [PATCH] Vendor crypto backends
 
 To reproduce changes in 'src/vendor', run 'go mod vendor' in 'src'.
+Use a 'go' that was recently built by the current branch to ensure stable results.
 ---
  src/crypto/internal/backend/deps_ignore.go    |  16 +
  src/go.mod                                    |   5 +
