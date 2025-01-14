@@ -23,9 +23,20 @@ OpenSSL is normally available on Linux distributions, but it may not be installe
 If it is not installed, you can install it using the package manager of your distribution.
 
 OpenSSL 3 implements all the cryptographic algorithms using [Providers](https://docs.openssl.org/3.0/man7/crypto/#providers).
-Microsoft Go officially supports the built-in providers and [SCOSSL (SymCrypt provider for OpenSSL)](https://github.com/microsoft/SymCrypt-OpenSSL).
-The minimum SCOSSL version required is v1.6.1.
-The following tables assume that the SCOSSL provider is used together with the built-in providers.
+Microsoft Go officially supports the built-in providers and [SCOSSL (SymCrypt provider for OpenSSL)](https://github.com/microsoft/SymCrypt-OpenSSL) v1.6.1 or later.
+SCOSSL is expected to be used with the default built-in provider enable as a fallback (which is the case when using [Azure Linux 3](https://github.com/microsoft/AzureLinux)).
+
+## Table legend
+
+The following table legend is used to indicate the level of support for each cryptographic algorithm:
+
+| Symbol | Meaning                                                                                                            |
+|--------|--------------------------------------------------------------------------------------------------------------------|
+| ✔️     | Supported, possibly with minor limitations that don't require user action when using the latest Go and OS versions |
+| ⚠️     | Supported with limitations that require user action                                                                |
+| ❌     | Not supported                                                                                                      |
+
+When an algorithm is not supported or the limitations are not met, Microsoft Go will fall back to the Go implementation.
 
 ## Hash and Message Authentication Algorithms
 
