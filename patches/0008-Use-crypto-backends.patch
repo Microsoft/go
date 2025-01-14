@@ -1,60 +1,56 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: qmuntal <qmuntaldiaz@microsoft.com>
-Date: Thu, 30 Jun 2022 10:03:03 +0200
-Subject: [PATCH] Add crypto backend foundation
+Date: Tue, 14 Jan 2025 11:10:21 +0100
+Subject: [PATCH] Use crypto backends
 
 ---
  src/cmd/api/boring_test.go                    |   2 +-
- src/cmd/go/go_boring_test.go                  |   2 +-
+ src/cmd/dist/test.go                          |   7 +-
+ src/cmd/go/go_boring_test.go                  |  11 +-
+ src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
+ .../go/testdata/script/gopath_std_vendor.txt  |   9 +
  src/crypto/aes/aes.go                         |   2 +-
  src/crypto/boring/boring.go                   |   4 +-
  src/crypto/cipher/ctr_aes_test.go             |   2 +-
  src/crypto/cipher/gcm_test.go                 |   2 +-
  src/crypto/des/cipher.go                      |   7 +
- src/crypto/dsa/boring.go                      | 113 +++++++++
- src/crypto/dsa/dsa.go                         |  88 +++++++
+ src/crypto/dsa/boring.go                      | 113 +++++++++++
+ src/crypto/dsa/dsa.go                         |  88 +++++++++
  src/crypto/dsa/notboring.go                   |  16 ++
  src/crypto/ecdh/ecdh.go                       |   2 +-
  src/crypto/ecdh/ecdh_test.go                  |   4 +
  src/crypto/ecdh/nist.go                       |   2 +-
+ src/crypto/ecdsa/badlinkname.go               |  19 ++
  src/crypto/ecdsa/boring.go                    |   6 +-
- src/crypto/ecdsa/ecdsa.go                     |   4 +-
+ src/crypto/ecdsa/ecdsa.go                     |  10 +-
  src/crypto/ecdsa/notboring.go                 |   4 +-
- src/crypto/ed25519/boring.go                  |  71 ++++++
- src/crypto/ed25519/ed25519.go                 |  73 ++++++
+ src/crypto/ed25519/boring.go                  |  71 +++++++
+ src/crypto/ed25519/ed25519.go                 |  73 +++++++
+ src/crypto/ed25519/ed25519_test.go            |   3 +-
  src/crypto/ed25519/notboring.go               |  16 ++
  src/crypto/hkdf/hkdf.go                       |  14 ++
  src/crypto/hkdf/hkdf_test.go                  |   2 +-
  src/crypto/hmac/hmac.go                       |   2 +-
  src/crypto/hmac/hmac_test.go                  |   2 +-
- src/crypto/internal/backend/backend_test.go   |  30 +++
- src/crypto/internal/backend/bbig/big.go       |  17 ++
- src/crypto/internal/backend/common.go         |  72 ++++++
- .../internal/backend/fips140/fips140.go       |  55 +++++
- .../internal/backend/fips140/isrequirefips.go |   9 +
- .../internal/backend/fips140/norequirefips.go |   9 +
- .../backend/fips140/nosystemcrypto.go         |  11 +
- src/crypto/internal/backend/nobackend.go      | 233 ++++++++++++++++++
- src/crypto/internal/backend/stub.s            |  10 +
  src/crypto/internal/cryptotest/allocations.go |   2 +-
  .../internal/cryptotest/implementations.go    |   2 +-
- src/crypto/md5/md5.go                         |   7 +
+ src/crypto/md5/md5.go                         |  10 +
  src/crypto/md5/md5_test.go                    |  21 ++
  src/crypto/pbkdf2/pbkdf2.go                   |   4 +
  src/crypto/pbkdf2/pbkdf2_test.go              |   2 +-
  src/crypto/purego_test.go                     |   2 +-
  src/crypto/rand/rand.go                       |   2 +-
  src/crypto/rc4/rc4.go                         |  18 ++
- src/crypto/rsa/boring.go                      |   6 +-
+ src/crypto/rsa/boring.go                      |  12 +-
  src/crypto/rsa/boring_test.go                 |   2 +-
- src/crypto/rsa/fips.go                        |  10 +-
+ src/crypto/rsa/fips.go                        |  14 +-
  src/crypto/rsa/notboring.go                   |   4 +-
  src/crypto/rsa/pkcs1v15.go                    |   6 +-
  src/crypto/rsa/pkcs1v15_test.go               |   5 +
- src/crypto/rsa/pss_test.go                    |   5 +
+ src/crypto/rsa/pss_test.go                    |  13 +-
  src/crypto/rsa/rsa.go                         |   4 +-
- src/crypto/rsa/rsa_test.go                    |  12 +-
- src/crypto/sha1/sha1.go                       |   2 +-
+ src/crypto/rsa/rsa_test.go                    |  15 +-
+ src/crypto/sha1/sha1.go                       |   8 +-
  src/crypto/sha1/sha1_test.go                  |  19 +-
  src/crypto/sha256/sha256.go                   |   6 +-
  src/crypto/sha256/sha256_test.go              |  29 +++
@@ -63,33 +59,29 @@ Subject: [PATCH] Add crypto backend foundation
  src/crypto/tls/cipher_suites.go               |   2 +-
  src/crypto/tls/fipsonly/fipsonly.go           |   2 +-
  src/crypto/tls/fipsonly/fipsonly_test.go      |   2 +-
- src/crypto/tls/handshake_client.go            |  10 +-
- src/crypto/tls/handshake_client_tls13.go      |  14 +-
+ src/crypto/tls/handshake_client.go            |  12 +-
+ src/crypto/tls/handshake_client_tls13.go      |  16 +-
  src/crypto/tls/handshake_server.go            |  10 +-
- src/crypto/tls/handshake_server_tls13.go      |  25 +-
+ src/crypto/tls/handshake_server_tls13.go      |  27 ++-
  src/crypto/tls/internal/fips140tls/fipstls.go |   3 +-
- src/crypto/tls/prf.go                         |  41 +++
- src/go/build/deps_test.go                     |   8 +-
+ src/crypto/tls/internal/tls13/doc.go          |  18 ++
+ src/crypto/tls/internal/tls13/tls13.go        | 182 ++++++++++++++++++
+ src/crypto/tls/key_schedule.go                |   2 +-
+ src/crypto/tls/prf.go                         |  41 ++++
+ src/go/build/deps_test.go                     |   3 +-
  src/hash/boring_test.go                       |   9 +
  src/hash/example_test.go                      |   2 +
  src/hash/marshal_test.go                      |   9 +
  src/hash/notboring_test.go                    |   9 +
- src/net/smtp/smtp_test.go                     |  72 ++++--
- src/runtime/runtime_boring.go                 |   5 +
- 72 files changed, 1221 insertions(+), 89 deletions(-)
+ src/net/smtp/smtp_test.go                     |  72 ++++---
+ 70 files changed, 1042 insertions(+), 105 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
+ create mode 100644 src/crypto/ecdsa/badlinkname.go
  create mode 100644 src/crypto/ed25519/boring.go
  create mode 100644 src/crypto/ed25519/notboring.go
- create mode 100644 src/crypto/internal/backend/backend_test.go
- create mode 100644 src/crypto/internal/backend/bbig/big.go
- create mode 100644 src/crypto/internal/backend/common.go
- create mode 100644 src/crypto/internal/backend/fips140/fips140.go
- create mode 100644 src/crypto/internal/backend/fips140/isrequirefips.go
- create mode 100644 src/crypto/internal/backend/fips140/norequirefips.go
- create mode 100644 src/crypto/internal/backend/fips140/nosystemcrypto.go
- create mode 100644 src/crypto/internal/backend/nobackend.go
- create mode 100644 src/crypto/internal/backend/stub.s
+ create mode 100644 src/crypto/tls/internal/tls13/doc.go
+ create mode 100644 src/crypto/tls/internal/tls13/tls13.go
  create mode 100644 src/hash/boring_test.go
  create mode 100644 src/hash/notboring_test.go
 
@@ -106,11 +98,36 @@ index f0e3575637c62a..9eab3b4e66e60b 100644
  
  package main
  
+diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
+index 0de6e80fd985a3..783632120eada8 100644
+--- a/src/cmd/dist/test.go
++++ b/src/cmd/dist/test.go
+@@ -876,7 +876,7 @@ func (t *tester) registerTests() {
+ 	}
+ 
+ 	if t.extLink() && !t.compileOnly {
+-		if goos != "android" { // Android does not support non-PIE linking
++		if goos != "android" && !(goos == "darwin" && (strings.Contains(goexperiment, "systemcrypto") || strings.Contains(goexperiment, "darwincrypto"))) { // Android does not support non-PIE linking
+ 			t.registerTest("external linking, -buildmode=exe",
+ 				&goTest{
+ 					variant:   "exe_external",
+@@ -1161,6 +1161,11 @@ func (t *tester) internalLink() bool {
+ 	if goos == "windows" && goarch == "arm64" {
+ 		return false
+ 	}
++	if goos == "darwin" && (strings.Contains(goexperiment, "systemcrypto") || strings.Contains(goexperiment, "darwincrypto")) {
++		// linkmode=internal isn't supported with system/darwin crypto.
++		// see https://github.com/microsoft/go-crypto-darwin/issues/33
++		return false
++	}
+ 	// Internally linking cgo is incomplete on some architectures.
+ 	// https://golang.org/issue/10373
+ 	// https://golang.org/issue/14449
 diff --git a/src/cmd/go/go_boring_test.go b/src/cmd/go/go_boring_test.go
-index ed0fbf3d53d75b..06478963f4be44 100644
+index ed0fbf3d53d75b..8111b143a1295b 100644
 --- a/src/cmd/go/go_boring_test.go
 +++ b/src/cmd/go/go_boring_test.go
-@@ -2,7 +2,7 @@
+@@ -2,13 +2,20 @@
  // Use of this source code is governed by a BSD-style
  // license that can be found in the LICENSE file.
  
@@ -119,6 +136,52 @@ index ed0fbf3d53d75b..06478963f4be44 100644
  
  package main_test
  
+-import "testing"
++import (
++	"internal/goexperiment"
++	"testing"
++)
+ 
+ func TestBoringInternalLink(t *testing.T) {
++	if goexperiment.DarwinCrypto {
++		// https://github.com/microsoft/go-crypto-darwin/issues/33
++		t.Skip("skipping on Darwin")
++	}
+ 	tg := testgo(t)
+ 	defer tg.cleanup()
+ 	tg.parallel()
+diff --git a/src/cmd/go/testdata/script/darwin_no_cgo.txt b/src/cmd/go/testdata/script/darwin_no_cgo.txt
+index fa445925b7c374..e36ac86fcaa58d 100644
+--- a/src/cmd/go/testdata/script/darwin_no_cgo.txt
++++ b/src/cmd/go/testdata/script/darwin_no_cgo.txt
+@@ -4,6 +4,8 @@
+ # of cmd/go, which imports approximately everything
+ # in std (certainly everything relevant).
+ [!GOOS:darwin] skip
++[GOEXPERIMENT:darwincrypto] skip
++[GOEXPERIMENT:systemcrypto] skip
+ go list -deps cmd/go
+ ! stdout runtime/cgo
+ 
+diff --git a/src/cmd/go/testdata/script/gopath_std_vendor.txt b/src/cmd/go/testdata/script/gopath_std_vendor.txt
+index 4aaf46b5d0f0dc..ec58a217400caa 100644
+--- a/src/cmd/go/testdata/script/gopath_std_vendor.txt
++++ b/src/cmd/go/testdata/script/gopath_std_vendor.txt
+@@ -1,5 +1,14 @@
+ env GO111MODULE=off
+ 
++# Disable systemcrypto while evaluating test dependencies to avoid importing
++# vendored crypto module dependencies like golang-fips/openssl. This test script
++# is not set up to handle any vendored libraries being imported other than
++# golang.org/x/net/http2/hpack, so we must make sure it is the only one.
++#
++# See https://github.com/microsoft/go/issues/481 for more details, such as the
++# dependency chain that would cause the failure if the gocrypt tag isn't used.
++env GOEXPERIMENT=none
++
+ [!compiler:gc] skip
+ 
+ go list -f '{{.Dir}}' vendor/golang.org/x/net/http2/hpack
 diff --git a/src/crypto/aes/aes.go b/src/crypto/aes/aes.go
 index 5bc2d13d673e0a..b803c77be62a66 100644
 --- a/src/crypto/aes/aes.go
@@ -534,6 +597,31 @@ index acef8298943c2b..ca6171cf775117 100644
  	"crypto/internal/fips140/ecdh"
  	"crypto/internal/fips140only"
  	"errors"
+diff --git a/src/crypto/ecdsa/badlinkname.go b/src/crypto/ecdsa/badlinkname.go
+new file mode 100644
+index 00000000000000..1dc05d09b2062d
+--- /dev/null
++++ b/src/crypto/ecdsa/badlinkname.go
+@@ -0,0 +1,19 @@
++// Copyright 2025 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.systemcrypto
++
++package ecdsa
++
++import _ "unsafe"
++
++// The symbols below are pulled by some crypto backend in the Microsoft Go compiler.
++// We provide a push linkname here, to keep them accessible with pull linknames.
++
++//go:linkname encodeSignature
++//go:linkname parseSignature
++
++// This supplements other linknames that are already added by
++// https://github.com/golang/go/commit/41aab30bd260297ad8ddad47e98fdf8390a9a67e
++// See that commit for more information.
 diff --git a/src/crypto/ecdsa/boring.go b/src/crypto/ecdsa/boring.go
 index 275c60b4de49eb..ff8bddf28c4545 100644
 --- a/src/crypto/ecdsa/boring.go
@@ -556,7 +644,7 @@ index 275c60b4de49eb..ff8bddf28c4545 100644
  	"math/big"
  )
 diff --git a/src/crypto/ecdsa/ecdsa.go b/src/crypto/ecdsa/ecdsa.go
-index f682e6b1c6cfa6..049da55bd70f2c 100644
+index cb308b41e9df86..5c841d2f021967 100644
 --- a/src/crypto/ecdsa/ecdsa.go
 +++ b/src/crypto/ecdsa/ecdsa.go
 @@ -20,8 +20,8 @@ import (
@@ -568,8 +656,35 @@ index f682e6b1c6cfa6..049da55bd70f2c 100644
 +	boring "crypto/internal/backend"
 +	"crypto/internal/backend/bbig"
  	"crypto/internal/fips140/ecdsa"
+ 	"crypto/internal/fips140hash"
  	"crypto/internal/fips140only"
- 	"crypto/internal/randutil"
+@@ -162,7 +162,7 @@ func (priv *PrivateKey) Sign(rand io.Reader, digest []byte, opts crypto.SignerOp
+ func GenerateKey(c elliptic.Curve, rand io.Reader) (*PrivateKey, error) {
+ 	randutil.MaybeReadByte(rand)
+ 
+-	if boring.Enabled && rand == boring.RandReader {
++	if boring.Enabled && rand == boring.RandReader && boring.IsCurveSupported(c.Params().Name) {
+ 		x, y, d, err := boring.GenerateKeyECDSA(c.Params().Name)
+ 		if err != nil {
+ 			return nil, err
+@@ -211,7 +211,7 @@ var errNoAsm = errors.New("no assembly implementation available")
+ func SignASN1(rand io.Reader, priv *PrivateKey, hash []byte) ([]byte, error) {
+ 	randutil.MaybeReadByte(rand)
+ 
+-	if boring.Enabled && rand == boring.RandReader {
++	if boring.Enabled && rand == boring.RandReader && boring.IsCurveSupported(priv.Curve.Params().Name) {
+ 		b, err := boringPrivateKey(priv)
+ 		if err != nil {
+ 			return nil, err
+@@ -326,7 +326,7 @@ func addASN1IntBytes(b *cryptobyte.Builder, bytes []byte) {
+ // The inputs are not considered confidential, and may leak through timing side
+ // channels, or if an attacker has control of part of the inputs.
+ func VerifyASN1(pub *PublicKey, hash, sig []byte) bool {
+-	if boring.Enabled {
++	if boring.Enabled && boring.IsCurveSupported(pub.Curve.Params().Name) {
+ 		key, err := boringPublicKey(pub)
+ 		if err != nil {
+ 			return false
 diff --git a/src/crypto/ecdsa/notboring.go b/src/crypto/ecdsa/notboring.go
 index 039bd82ed21f9f..69a97d9bf250be 100644
 --- a/src/crypto/ecdsa/notboring.go
@@ -590,7 +705,7 @@ index 039bd82ed21f9f..69a97d9bf250be 100644
  	panic("boringcrypto: not available")
 diff --git a/src/crypto/ed25519/boring.go b/src/crypto/ed25519/boring.go
 new file mode 100644
-index 00000000000000..cce33e4d6cc927
+index 00000000000000..4e18cdfbaad4fd
 --- /dev/null
 +++ b/src/crypto/ed25519/boring.go
 @@ -0,0 +1,71 @@
@@ -791,6 +906,27 @@ index c1f8ff784e4a5c..6476bfbe896d6c 100644
  		return ed25519.Verify(k, message, sig)
  	default:
  		return errors.New("ed25519: expected opts.Hash zero (unhashed message, for standard Ed25519) or SHA-512 (for Ed25519ph)")
+diff --git a/src/crypto/ed25519/ed25519_test.go b/src/crypto/ed25519/ed25519_test.go
+index 87d0132df11d8b..00dd5224a70418 100644
+--- a/src/crypto/ed25519/ed25519_test.go
++++ b/src/crypto/ed25519/ed25519_test.go
+@@ -13,6 +13,7 @@ import (
+ 	"crypto/rand"
+ 	"crypto/sha512"
+ 	"encoding/hex"
++	"internal/goexperiment"
+ 	"log"
+ 	"os"
+ 	"strings"
+@@ -316,7 +317,7 @@ func TestGolden(t *testing.T) {
+ 		copy(priv[32:], pubKey)
+ 
+ 		sig2 := Sign(priv[:], msg)
+-		if !bytes.Equal(sig, sig2[:]) {
++		if !bytes.Equal(sig, sig2[:]) && !goexperiment.DarwinCrypto {
+ 			t.Errorf("different signature result on line %d: %x vs %x", lineNo, sig, sig2)
+ 		}
+ 
 diff --git a/src/crypto/ed25519/notboring.go b/src/crypto/ed25519/notboring.go
 new file mode 100644
 index 00000000000000..77b69a3be88183
@@ -814,7 +950,7 @@ index 00000000000000..77b69a3be88183
 +	panic("boringcrypto: not available")
 +}
 diff --git a/src/crypto/hkdf/hkdf.go b/src/crypto/hkdf/hkdf.go
-index 7cfbe2c60de356..78139ed6170da5 100644
+index 6b02522866d57f..37e67ec184af5d 100644
 --- a/src/crypto/hkdf/hkdf.go
 +++ b/src/crypto/hkdf/hkdf.go
 @@ -11,6 +11,7 @@
@@ -823,40 +959,40 @@ index 7cfbe2c60de356..78139ed6170da5 100644
  import (
 +	boring "crypto/internal/backend"
  	"crypto/internal/fips140/hkdf"
+ 	"crypto/internal/fips140hash"
  	"crypto/internal/fips140only"
- 	"errors"
-@@ -27,6 +28,9 @@ func Extract[H hash.Hash](h func() H, secret, salt []byte) ([]byte, error) {
- 	if err := checkFIPS140Only(h, secret); err != nil {
+@@ -29,6 +30,9 @@ func Extract[H hash.Hash](h func() H, secret, salt []byte) ([]byte, error) {
+ 	if err := checkFIPS140Only(fh, secret); err != nil {
  		return nil, err
  	}
 +	if boring.Enabled && boring.SupportsHKDF() {
-+		return boring.ExtractHKDF(func() hash.Hash { return h() }, secret, salt)
++		return boring.ExtractHKDF(fh, secret, salt)
 +	}
- 	return hkdf.Extract(h, secret, salt), nil
+ 	return hkdf.Extract(fh, secret, salt), nil
  }
  
-@@ -47,6 +51,9 @@ func Expand[H hash.Hash](h func() H, pseudorandomKey []byte, info string, keyLen
+@@ -50,6 +54,9 @@ func Expand[H hash.Hash](h func() H, pseudorandomKey []byte, info string, keyLen
  		return nil, errors.New("hkdf: requested key length too large")
  	}
  
 +	if boring.Enabled && boring.SupportsHKDF() {
-+		return boring.ExpandHKDF(func() hash.Hash { return h() }, pseudorandomKey, []byte(info), keyLength)
++		return boring.ExpandHKDF(fh, pseudorandomKey, []byte(info), keyLength)
 +	}
- 	return hkdf.Expand(h, pseudorandomKey, info, keyLength), nil
+ 	return hkdf.Expand(fh, pseudorandomKey, info, keyLength), nil
  }
  
-@@ -63,6 +70,13 @@ func Key[Hash hash.Hash](h func() Hash, secret, salt []byte, info string, keyLen
+@@ -67,6 +74,13 @@ func Key[Hash hash.Hash](h func() Hash, secret, salt []byte, info string, keyLen
  		return nil, errors.New("hkdf: requested key length too large")
  	}
  
 +	if boring.Enabled && boring.SupportsHKDF() {
-+		pseudorandomKey, err := boring.ExtractHKDF(func() hash.Hash { return h() }, secret, salt)
++		pseudorandomKey, err := boring.ExtractHKDF(fh, secret, salt)
 +		if err != nil {
 +			return nil, err
 +		}
-+		return boring.ExpandHKDF(func() hash.Hash { return h() }, pseudorandomKey, []byte(info), keyLength)
++		return boring.ExpandHKDF(fh, pseudorandomKey, []byte(info), keyLength)
 +	}
- 	return hkdf.Key(h, secret, salt, info, keyLength), nil
+ 	return hkdf.Key(fh, secret, salt, info, keyLength), nil
  }
  
 diff --git a/src/crypto/hkdf/hkdf_test.go b/src/crypto/hkdf/hkdf_test.go
@@ -873,7 +1009,7 @@ index 201b440289bb2d..4ed4960ff35b66 100644
  	"crypto/md5"
  	"crypto/sha1"
 diff --git a/src/crypto/hmac/hmac.go b/src/crypto/hmac/hmac.go
-index 72f5a4abea9d35..c88c6cbd128451 100644
+index 554c8c9b78940b..c68a394280cc2c 100644
 --- a/src/crypto/hmac/hmac.go
 +++ b/src/crypto/hmac/hmac.go
 @@ -22,7 +22,7 @@ timing side-channels:
@@ -883,8 +1019,8 @@ index 72f5a4abea9d35..c88c6cbd128451 100644
 -	"crypto/internal/boring"
 +	boring "crypto/internal/backend"
  	"crypto/internal/fips140/hmac"
+ 	"crypto/internal/fips140hash"
  	"crypto/internal/fips140only"
- 	"crypto/subtle"
 diff --git a/src/crypto/hmac/hmac_test.go b/src/crypto/hmac/hmac_test.go
 index 7accad763244a1..dd3211f2c37af3 100644
 --- a/src/crypto/hmac/hmac_test.go
@@ -898,509 +1034,6 @@ index 7accad763244a1..dd3211f2c37af3 100644
  	"crypto/internal/cryptotest"
  	"crypto/md5"
  	"crypto/sha1"
-diff --git a/src/crypto/internal/backend/backend_test.go b/src/crypto/internal/backend/backend_test.go
-new file mode 100644
-index 00000000000000..c2c06d3bff8c74
---- /dev/null
-+++ b/src/crypto/internal/backend/backend_test.go
-@@ -0,0 +1,30 @@
-+// Copyright 2017 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+package backend
-+
-+import (
-+	"testing"
-+)
-+
-+// Test that Unreachable panics.
-+func TestUnreachable(t *testing.T) {
-+	defer func() {
-+		if Enabled {
-+			if err := recover(); err == nil {
-+				t.Fatal("expected Unreachable to panic")
-+			}
-+		} else {
-+			if err := recover(); err != nil {
-+				t.Fatalf("expected Unreachable to be a no-op")
-+			}
-+		}
-+	}()
-+	Unreachable()
-+}
-+
-+// Test that UnreachableExceptTests does not panic (this is a test).
-+func TestUnreachableExceptTests(t *testing.T) {
-+	UnreachableExceptTests()
-+}
-diff --git a/src/crypto/internal/backend/bbig/big.go b/src/crypto/internal/backend/bbig/big.go
-new file mode 100644
-index 00000000000000..ab3f30825dcfa1
---- /dev/null
-+++ b/src/crypto/internal/backend/bbig/big.go
-@@ -0,0 +1,17 @@
-+// Copyright 2022 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+//go:build !goexperiment.systemcrypto || (goexperiment.darwincrypto && !cgo)
-+
-+package bbig
-+
-+import "math/big"
-+
-+func Enc(b *big.Int) []uint {
-+	return nil
-+}
-+
-+func Dec(b []uint) *big.Int {
-+	return nil
-+}
-diff --git a/src/crypto/internal/backend/common.go b/src/crypto/internal/backend/common.go
-new file mode 100644
-index 00000000000000..858e76e3c51c06
---- /dev/null
-+++ b/src/crypto/internal/backend/common.go
-@@ -0,0 +1,72 @@
-+// Copyright 2022 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+package backend
-+
-+import (
-+	"crypto/internal/backend/fips140"
-+	"crypto/internal/boring/sig"
-+	"internal/goexperiment"
-+	"runtime"
-+)
-+
-+func init() {
-+	if fips140.Enabled() {
-+		if !Enabled {
-+			if runtime.GOOS != "linux" && runtime.GOOS != "windows" {
-+				panic("FIPS mode requested (" + fips140.Message + ") but no crypto backend is supported on " + runtime.GOOS)
-+			}
-+			panic("FIPS mode requested (" + fips140.Message + ") but no supported crypto backend is enabled")
-+		}
-+	}
-+}
-+
-+// Unreachable marks code that should be unreachable
-+// when backend is in use.
-+func Unreachable() {
-+	if Enabled {
-+		panic("cryptobackend: invalid code execution")
-+	} else {
-+		// Code that's unreachable is exactly the code
-+		// we want to detect for reporting standard Go crypto.
-+		sig.StandardCrypto()
-+	}
-+}
-+
-+// Provided by runtime.crypto_backend_runtime_arg0 to avoid os import.
-+func runtime_arg0() string
-+
-+func hasSuffix(s, t string) bool {
-+	return len(s) > len(t) && s[len(s)-len(t):] == t
-+}
-+
-+// UnreachableExceptTests marks code that should be unreachable
-+// when backend is in use. It panics.
-+func UnreachableExceptTests() {
-+	if Enabled {
-+		name := runtime_arg0()
-+		// If ran on Windows we'd need to allow _test.exe and .test.exe as well.
-+		if !hasSuffix(name, "_test") && !hasSuffix(name, ".test") {
-+			println("cryptobackend: unexpected code execution in", name)
-+			panic("cryptobackend: invalid code execution")
-+		}
-+	}
-+}
-+
-+func IsRSAKeySupported(primes int) bool {
-+	if goexperiment.BoringCrypto {
-+		return true
-+	}
-+	// CNG only supports 2-prime RSA keys.
-+	// The built-in OpenSSL 3 providers and OpenSSL 1 do support n-prime RSA keys,
-+	// but the SymCrypt provider for OpenSSL only supports 2-prime RSA keys.
-+	// Only 2-prime RSA keys are FIPS compliant, other n having compatibility
-+	// and security issues. Even crypto/rsa deprecated rsa.GenerateMultiPrimeKey as of Go 1.21.
-+	// Given the above reasons, we only support 2-prime RSA keys.
-+	return primes == 2
-+}
-+
-+func IsSaltSupported(salt int) bool {
-+	return true
-+}
-diff --git a/src/crypto/internal/backend/fips140/fips140.go b/src/crypto/internal/backend/fips140/fips140.go
-new file mode 100644
-index 00000000000000..f54d39970319af
---- /dev/null
-+++ b/src/crypto/internal/backend/fips140/fips140.go
-@@ -0,0 +1,55 @@
-+// Copyright 2024 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+package fips140
-+
-+import "syscall"
-+
-+// Enabled reports whether FIPS 140 mode is enabled by using GOFIPS=1, GOLANG_FIPS=1,
-+// the 'requirefips' build tag, or any other platform-specific mechanism.
-+func Enabled() bool {
-+	return enabled
-+}
-+
-+var enabled bool
-+
-+// Disabled reports whether FIPS 140 mode is disabled by using GOFIPS=0 or GOLANG_FIPS=0.
-+func Disabled() bool {
-+	return disabled
-+}
-+
-+var disabled bool
-+
-+// Message is a human-readable message about how [Enabled] was set.
-+var Message string
-+
-+func init() {
-+	// TODO: Decide which environment variable to use.
-+	// See https://github.com/microsoft/go/issues/397.
-+	var value string
-+	var ok bool
-+	if value, ok = syscall.Getenv("GOFIPS"); ok {
-+		Message = "environment variable GOFIPS"
-+	} else if value, ok = syscall.Getenv("GOLANG_FIPS"); ok {
-+		Message = "environment variable GOLANG_FIPS"
-+	} else if systemFIPSMode() {
-+		Message = "system FIPS mode"
-+		value = "1"
-+	}
-+	if value == "1" {
-+		enabled = true
-+	} else if value == "0" {
-+		disabled = true
-+	}
-+	if isRequireFIPS {
-+		if disabled {
-+			panic("the 'requirefips' build tag is enabled, but it conflicts " +
-+				"with the " + Message + "=" + value +
-+				" which would disable FIPS mode")
-+		}
-+		Message = "requirefips tag set"
-+		enabled = true
-+		return
-+	}
-+}
-\ No newline at end of file
-diff --git a/src/crypto/internal/backend/fips140/isrequirefips.go b/src/crypto/internal/backend/fips140/isrequirefips.go
-new file mode 100644
-index 00000000000000..b33d08c84e2dae
---- /dev/null
-+++ b/src/crypto/internal/backend/fips140/isrequirefips.go
-@@ -0,0 +1,9 @@
-+// Copyright 2024 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+//go:build requirefips
-+
-+package fips140
-+
-+const isRequireFIPS = true
-\ No newline at end of file
-diff --git a/src/crypto/internal/backend/fips140/norequirefips.go b/src/crypto/internal/backend/fips140/norequirefips.go
-new file mode 100644
-index 00000000000000..6f01b9a3524dee
---- /dev/null
-+++ b/src/crypto/internal/backend/fips140/norequirefips.go
-@@ -0,0 +1,9 @@
-+// Copyright 2024 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+//go:build !requirefips
-+
-+package fips140
-+
-+const isRequireFIPS = false
-\ No newline at end of file
-diff --git a/src/crypto/internal/backend/fips140/nosystemcrypto.go b/src/crypto/internal/backend/fips140/nosystemcrypto.go
-new file mode 100644
-index 00000000000000..83691d7dd42d51
---- /dev/null
-+++ b/src/crypto/internal/backend/fips140/nosystemcrypto.go
-@@ -0,0 +1,11 @@
-+// Copyright 2024 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+//go:build !goexperiment.systemcrypto
-+
-+package fips140
-+
-+func systemFIPSMode() bool {
-+	return false
-+}
-diff --git a/src/crypto/internal/backend/nobackend.go b/src/crypto/internal/backend/nobackend.go
-new file mode 100644
-index 00000000000000..3ebb6d5e4b4bb5
---- /dev/null
-+++ b/src/crypto/internal/backend/nobackend.go
-@@ -0,0 +1,233 @@
-+// Copyright 2017 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+// Do not edit the build constraint by hand. It is generated by "backendgen.go".
-+
-+//go:build ignore
-+
-+package backend
-+
-+import (
-+	"crypto"
-+	"crypto/cipher"
-+	"hash"
-+)
-+
-+const Enabled = false
-+
-+type BigInt = []uint
-+
-+type randReader int
-+
-+func (randReader) Read(b []byte) (int, error) { panic("cryptobackend: not available") }
-+
-+const RandReader = randReader(0)
-+
-+func SupportsHash(h crypto.Hash) bool { panic("cryptobackend: not available") }
-+
-+func NewMD5() hash.Hash        { panic("cryptobackend: not available") }
-+func NewSHA1() hash.Hash       { panic("cryptobackend: not available") }
-+func NewSHA224() hash.Hash     { panic("cryptobackend: not available") }
-+func NewSHA256() hash.Hash     { panic("cryptobackend: not available") }
-+func NewSHA384() hash.Hash     { panic("cryptobackend: not available") }
-+func NewSHA512() hash.Hash     { panic("cryptobackend: not available") }
-+func NewSHA512_224() hash.Hash { panic("cryptobackend: not available") }
-+func NewSHA512_256() hash.Hash { panic("cryptobackend: not available") }
-+
-+func MD5(p []byte) (sum [16]byte)        { panic("cryptobackend: not available") }
-+func SHA1(p []byte) (sum [20]byte)       { panic("cryptobackend: not available") }
-+func SHA224(p []byte) (sum [28]byte)     { panic("cryptobackend: not available") }
-+func SHA256(p []byte) (sum [32]byte)     { panic("cryptobackend: not available") }
-+func SHA384(p []byte) (sum [48]byte)     { panic("cryptobackend: not available") }
-+func SHA512(p []byte) (sum [64]byte)     { panic("cryptobackend: not available") }
-+func SHA512_224(p []byte) (sum [28]byte) { panic("cryptobackend: not available") }
-+func SHA512_256(p []byte) (sum [32]byte) { panic("cryptobackend: not available") }
-+
-+func NewHMAC(h func() hash.Hash, key []byte) hash.Hash { panic("cryptobackend: not available") }
-+
-+func NewAESCipher(key []byte) (cipher.Block, error)   { panic("cryptobackend: not available") }
-+func NewGCMTLS(c cipher.Block) (cipher.AEAD, error)   { panic("cryptobackend: not available") }
-+func NewGCMTLS13(c cipher.Block) (cipher.AEAD, error) { panic("cryptobackend: not available") }
-+
-+type PublicKeyECDSA struct{ _ int }
-+type PrivateKeyECDSA struct{ _ int }
-+
-+func GenerateKeyECDSA(curve string) (X, Y, D BigInt, err error) {
-+	panic("cryptobackend: not available")
-+}
-+func NewPrivateKeyECDSA(curve string, X, Y, D BigInt) (*PrivateKeyECDSA, error) {
-+	panic("cryptobackend: not available")
-+}
-+func NewPublicKeyECDSA(curve string, X, Y BigInt) (*PublicKeyECDSA, error) {
-+	panic("cryptobackend: not available")
-+}
-+func SignMarshalECDSA(priv *PrivateKeyECDSA, hash []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+func VerifyECDSA(pub *PublicKeyECDSA, hash []byte, sig []byte) bool {
-+	panic("cryptobackend: not available")
-+}
-+
-+type PublicKeyRSA struct{ _ int }
-+type PrivateKeyRSA struct{ _ int }
-+
-+func DecryptRSAOAEP(h, mgfHash hash.Hash, priv *PrivateKeyRSA, ciphertext, label []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+func DecryptRSAPKCS1(priv *PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+func DecryptRSANoPadding(priv *PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+func EncryptRSAOAEP(h, mgfHash hash.Hash, pub *PublicKeyRSA, msg, label []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+func EncryptRSAPKCS1(pub *PublicKeyRSA, msg []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+func EncryptRSANoPadding(pub *PublicKeyRSA, msg []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+func GenerateKeyRSA(bits int) (N, E, D, P, Q, Dp, Dq, Qinv BigInt, err error) {
-+	panic("cryptobackend: not available")
-+}
-+func NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv BigInt) (*PrivateKeyRSA, error) {
-+	panic("cryptobackend: not available")
-+}
-+func NewPublicKeyRSA(N, E BigInt) (*PublicKeyRSA, error) {
-+	panic("cryptobackend: not available")
-+}
-+func SignRSAPKCS1v15(priv *PrivateKeyRSA, h crypto.Hash, hashed []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+func SignRSAPSS(priv *PrivateKeyRSA, h crypto.Hash, hashed []byte, saltLen int) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+func VerifyRSAPKCS1v15(pub *PublicKeyRSA, h crypto.Hash, hashed, sig []byte) error {
-+	panic("cryptobackend: not available")
-+}
-+func VerifyRSAPSS(pub *PublicKeyRSA, h crypto.Hash, hashed, sig []byte, saltLen int) error {
-+	panic("cryptobackend: not available")
-+}
-+
-+type PublicKeyECDH struct{}
-+type PrivateKeyECDH struct{}
-+
-+func ECDH(*PrivateKeyECDH, *PublicKeyECDH) ([]byte, error)    { panic("cryptobackend: not available") }
-+func GenerateKeyECDH(string) (*PrivateKeyECDH, []byte, error) { panic("cryptobackend: not available") }
-+func NewPrivateKeyECDH(string, []byte) (*PrivateKeyECDH, error) {
-+	panic("cryptobackend: not available")
-+}
-+func NewPublicKeyECDH(string, []byte) (*PublicKeyECDH, error) { panic("cryptobackend: not available") }
-+func (*PublicKeyECDH) Bytes() []byte                          { panic("cryptobackend: not available") }
-+func (*PrivateKeyECDH) PublicKey() (*PublicKeyECDH, error)    { panic("cryptobackend: not available") }
-+
-+func SupportsHKDF() bool { panic("cryptobackend: not available") }
-+
-+func ExpandHKDF(h func() hash.Hash, pseudorandomKey, info []byte, keyLength int) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func SupportsPBKDF2() bool { panic("cryptobackend: not available") }
-+
-+func PBKDF2(password, salt []byte, iter, keyLen int, fh func() hash.Hash) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func SupportsTLS1PRF() bool { panic("cryptobackend: not available") }
-+
-+func TLS1PRF(result, secret, label, seed []byte, h func() hash.Hash) error {
-+	panic("cryptobackend: not available")
-+}
-+
-+func SupportsDESCipher() bool { panic("cryptobackend: not available") }
-+
-+func SupportsTripleDESCipher() bool { panic("cryptobackend: not available") }
-+
-+func NewDESCipher(key []byte) (cipher.Block, error) { panic("cryptobackend: not available") }
-+
-+func NewTripleDESCipher(key []byte) (cipher.Block, error) { panic("cryptobackend: not available") }
-+
-+func SupportsRC4() bool { panic("cryptobackend: not available") }
-+
-+type RC4Cipher struct{}
-+
-+func (c *RC4Cipher) Reset()                       { panic("cryptobackend: not available") }
-+func (c *RC4Cipher) XORKeyStream(dst, src []byte) { panic("cryptobackend: not available") }
-+
-+func NewRC4Cipher(key []byte) (*RC4Cipher, error) { panic("cryptobackend: not available") }
-+
-+func SupportsEd25519() bool { panic("cryptobackend: not available") }
-+
-+type PublicKeyEd25519 struct{}
-+
-+func (k PublicKeyEd25519) Bytes() ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+type PrivateKeyEd25519 struct{}
-+
-+func (k PrivateKeyEd25519) Bytes() ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
-+	panic("cryptobackend: not available")
-+}
-+
-+func SupportsDSA(l, n int) bool {
-+	panic("cryptobackend: not available")
-+}
-+
-+func GenerateParametersDSA(l, n int) (p, q, g BigInt, err error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+type PublicKeyDSA struct{ _ int }
-+type PrivateKeyDSA struct{ _ int }
-+
-+func GenerateKeyDSA(p, q, g BigInt) (x, y BigInt, err error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func NewPrivateKeyDSA(p, q, g, x, y BigInt) (*PrivateKeyDSA, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func NewPublicKeyDSA(p, q, g, y BigInt) (*PublicKeyDSA, error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func SignDSA(priv *PrivateKeyDSA, hash []byte, parseSignature func([]byte) (BigInt, BigInt, error)) (r, s BigInt, err error) {
-+	panic("cryptobackend: not available")
-+}
-+
-+func VerifyDSA(pub *PublicKeyDSA, hashed []byte, r, s BigInt, encodeSignature func(r, s BigInt) ([]byte, error)) bool {
-+	panic("cryptobackend: not available")
-+}
-diff --git a/src/crypto/internal/backend/stub.s b/src/crypto/internal/backend/stub.s
-new file mode 100644
-index 00000000000000..5e4b436554d44d
---- /dev/null
-+++ b/src/crypto/internal/backend/stub.s
-@@ -0,0 +1,10 @@
-+// Copyright 2017 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+// runtime_arg0 is declared in common.go without a body.
-+// It's provided by package runtime,
-+// but the go command doesn't know that.
-+// Having this assembly file keeps the go command
-+// from complaining about the missing body
-+// (because the implementation might be here).
 diff --git a/src/crypto/internal/cryptotest/allocations.go b/src/crypto/internal/cryptotest/allocations.go
 index 70055af70b42ec..3c4b4fbaa98ded 100644
 --- a/src/crypto/internal/cryptotest/allocations.go
@@ -1428,7 +1061,7 @@ index 3fa730459050f6..1f28f12a6e7b4f 100644
  	"internal/goos"
  	"internal/testenv"
 diff --git a/src/crypto/md5/md5.go b/src/crypto/md5/md5.go
-index 75e1fc7404724a..60428f8e1201de 100644
+index a0384e175f31bd..f7aa6da36f02de 100644
 --- a/src/crypto/md5/md5.go
 +++ b/src/crypto/md5/md5.go
 @@ -12,6 +12,7 @@ package md5
@@ -1439,21 +1072,24 @@ index 75e1fc7404724a..60428f8e1201de 100644
  	"crypto/internal/fips140only"
  	"errors"
  	"hash"
-@@ -107,6 +108,9 @@ func New() hash.Hash {
- 	if fips140only.Enabled {
- 		panic("crypto/md5: use of MD5 is not allowed in FIPS 140-only mode")
- 	}
+@@ -104,6 +105,9 @@ func consumeUint32(b []byte) ([]byte, uint32) {
+ // [encoding.BinaryUnmarshaler] to marshal and unmarshal the internal
+ // state of the hash.
+ func New() hash.Hash {
 +	if boring.Enabled && boring.SupportsHash(crypto.MD5) {
 +		return boring.NewMD5()
 +	}
  	d := new(digest)
  	d.Reset()
  	return d
-@@ -187,6 +191,9 @@ func Sum(data []byte) [Size]byte {
- 	if fips140only.Enabled {
- 		panic("crypto/md5: use of MD5 is not allowed in FIPS 140-only mode")
- 	}
+@@ -188,6 +192,12 @@ func (d *digest) checkSum() [Size]byte {
+ 
+ // Sum returns the MD5 checksum of the data.
+ func Sum(data []byte) [Size]byte {
 +	if boring.Enabled && boring.SupportsHash(crypto.MD5) {
++		if fips140only.Enabled {
++			panic("crypto/md5: use of MD5 is not allowed in FIPS 140-only mode")
++		}
 +		return boring.MD5(data)
 +	}
  	var d digest
@@ -1530,7 +1166,7 @@ index 437d9b9d4c0e0d..ee28c55f846e81 100644
  			continue
  		}
 diff --git a/src/crypto/pbkdf2/pbkdf2.go b/src/crypto/pbkdf2/pbkdf2.go
-index d40daab5e5b879..c32b3fd82b99b0 100644
+index 271d2b03312ef0..ff76299fbe4782 100644
 --- a/src/crypto/pbkdf2/pbkdf2.go
 +++ b/src/crypto/pbkdf2/pbkdf2.go
 @@ -11,6 +11,7 @@
@@ -1539,16 +1175,16 @@ index d40daab5e5b879..c32b3fd82b99b0 100644
  import (
 +	boring "crypto/internal/backend"
  	"crypto/internal/fips140/pbkdf2"
+ 	"crypto/internal/fips140hash"
  	"crypto/internal/fips140only"
- 	"errors"
-@@ -45,5 +46,8 @@ func Key[Hash hash.Hash](h func() Hash, password string, salt []byte, iter, keyL
+@@ -47,5 +48,8 @@ func Key[Hash hash.Hash](h func() Hash, password string, salt []byte, iter, keyL
  			return nil, errors.New("crypto/pbkdf2: use of hash functions other than SHA-2 or SHA-3 is not allowed in FIPS 140-only mode")
  		}
  	}
 +	if boring.Enabled && boring.SupportsPBKDF2() {
-+		return boring.PBKDF2([]byte(password), salt, iter, keyLength, func() hash.Hash { return h() })
++		return boring.PBKDF2([]byte(password), salt, iter, keyLength, fh)
 +	}
- 	return pbkdf2.Key(h, password, salt, iter, keyLength)
+ 	return pbkdf2.Key(fh, password, salt, iter, keyLength)
  }
 diff --git a/src/crypto/pbkdf2/pbkdf2_test.go b/src/crypto/pbkdf2/pbkdf2_test.go
 index 03980c7e54d3be..4968a666fad4e5 100644
@@ -1647,10 +1283,10 @@ index 90943a0935befb..09ebdfd733e5d6 100644
  		return
  	}
 diff --git a/src/crypto/rsa/boring.go b/src/crypto/rsa/boring.go
-index b9f9d3154f2589..d52faddef45549 100644
+index 28d16a89f6a1cf..b276571ddf9fc8 100644
 --- a/src/crypto/rsa/boring.go
 +++ b/src/crypto/rsa/boring.go
-@@ -2,13 +2,13 @@
+@@ -2,14 +2,15 @@
  // Use of this source code is governed by a BSD-style
  // license that can be found in the LICENSE file.
  
@@ -1665,8 +1301,22 @@ index b9f9d3154f2589..d52faddef45549 100644
 +	boring "crypto/internal/backend"
 +	"crypto/internal/backend/bbig"
  	"crypto/internal/boring/bcache"
++	"internal/goexperiment"
  	"math/big"
  )
+ 
+@@ -62,6 +63,11 @@ type boringPriv struct {
+ }
+ 
+ func boringPrivateKey(priv *PrivateKey) (*boring.PrivateKeyRSA, error) {
++	// CommonCrypto requires the CRT values to be precomputed if nil
++	if goexperiment.DarwinCrypto && (priv.Precomputed.Dp == nil || priv.Precomputed.Dq == nil || priv.Precomputed.Qinv == nil) {
++		priv.Precompute()
++		priv.Precomputed.fips = nil
++	}
+ 	b := privCache.Get(priv)
+ 	if b != nil && privateKeyEqual(&b.orig, priv) {
+ 		return b.key, nil
 diff --git a/src/crypto/rsa/boring_test.go b/src/crypto/rsa/boring_test.go
 index 838fcc1244bdbe..d89f732345e8a3 100644
 --- a/src/crypto/rsa/boring_test.go
@@ -1681,7 +1331,7 @@ index 838fcc1244bdbe..d89f732345e8a3 100644
  // Note: Can run these tests against the non-BoringCrypto
  // version of the code by using "CGO_ENABLED=0 go test".
 diff --git a/src/crypto/rsa/fips.go b/src/crypto/rsa/fips.go
-index 24dfb38cf625bd..ccb027810a7e07 100644
+index 8373c125ae3096..319fae6fb282db 100644
 --- a/src/crypto/rsa/fips.go
 +++ b/src/crypto/rsa/fips.go
 @@ -6,7 +6,7 @@ package rsa
@@ -1691,44 +1341,62 @@ index 24dfb38cf625bd..ccb027810a7e07 100644
 -	"crypto/internal/boring"
 +	boring "crypto/internal/backend"
  	"crypto/internal/fips140/rsa"
+ 	"crypto/internal/fips140hash"
  	"crypto/internal/fips140only"
- 	"errors"
-@@ -78,7 +78,7 @@ func SignPSS(rand io.Reader, priv *PrivateKey, hash crypto.Hash, digest []byte,
+@@ -70,7 +70,7 @@ func SignPSS(rand io.Reader, priv *PrivateKey, hash crypto.Hash, digest []byte,
  		hash = opts.Hash
  	}
  
 -	if boring.Enabled && rand == boring.RandReader {
-+	if boring.Enabled && rand == boring.RandReader && boring.IsRSAKeySupported(len(priv.Primes)) && boring.SupportsHash(hash) {
++	if boring.Enabled && rand == boring.RandReader && boring.SupportsRSASaltLength(true, opts.saltLength()) && boring.SupportsRSAKeyPrimes(len(priv.Primes)) && boring.SupportsHash(hash) {
  		bkey, err := boringPrivateKey(priv)
  		if err != nil {
  			return nil, err
-@@ -136,7 +136,7 @@ func VerifyPSS(pub *PublicKey, hash crypto.Hash, digest []byte, sig []byte, opts
- 		return errors.New("crypto/rsa: use of hash functions other than SHA-2 or SHA-3 is not allowed in FIPS 140-only mode")
+@@ -133,7 +133,7 @@ func VerifyPSS(pub *PublicKey, hash crypto.Hash, digest []byte, sig []byte, opts
+ 		return err
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.IsSaltSupported(opts.saltLength()) && boring.SupportsHash(hash) {
++	if boring.Enabled && boring.SupportsRSASaltLength(false, opts.saltLength()) && boring.SupportsHash(hash) {
  		bkey, err := boringPublicKey(pub)
  		if err != nil {
  			return err
-@@ -249,7 +249,7 @@ func decryptOAEP(hash, mgfHash hash.Hash, priv *PrivateKey, ciphertext []byte, l
- 		}
+@@ -197,7 +197,7 @@ func EncryptOAEP(hash hash.Hash, random io.Reader, pub *PublicKey, msg []byte, l
+ 
+ 	defer hash.Reset()
+ 
+-	if boring.Enabled && random == boring.RandReader {
++	if boring.Enabled && random == boring.RandReader && boring.IsRSAOAEPLabelSupported(label) {
+ 		hash.Reset()
+ 		k := pub.Size()
+ 		if len(msg) > k-2*hash.Size()-2 {
+@@ -250,7 +250,7 @@ func decryptOAEP(hash, mgfHash hash.Hash, priv *PrivateKey, ciphertext []byte, l
+ 		return nil, err
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) {
++	if boring.Enabled && boring.SupportsRSAKeyPrimes(len(priv.Primes)) && boring.IsRSAOAEPLabelSupported(label) {
  		k := priv.Size()
  		if len(ciphertext) > k ||
  			k < hash.Size()*2+2 {
-@@ -305,7 +305,7 @@ func SignPKCS1v15(random io.Reader, priv *PrivateKey, hash crypto.Hash, hashed [
- 		return nil, errors.New("crypto/rsa: use of hash functions other than SHA-2 or SHA-3 is not allowed in FIPS 140-only mode")
+@@ -312,7 +312,7 @@ func SignPKCS1v15(random io.Reader, priv *PrivateKey, hash crypto.Hash, hashed [
+ 		return nil, err
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) {
++	if boring.Enabled && boring.SupportsRSAKeyPrimes(len(priv.Primes)) && boring.IsPKCS1v15HashSupported(hash) {
  		bkey, err := boringPrivateKey(priv)
  		if err != nil {
  			return nil, err
+@@ -355,7 +355,7 @@ func VerifyPKCS1v15(pub *PublicKey, hash crypto.Hash, hashed []byte, sig []byte)
+ 		return err
+ 	}
+ 
+-	if boring.Enabled {
++	if boring.Enabled && boring.IsPKCS1v15HashSupported(hash) {
+ 		bkey, err := boringPublicKey(pub)
+ 		if err != nil {
+ 			return err
 diff --git a/src/crypto/rsa/notboring.go b/src/crypto/rsa/notboring.go
 index 2abc0436405f8a..3e4d6f3eef61e6 100644
 --- a/src/crypto/rsa/notboring.go
@@ -1748,7 +1416,7 @@ index 2abc0436405f8a..3e4d6f3eef61e6 100644
  func boringPublicKey(*PublicKey) (*boring.PublicKeyRSA, error) {
  	panic("boringcrypto: not available")
 diff --git a/src/crypto/rsa/pkcs1v15.go b/src/crypto/rsa/pkcs1v15.go
-index f1e4ef48a4fd1c..cb5aa30920bb7d 100644
+index f1e4ef48a4fd1c..a179a4388e3ee5 100644
 --- a/src/crypto/rsa/pkcs1v15.go
 +++ b/src/crypto/rsa/pkcs1v15.go
 @@ -5,7 +5,7 @@
@@ -1765,7 +1433,7 @@ index f1e4ef48a4fd1c..cb5aa30920bb7d 100644
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) {
++	if boring.Enabled && boring.SupportsRSAKeyPrimes(len(priv.Primes)) {
  		bkey, err := boringPrivateKey(priv)
  		if err != nil {
  			return nil, err
@@ -1774,7 +1442,7 @@ index f1e4ef48a4fd1c..cb5aa30920bb7d 100644
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) {
++	if boring.Enabled && boring.SupportsRSAKeyPrimes(len(priv.Primes)) {
  		var bkey *boring.PrivateKeyRSA
  		bkey, err = boringPrivateKey(priv)
  		if err != nil {
@@ -1802,10 +1470,10 @@ index c65552cd93526a..910416abe842f5 100644
  	ciphertext := decodeBase64("fjOVdirUzFoLlukv80dBllMLjXythIf22feqPrNo0YoIjzyzyoMFiLjAc/Y4krkeZ11XFThIrEvw\nkRiZcCq5ng==")
  	_, err := DecryptPKCS1v15(nil, test512Key, ciphertext)
 diff --git a/src/crypto/rsa/pss_test.go b/src/crypto/rsa/pss_test.go
-index e03f4ab06603c6..a4af0a2144870a 100644
+index e03f4ab06603c6..cd44f3af23b0d4 100644
 --- a/src/crypto/rsa/pss_test.go
 +++ b/src/crypto/rsa/pss_test.go
-@@ -8,6 +8,7 @@ import (
+@@ -8,12 +8,14 @@ import (
  	"bufio"
  	"compress/bzip2"
  	"crypto"
@@ -1813,7 +1481,24 @@ index e03f4ab06603c6..a4af0a2144870a 100644
  	"crypto/internal/fips140"
  	"crypto/rand"
  	. "crypto/rsa"
-@@ -180,6 +181,10 @@ func TestPSSSigning(t *testing.T) {
+ 	"crypto/sha256"
+ 	"crypto/sha512"
+ 	"encoding/hex"
++	"internal/goexperiment"
+ 	"math/big"
+ 	"os"
+ 	"strconv"
+@@ -104,6 +106,9 @@ func TestPSSGolden(t *testing.T) {
+ 			hashed = h.Sum(hashed[:0])
+ 
+ 			if err := VerifyPSS(key, hash, hashed, sig, opts); err != nil {
++				if goexperiment.DarwinCrypto && key.N.BitLen() == 1025 {
++					t.Skip("CommonCrypto doesn't support golden test entries with this key size")
++				}
+ 				t.Error(err)
+ 			}
+ 		default:
+@@ -180,6 +185,10 @@ func TestPSSSigning(t *testing.T) {
  			continue
  		}
  
@@ -1824,8 +1509,19 @@ index e03f4ab06603c6..a4af0a2144870a 100644
  		opts.SaltLength = test.verifySaltLength
  		err = VerifyPSS(&rsaPrivateKey.PublicKey, hash, hashed, sig, &opts)
  		good := test.good
+@@ -241,7 +250,9 @@ func fromHex(hexStr string) []byte {
+ 
+ func TestInvalidPSSSaltLength(t *testing.T) {
+ 	t.Setenv("GODEBUG", "rsa1024min=0")
+-	key, err := GenerateKey(rand.Reader, 245)
++	// Most crypto backends don't support generating RSA keys with a bit size
++	// lower than 512, so we use 512 here.
++	key, err := GenerateKey(rand.Reader, 512)
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
 diff --git a/src/crypto/rsa/rsa.go b/src/crypto/rsa/rsa.go
-index fb23f003a6f217..be374dad6969d5 100644
+index 95bb4becd2ff8c..73991434dabaf1 100644
 --- a/src/crypto/rsa/rsa.go
 +++ b/src/crypto/rsa/rsa.go
 @@ -42,8 +42,8 @@ package rsa
@@ -1840,7 +1536,7 @@ index fb23f003a6f217..be374dad6969d5 100644
  	"crypto/internal/fips140/rsa"
  	"crypto/internal/fips140only"
 diff --git a/src/crypto/rsa/rsa_test.go b/src/crypto/rsa/rsa_test.go
-index 2535661040273a..f9543d9cc89e7b 100644
+index 73b0c3749eedb2..1a712a0e1c5d95 100644
 --- a/src/crypto/rsa/rsa_test.go
 +++ b/src/crypto/rsa/rsa_test.go
 @@ -8,7 +8,7 @@ import (
@@ -1852,7 +1548,7 @@ index 2535661040273a..f9543d9cc89e7b 100644
  	"crypto/internal/cryptotest"
  	"crypto/rand"
  	. "crypto/rsa"
-@@ -129,6 +129,11 @@ func testKeyBasics(t *testing.T, priv *PrivateKey) {
+@@ -146,6 +146,11 @@ func testKeyBasics(t *testing.T, priv *PrivateKey) {
  	if priv.D.Cmp(priv.N) > 0 {
  		t.Errorf("private exponent too large")
  	}
@@ -1864,7 +1560,7 @@ index 2535661040273a..f9543d9cc89e7b 100644
  
  	msg := []byte("hi!")
  	enc, err := EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
-@@ -209,6 +214,11 @@ func testEverything(t *testing.T, priv *PrivateKey) {
+@@ -226,6 +231,11 @@ func testEverything(t *testing.T, priv *PrivateKey) {
  	if err := priv.Validate(); err != nil {
  		t.Errorf("Validate() failed: %s", err)
  	}
@@ -1876,8 +1572,18 @@ index 2535661040273a..f9543d9cc89e7b 100644
  
  	msg := []byte("test")
  	enc, err := EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
+@@ -853,6 +863,9 @@ func TestDecryptOAEP(t *testing.T) {
+ }
+ 
+ func Test2DecryptOAEP(t *testing.T) {
++	if boring.Enabled {
++		t.Skip("Some crypto backends don't supports OAEPOptions.MGFHash.")
++	}
+ 	random := rand.Reader
+ 
+ 	msg := []byte{0xed, 0x36, 0x90, 0x8d, 0xbe, 0xfc, 0x35, 0x40, 0x70, 0x4f, 0xf5, 0x9d, 0x6e, 0xc2, 0xeb, 0xf5, 0x27, 0xae, 0x65, 0xb0, 0x59, 0x29, 0x45, 0x25, 0x8c, 0xc1, 0x91, 0x22}
 diff --git a/src/crypto/sha1/sha1.go b/src/crypto/sha1/sha1.go
-index b799f0d2fb1548..9aa23e9aa17e89 100644
+index d2ffaac0aeb674..23d8ad44d0bd9a 100644
 --- a/src/crypto/sha1/sha1.go
 +++ b/src/crypto/sha1/sha1.go
 @@ -10,7 +10,7 @@ package sha1
@@ -1889,6 +1595,22 @@ index b799f0d2fb1548..9aa23e9aa17e89 100644
  	"crypto/internal/fips140only"
  	"errors"
  	"hash"
+@@ -266,12 +266,12 @@ func (d *digest) constSum() [Size]byte {
+ 
+ // Sum returns the SHA-1 checksum of the data.
+ func Sum(data []byte) [Size]byte {
+-	if boring.Enabled {
+-		return boring.SHA1(data)
+-	}
+ 	if fips140only.Enabled {
+ 		panic("crypto/sha1: use of SHA-1 is not allowed in FIPS 140-only mode")
+ 	}
++	if boring.Enabled {
++		return boring.SHA1(data)
++	}	
+ 	var d digest
+ 	d.Reset()
+ 	d.Write(data)
 diff --git a/src/crypto/sha1/sha1_test.go b/src/crypto/sha1/sha1_test.go
 index 9d707b7cde5c2d..8da08b3d860a85 100644
 --- a/src/crypto/sha1/sha1_test.go
@@ -2193,9 +1915,22 @@ index 027bc22c33c921..eba08da985f832 100644
  package fipsonly
  
 diff --git a/src/crypto/tls/handshake_client.go b/src/crypto/tls/handshake_client.go
-index 38bd417a0dca72..9eec202234fa94 100644
+index 38bd417a0dca72..8c1ae3c7ec5485 100644
 --- a/src/crypto/tls/handshake_client.go
 +++ b/src/crypto/tls/handshake_client.go
+@@ -11,11 +11,11 @@ import (
+ 	"crypto/ecdsa"
+ 	"crypto/ed25519"
+ 	"crypto/internal/fips140/mlkem"
+-	"crypto/internal/fips140/tls13"
+ 	"crypto/internal/hpke"
+ 	"crypto/rsa"
+ 	"crypto/subtle"
+ 	"crypto/tls/internal/fips140tls"
++	"crypto/tls/internal/tls13"
+ 	"crypto/x509"
+ 	"errors"
+ 	"fmt"
 @@ -549,7 +549,15 @@ func (c *Conn) pickTLSVersion(serverHello *serverHelloMsg) error {
  
  // Does the handshake, either a full one or resumes old session. Requires hs.c,
@@ -2214,10 +1949,10 @@ index 38bd417a0dca72..9eec202234fa94 100644
  
  	isResume, err := hs.processServerHello()
 diff --git a/src/crypto/tls/handshake_client_tls13.go b/src/crypto/tls/handshake_client_tls13.go
-index c0396e75796add..819bc54822f0cb 100644
+index c0396e75796add..2c00e119cb66e4 100644
 --- a/src/crypto/tls/handshake_client_tls13.go
 +++ b/src/crypto/tls/handshake_client_tls13.go
-@@ -8,8 +8,8 @@ import (
+@@ -8,12 +8,12 @@ import (
  	"bytes"
  	"context"
  	"crypto"
@@ -2225,8 +1960,13 @@ index c0396e75796add..819bc54822f0cb 100644
  	"crypto/hmac"
 -	"crypto/internal/fips140/hkdf"
  	"crypto/internal/fips140/mlkem"
- 	"crypto/internal/fips140/tls13"
+-	"crypto/internal/fips140/tls13"
  	"crypto/rsa"
+ 	"crypto/subtle"
++	"crypto/tls/internal/tls13"
+ 	"errors"
+ 	"hash"
+ 	"slices"
 @@ -90,8 +90,12 @@ func (hs *clientHandshakeStateTLS13) handshake() error {
  		confTranscript.Write(hs.serverHello.original[:30])
  		confTranscript.Write(make([]byte, 8))
@@ -2277,10 +2017,10 @@ index 7c75977ad3ffb2..b9db95ca7b9d5a 100644
  
  	if err := hs.processClientHello(); err != nil {
 diff --git a/src/crypto/tls/handshake_server_tls13.go b/src/crypto/tls/handshake_server_tls13.go
-index 76fff6974e7403..bccf52fb28fcc5 100644
+index 76fff6974e7403..3ef8b56e5c7898 100644
 --- a/src/crypto/tls/handshake_server_tls13.go
 +++ b/src/crypto/tls/handshake_server_tls13.go
-@@ -8,8 +8,9 @@ import (
+@@ -8,13 +8,14 @@ import (
  	"bytes"
  	"context"
  	"crypto"
@@ -2289,8 +2029,14 @@ index 76fff6974e7403..bccf52fb28fcc5 100644
 -	"crypto/internal/fips140/hkdf"
 +	boring "crypto/internal/backend"
  	"crypto/internal/fips140/mlkem"
- 	"crypto/internal/fips140/tls13"
+-	"crypto/internal/fips140/tls13"
  	"crypto/internal/hpke"
+ 	"crypto/rsa"
+ 	"crypto/tls/internal/fips140tls"
++	"crypto/tls/internal/tls13"
+ 	"errors"
+ 	"hash"
+ 	"internal/byteorder"
 @@ -470,15 +471,19 @@ func (hs *serverHandshakeStateTLS13) checkForResumption() error {
  // interfaces implemented by standard library hashes to clone the state of in
  // to a new instance of h. It returns nil if the operation fails.
@@ -2364,6 +2110,231 @@ index 24d78d60cf5b64..a6bfd3f17c1911 100644
  		Force()
  	}
  }
+diff --git a/src/crypto/tls/internal/tls13/doc.go b/src/crypto/tls/internal/tls13/doc.go
+new file mode 100644
+index 00000000000000..1adf3098356307
+--- /dev/null
++++ b/src/crypto/tls/internal/tls13/doc.go
+@@ -0,0 +1,18 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++/*
++Microsoft Go only package.
++
++TLS 1.3 Key Schedule is normally not part of the FIPS boundary, but upstream Go
++decided to include it in the FIPS boundary to facilitate the FIPS 140-3 certification
++process.
++
++The problem is that crypto/internal/fips140/tls13 uses crypto/internal/fips140/hkdf,
++which can't be patched to use other backends.
++
++To solve this problem, we created this package, which is a direct copy of
++crypto/internal/fips140/tls13, but uses crypto/hkdf instead of crypto/internal/fips140/hkdf.
++*/
++package tls13
+diff --git a/src/crypto/tls/internal/tls13/tls13.go b/src/crypto/tls/internal/tls13/tls13.go
+new file mode 100644
+index 00000000000000..573896b9c1e6a8
+--- /dev/null
++++ b/src/crypto/tls/internal/tls13/tls13.go
+@@ -0,0 +1,182 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++// Package tls13 implements the TLS 1.3 Key Schedule as specified in RFC 8446,
++// Section 7.1 and allowed by FIPS 140-3 IG 2.4.B Resolution 7.
++package tls13
++
++import (
++	"crypto/hkdf"
++	"hash"
++	"internal/byteorder"
++)
++
++// We don't set the service indicator in this package but we delegate that to
++// the underlying functions because the TLS 1.3 KDF does not have a standard of
++// its own.
++
++// ExpandLabel implements HKDF-Expand-Label from RFC 8446, Section 7.1.
++func ExpandLabel[H hash.Hash](hash func() H, secret []byte, label string, context []byte, length int) []byte {
++	if len("tls13 ")+len(label) > 255 || len(context) > 255 {
++		// It should be impossible for this to panic: labels are fixed strings,
++		// and context is either a fixed-length computed hash, or parsed from a
++		// field which has the same length limitation.
++		//
++		// Another reasonable approach might be to return a randomized slice if
++		// we encounter an error, which would break the connection, but avoid
++		// panicking. This would perhaps be safer but significantly more
++		// confusing to users.
++		panic("tls13: label or context too long")
++	}
++	hkdfLabel := make([]byte, 0, 2+1+len("tls13 ")+len(label)+1+len(context))
++	hkdfLabel = byteorder.BEAppendUint16(hkdfLabel, uint16(length))
++	hkdfLabel = append(hkdfLabel, byte(len("tls13 ")+len(label)))
++	hkdfLabel = append(hkdfLabel, "tls13 "...)
++	hkdfLabel = append(hkdfLabel, label...)
++	hkdfLabel = append(hkdfLabel, byte(len(context)))
++	hkdfLabel = append(hkdfLabel, context...)
++	key, err := hkdf.Expand(hash, secret, string(hkdfLabel), length)
++	if err != nil {
++		panic(err)
++	}
++	return key
++}
++
++func extract[H hash.Hash](hash func() H, newSecret, currentSecret []byte) []byte {
++	if newSecret == nil {
++		newSecret = make([]byte, hash().Size())
++	}
++	prk, err := hkdf.Extract(hash, newSecret, currentSecret)
++	if err != nil {
++		panic(err)
++	}
++	return prk
++}
++
++func deriveSecret[H hash.Hash](hash func() H, secret []byte, label string, transcript hash.Hash) []byte {
++	if transcript == nil {
++		transcript = hash()
++	}
++	return ExpandLabel(hash, secret, label, transcript.Sum(nil), transcript.Size())
++}
++
++const (
++	resumptionBinderLabel         = "res binder"
++	clientEarlyTrafficLabel       = "c e traffic"
++	clientHandshakeTrafficLabel   = "c hs traffic"
++	serverHandshakeTrafficLabel   = "s hs traffic"
++	clientApplicationTrafficLabel = "c ap traffic"
++	serverApplicationTrafficLabel = "s ap traffic"
++	earlyExporterLabel            = "e exp master"
++	exporterLabel                 = "exp master"
++	resumptionLabel               = "res master"
++)
++
++type EarlySecret struct {
++	secret []byte
++	hash   func() hash.Hash
++}
++
++func NewEarlySecret[H hash.Hash](h func() H, psk []byte) *EarlySecret {
++	return &EarlySecret{
++		secret: extract(h, psk, nil),
++		hash:   func() hash.Hash { return h() },
++	}
++}
++
++func (s *EarlySecret) ResumptionBinderKey() []byte {
++	return deriveSecret(s.hash, s.secret, resumptionBinderLabel, nil)
++}
++
++// ClientEarlyTrafficSecret derives the client_early_traffic_secret from the
++// early secret and the transcript up to the ClientHello.
++func (s *EarlySecret) ClientEarlyTrafficSecret(transcript hash.Hash) []byte {
++	return deriveSecret(s.hash, s.secret, clientEarlyTrafficLabel, transcript)
++}
++
++type HandshakeSecret struct {
++	secret []byte
++	hash   func() hash.Hash
++}
++
++func (s *EarlySecret) HandshakeSecret(sharedSecret []byte) *HandshakeSecret {
++	derived := deriveSecret(s.hash, s.secret, "derived", nil)
++	return &HandshakeSecret{
++		secret: extract(s.hash, sharedSecret, derived),
++		hash:   s.hash,
++	}
++}
++
++// ClientHandshakeTrafficSecret derives the client_handshake_traffic_secret from
++// the handshake secret and the transcript up to the ServerHello.
++func (s *HandshakeSecret) ClientHandshakeTrafficSecret(transcript hash.Hash) []byte {
++	return deriveSecret(s.hash, s.secret, clientHandshakeTrafficLabel, transcript)
++}
++
++// ServerHandshakeTrafficSecret derives the server_handshake_traffic_secret from
++// the handshake secret and the transcript up to the ServerHello.
++func (s *HandshakeSecret) ServerHandshakeTrafficSecret(transcript hash.Hash) []byte {
++	return deriveSecret(s.hash, s.secret, serverHandshakeTrafficLabel, transcript)
++}
++
++type MasterSecret struct {
++	secret []byte
++	hash   func() hash.Hash
++}
++
++func (s *HandshakeSecret) MasterSecret() *MasterSecret {
++	derived := deriveSecret(s.hash, s.secret, "derived", nil)
++	return &MasterSecret{
++		secret: extract(s.hash, nil, derived),
++		hash:   s.hash,
++	}
++}
++
++// ClientApplicationTrafficSecret derives the client_application_traffic_secret_0
++// from the master secret and the transcript up to the server Finished.
++func (s *MasterSecret) ClientApplicationTrafficSecret(transcript hash.Hash) []byte {
++	return deriveSecret(s.hash, s.secret, clientApplicationTrafficLabel, transcript)
++}
++
++// ServerApplicationTrafficSecret derives the server_application_traffic_secret_0
++// from the master secret and the transcript up to the server Finished.
++func (s *MasterSecret) ServerApplicationTrafficSecret(transcript hash.Hash) []byte {
++	return deriveSecret(s.hash, s.secret, serverApplicationTrafficLabel, transcript)
++}
++
++// ResumptionMasterSecret derives the resumption_master_secret from the master secret
++// and the transcript up to the client Finished.
++func (s *MasterSecret) ResumptionMasterSecret(transcript hash.Hash) []byte {
++	return deriveSecret(s.hash, s.secret, resumptionLabel, transcript)
++}
++
++type ExporterMasterSecret struct {
++	secret []byte
++	hash   func() hash.Hash
++}
++
++// ExporterMasterSecret derives the exporter_master_secret from the master secret
++// and the transcript up to the server Finished.
++func (s *MasterSecret) ExporterMasterSecret(transcript hash.Hash) *ExporterMasterSecret {
++	return &ExporterMasterSecret{
++		secret: deriveSecret(s.hash, s.secret, exporterLabel, transcript),
++		hash:   s.hash,
++	}
++}
++
++// EarlyExporterMasterSecret derives the exporter_master_secret from the early secret
++// and the transcript up to the ClientHello.
++func (s *EarlySecret) EarlyExporterMasterSecret(transcript hash.Hash) *ExporterMasterSecret {
++	return &ExporterMasterSecret{
++		secret: deriveSecret(s.hash, s.secret, earlyExporterLabel, transcript),
++		hash:   s.hash,
++	}
++}
++
++func (s *ExporterMasterSecret) Exporter(label string, context []byte, length int) []byte {
++	secret := deriveSecret(s.hash, s.secret, label, nil)
++	h := s.hash()
++	h.Write(context)
++	return ExpandLabel(s.hash, secret, "exporter", h.Sum(nil), length)
++}
+diff --git a/src/crypto/tls/key_schedule.go b/src/crypto/tls/key_schedule.go
+index 38d6d3f7be1673..b236ae44a34030 100644
+--- a/src/crypto/tls/key_schedule.go
++++ b/src/crypto/tls/key_schedule.go
+@@ -8,7 +8,7 @@ import (
+ 	"crypto/ecdh"
+ 	"crypto/hmac"
+ 	"crypto/internal/fips140/mlkem"
+-	"crypto/internal/fips140/tls13"
++	"crypto/tls/internal/tls13"
+ 	"errors"
+ 	"hash"
+ 	"io"
 diff --git a/src/crypto/tls/prf.go b/src/crypto/tls/prf.go
 index e7369542a73270..ff52175e4ac636 100644
 --- a/src/crypto/tls/prf.go
@@ -2434,43 +2405,18 @@ index e7369542a73270..ff52175e4ac636 100644
  	}
  }
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index a62a5173b9c6bc..b39db00839ab43 100644
+index ada17d6dea9155..46de13a781292c 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -493,6 +493,8 @@ var depsRules = `
- 	< crypto/internal/fips140/rsa
- 	< FIPS;
+@@ -539,6 +539,7 @@ var depsRules = `
+ 	  crypto/pbkdf2,
+ 	  crypto/ecdh,
+ 	  crypto/mlkem
++	< crypto/tls/internal/tls13
+ 	< CRYPTO;
  
-+	syscall < crypto/internal/backend/fips140;
-+
- 	FIPS, internal/godebug < crypto/fips140;
- 
- 	crypto, hash !< FIPS;
-@@ -506,12 +508,15 @@ var depsRules = `
- 	FIPS, internal/godebug, hash, embed,
- 	crypto/internal/boring/sig,
- 	crypto/internal/boring/syso,
-+	encoding/binary,
- 	crypto/internal/boring/bcache
-+	crypto/internal/backend/fips140
- 	< crypto/internal/fips140only
- 	< crypto
- 	< crypto/subtle
- 	< crypto/cipher
- 	< crypto/internal/boring
-+	< crypto/internal/backend
- 	< crypto/boring
- 	< crypto/aes,
- 	  crypto/des,
-@@ -534,6 +539,7 @@ var depsRules = `
- 
- 	CRYPTO, FMT, math/big
- 	< crypto/internal/boring/bbig
-+	< crypto/internal/backend/bbig
- 	< crypto/rand
- 	< crypto/ed25519 # depends on crypto/rand.Reader
- 	< encoding/asn1
-@@ -547,7 +553,7 @@ var depsRules = `
+ 	CGO, fmt, net !< CRYPTO;
+@@ -564,7 +565,7 @@ var depsRules = `
  
  	# TLS, Prince of Dependencies.
  
@@ -2647,16 +2593,3 @@ index 389eda9ad54b99..110d60beb0e70c 100644
  -----END RSA TESTING KEY-----`))
  
  func testingKey(s string) string { return strings.ReplaceAll(s, "TESTING KEY", "PRIVATE KEY") }
-diff --git a/src/runtime/runtime_boring.go b/src/runtime/runtime_boring.go
-index 5a98b20253181c..9042f2c2795e19 100644
---- a/src/runtime/runtime_boring.go
-+++ b/src/runtime/runtime_boring.go
-@@ -17,3 +17,8 @@ func boring_runtime_arg0() string {
- 
- //go:linkname fipstls_runtime_arg0 crypto/internal/boring/fipstls.runtime_arg0
- func fipstls_runtime_arg0() string { return boring_runtime_arg0() }
-+
-+//go:linkname crypto_backend_runtime_arg0 crypto/internal/backend.runtime_arg0
-+func crypto_backend_runtime_arg0() string {
-+	return boring_runtime_arg0()
-+}

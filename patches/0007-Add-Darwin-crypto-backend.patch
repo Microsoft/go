@@ -5,35 +5,21 @@ Subject: [PATCH] Add Darwin crypto backend
 
 ---
  .gitignore                                    |   2 +
- src/cmd/dist/test.go                          |   7 +-
- src/cmd/go/go_boring_test.go                  |   9 +-
- src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
- src/crypto/ecdsa/ecdsa.go                     |   6 +-
- src/crypto/ed25519/ed25519_test.go            |   3 +-
  .../internal/backend/bbig/big_darwin.go       |  12 +
- src/crypto/internal/backend/common.go         |  36 +-
- src/crypto/internal/backend/darwin_darwin.go  | 328 ++++++++++++++++++
+ src/crypto/internal/backend/common.go         |  32 ++
+ src/crypto/internal/backend/darwin_darwin.go  | 337 ++++++++++++++++++
  src/crypto/internal/backend/fips140/darwin.go |  11 +
- src/crypto/rsa/boring.go                      |   7 +-
+ src/crypto/rsa/boring.go                      |   1 -
  src/crypto/rsa/darwin.go                      |  71 ++++
- src/crypto/rsa/fips.go                        |  10 +-
- src/crypto/rsa/pss_test.go                    |   5 +-
- src/go.mod                                    |   1 +
- src/go.sum                                    |   2 +
  src/go/build/deps_test.go                     |   5 +-
  src/go/build/vendor_test.go                   |   1 +
- .../goexperiment/exp_darwincrypto_off.go      |   9 +
- .../goexperiment/exp_darwincrypto_on.go       |   9 +
- src/internal/goexperiment/flags.go            |   1 +
  src/net/lookup_test.go                        |   3 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 23 files changed, 531 insertions(+), 15 deletions(-)
+ 11 files changed, 479 insertions(+), 2 deletions(-)
  create mode 100644 src/crypto/internal/backend/bbig/big_darwin.go
  create mode 100644 src/crypto/internal/backend/darwin_darwin.go
  create mode 100644 src/crypto/internal/backend/fips140/darwin.go
  create mode 100644 src/crypto/rsa/darwin.go
- create mode 100644 src/internal/goexperiment/exp_darwincrypto_off.go
- create mode 100644 src/internal/goexperiment/exp_darwincrypto_on.go
 
 diff --git a/.gitignore b/.gitignore
 index c6512e64a4ef39..b3b01db73b009d 100644
@@ -48,118 +34,6 @@ index c6512e64a4ef39..b3b01db73b009d 100644
  # This file includes artifacts of Go build that should not be checked in.
  # For files created by specific development environment (e.g. editor),
  # use alternative ways to exclude files from git.
-diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 0de6e80fd985a3..783632120eada8 100644
---- a/src/cmd/dist/test.go
-+++ b/src/cmd/dist/test.go
-@@ -876,7 +876,7 @@ func (t *tester) registerTests() {
- 	}
- 
- 	if t.extLink() && !t.compileOnly {
--		if goos != "android" { // Android does not support non-PIE linking
-+		if goos != "android" && !(goos == "darwin" && (strings.Contains(goexperiment, "systemcrypto") || strings.Contains(goexperiment, "darwincrypto"))) { // Android does not support non-PIE linking
- 			t.registerTest("external linking, -buildmode=exe",
- 				&goTest{
- 					variant:   "exe_external",
-@@ -1161,6 +1161,11 @@ func (t *tester) internalLink() bool {
- 	if goos == "windows" && goarch == "arm64" {
- 		return false
- 	}
-+	if goos == "darwin" && (strings.Contains(goexperiment, "systemcrypto") || strings.Contains(goexperiment, "darwincrypto")) {
-+		// linkmode=internal isn't supported with system/darwin crypto.
-+		// see https://github.com/microsoft/go-crypto-darwin/issues/33
-+		return false
-+	}
- 	// Internally linking cgo is incomplete on some architectures.
- 	// https://golang.org/issue/10373
- 	// https://golang.org/issue/14449
-diff --git a/src/cmd/go/go_boring_test.go b/src/cmd/go/go_boring_test.go
-index 06478963f4be44..8111b143a1295b 100644
---- a/src/cmd/go/go_boring_test.go
-+++ b/src/cmd/go/go_boring_test.go
-@@ -6,9 +6,16 @@
- 
- package main_test
- 
--import "testing"
-+import (
-+	"internal/goexperiment"
-+	"testing"
-+)
- 
- func TestBoringInternalLink(t *testing.T) {
-+	if goexperiment.DarwinCrypto {
-+		// https://github.com/microsoft/go-crypto-darwin/issues/33
-+		t.Skip("skipping on Darwin")
-+	}
- 	tg := testgo(t)
- 	defer tg.cleanup()
- 	tg.parallel()
-diff --git a/src/cmd/go/testdata/script/darwin_no_cgo.txt b/src/cmd/go/testdata/script/darwin_no_cgo.txt
-index fa445925b7c374..e36ac86fcaa58d 100644
---- a/src/cmd/go/testdata/script/darwin_no_cgo.txt
-+++ b/src/cmd/go/testdata/script/darwin_no_cgo.txt
-@@ -4,6 +4,8 @@
- # of cmd/go, which imports approximately everything
- # in std (certainly everything relevant).
- [!GOOS:darwin] skip
-+[GOEXPERIMENT:darwincrypto] skip
-+[GOEXPERIMENT:systemcrypto] skip
- go list -deps cmd/go
- ! stdout runtime/cgo
- 
-diff --git a/src/crypto/ecdsa/ecdsa.go b/src/crypto/ecdsa/ecdsa.go
-index 049da55bd70f2c..cd075f0efbc744 100644
---- a/src/crypto/ecdsa/ecdsa.go
-+++ b/src/crypto/ecdsa/ecdsa.go
-@@ -161,7 +161,7 @@ func (priv *PrivateKey) Sign(rand io.Reader, digest []byte, opts crypto.SignerOp
- func GenerateKey(c elliptic.Curve, rand io.Reader) (*PrivateKey, error) {
- 	randutil.MaybeReadByte(rand)
- 
--	if boring.Enabled && rand == boring.RandReader {
-+	if boring.Enabled && rand == boring.RandReader && boring.IsCurveSupported(c.Params().Name) {
- 		x, y, d, err := boring.GenerateKeyECDSA(c.Params().Name)
- 		if err != nil {
- 			return nil, err
-@@ -210,7 +210,7 @@ var errNoAsm = errors.New("no assembly implementation available")
- func SignASN1(rand io.Reader, priv *PrivateKey, hash []byte) ([]byte, error) {
- 	randutil.MaybeReadByte(rand)
- 
--	if boring.Enabled && rand == boring.RandReader {
-+	if boring.Enabled && rand == boring.RandReader && boring.IsCurveSupported(priv.Curve.Params().Name) {
- 		b, err := boringPrivateKey(priv)
- 		if err != nil {
- 			return nil, err
-@@ -321,7 +321,7 @@ func addASN1IntBytes(b *cryptobyte.Builder, bytes []byte) {
- // The inputs are not considered confidential, and may leak through timing side
- // channels, or if an attacker has control of part of the inputs.
- func VerifyASN1(pub *PublicKey, hash, sig []byte) bool {
--	if boring.Enabled {
-+	if boring.Enabled && boring.IsCurveSupported(pub.Curve.Params().Name) {
- 		key, err := boringPublicKey(pub)
- 		if err != nil {
- 			return false
-diff --git a/src/crypto/ed25519/ed25519_test.go b/src/crypto/ed25519/ed25519_test.go
-index 87d0132df11d8b..00dd5224a70418 100644
---- a/src/crypto/ed25519/ed25519_test.go
-+++ b/src/crypto/ed25519/ed25519_test.go
-@@ -13,6 +13,7 @@ import (
- 	"crypto/rand"
- 	"crypto/sha512"
- 	"encoding/hex"
-+	"internal/goexperiment"
- 	"log"
- 	"os"
- 	"strings"
-@@ -316,7 +317,7 @@ func TestGolden(t *testing.T) {
- 		copy(priv[32:], pubKey)
- 
- 		sig2 := Sign(priv[:], msg)
--		if !bytes.Equal(sig, sig2[:]) {
-+		if !bytes.Equal(sig, sig2[:]) && !goexperiment.DarwinCrypto {
- 			t.Errorf("different signature result on line %d: %x vs %x", lineNo, sig, sig2)
- 		}
- 
 diff --git a/src/crypto/internal/backend/bbig/big_darwin.go b/src/crypto/internal/backend/bbig/big_darwin.go
 new file mode 100644
 index 00000000000000..77f3ca5d262769
@@ -179,35 +53,24 @@ index 00000000000000..77f3ca5d262769
 +var Enc = bbig.Enc
 +var Dec = bbig.Dec
 diff --git a/src/crypto/internal/backend/common.go b/src/crypto/internal/backend/common.go
-index 91223c0ef0f810..d27bfee89e2534 100644
+index 84447174284ffd..f85f3b6c865764 100644
 --- a/src/crypto/internal/backend/common.go
 +++ b/src/crypto/internal/backend/common.go
-@@ -5,6 +5,7 @@
+@@ -5,8 +5,10 @@
  package backend
  
  import (
 +	"crypto"
  	"crypto/internal/backend/fips140"
  	"crypto/internal/boring/sig"
- 	"internal/goexperiment"
-@@ -14,7 +15,7 @@ import (
- func init() {
- 	if fips140.Enabled() {
- 		if !Enabled {
--			if runtime.GOOS != "linux" && runtime.GOOS != "windows" {
-+			if runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
- 				panic("FIPS mode requested (" + fips140.Message + ") but no crypto backend is supported on " + runtime.GOOS)
- 			}
- 			panic("FIPS mode requested (" + fips140.Message + ") but no supported crypto backend is enabled")
-@@ -75,5 +76,38 @@ func IsSaltSupported(salt int) bool {
- 	if goexperiment.CNGCrypto {
- 		return salt != 0 // rsa.PSSSaltLengthAuto
++	"internal/goexperiment"
+ 	"runtime"
+ )
+ 
+@@ -56,3 +58,33 @@ func UnreachableExceptTests() {
+ 		}
  	}
-+	if goexperiment.DarwinCrypto {
-+		return salt == -1 // CommonCrypto doesn't support custom salt length
-+	}
-+	return true
-+}
+ }
 +
 +func IsCurveSupported(curve string) bool {
 +	switch curve {
@@ -236,14 +99,14 @@ index 91223c0ef0f810..d27bfee89e2534 100644
 +		}
 +		return false
 +	}
- 	return true
- }
++	return true
++}
 diff --git a/src/crypto/internal/backend/darwin_darwin.go b/src/crypto/internal/backend/darwin_darwin.go
 new file mode 100644
-index 00000000000000..10c4a39570b22b
+index 00000000000000..938f72fafa9785
 --- /dev/null
 +++ b/src/crypto/internal/backend/darwin_darwin.go
-@@ -0,0 +1,328 @@
+@@ -0,0 +1,337 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -341,6 +204,15 @@ index 00000000000000..10c4a39570b22b
 +
 +func VerifyECDSA(pub *xcrypto.PublicKeyECDSA, hash []byte, sig []byte) bool {
 +	return xcrypto.VerifyECDSA(pub, hash, sig)
++}
++
++func SupportsRSAKeyPrimes(primes int) bool {
++	return primes == 2
++}
++
++func SupportsRSASaltLength(sign bool, salt int) bool {
++	// CommonCrypto doesn't support custom salt length
++	return salt == -1
 +}
 +
 +type PublicKeyRSA = xcrypto.PublicKeyRSA
@@ -590,27 +462,10 @@ index 00000000000000..ef5af5d956163e
 +	return false
 +}
 diff --git a/src/crypto/rsa/boring.go b/src/crypto/rsa/boring.go
-index d52faddef45549..b276571ddf9fc8 100644
+index ba66dd33a1f9f3..b276571ddf9fc8 100644
 --- a/src/crypto/rsa/boring.go
 +++ b/src/crypto/rsa/boring.go
-@@ -10,6 +10,7 @@ import (
- 	boring "crypto/internal/backend"
- 	"crypto/internal/backend/bbig"
- 	"crypto/internal/boring/bcache"
-+	"internal/goexperiment"
- 	"math/big"
- )
- 
-@@ -62,11 +63,15 @@ type boringPriv struct {
- }
- 
- func boringPrivateKey(priv *PrivateKey) (*boring.PrivateKeyRSA, error) {
-+	// CommonCrypto requires the CRT values to be precomputed if nil
-+	if goexperiment.DarwinCrypto && (priv.Precomputed.Dp == nil || priv.Precomputed.Dq == nil || priv.Precomputed.Qinv == nil) {
-+		priv.Precompute()
-+		priv.Precomputed.fips = nil
-+	}
- 	b := privCache.Get(priv)
+@@ -72,7 +72,6 @@ func boringPrivateKey(priv *PrivateKey) (*boring.PrivateKeyRSA, error) {
  	if b != nil && privateKeyEqual(&b.orig, priv) {
  		return b.key, nil
  	}
@@ -695,108 +550,11 @@ index 00000000000000..1b9c63523ee90e
 +	})
 +	return builder.Bytes()
 +}
-diff --git a/src/crypto/rsa/fips.go b/src/crypto/rsa/fips.go
-index ccb027810a7e07..149b109e0faa35 100644
---- a/src/crypto/rsa/fips.go
-+++ b/src/crypto/rsa/fips.go
-@@ -78,7 +78,7 @@ func SignPSS(rand io.Reader, priv *PrivateKey, hash crypto.Hash, digest []byte,
- 		hash = opts.Hash
- 	}
- 
--	if boring.Enabled && rand == boring.RandReader && boring.IsRSAKeySupported(len(priv.Primes)) && boring.SupportsHash(hash) {
-+	if boring.Enabled && rand == boring.RandReader && boring.IsSaltSupported(opts.saltLength()) && boring.IsRSAKeySupported(len(priv.Primes)) && boring.SupportsHash(hash) {
- 		bkey, err := boringPrivateKey(priv)
- 		if err != nil {
- 			return nil, err
-@@ -200,7 +200,7 @@ func EncryptOAEP(hash hash.Hash, random io.Reader, pub *PublicKey, msg []byte, l
- 
- 	defer hash.Reset()
- 
--	if boring.Enabled && random == boring.RandReader {
-+	if boring.Enabled && random == boring.RandReader && boring.IsRSAOAEPLabelSupported(label) {
- 		hash.Reset()
- 		k := pub.Size()
- 		if len(msg) > k-2*hash.Size()-2 {
-@@ -249,7 +249,7 @@ func decryptOAEP(hash, mgfHash hash.Hash, priv *PrivateKey, ciphertext []byte, l
- 		}
- 	}
- 
--	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) {
-+	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) && boring.IsRSAOAEPLabelSupported(label) {
- 		k := priv.Size()
- 		if len(ciphertext) > k ||
- 			k < hash.Size()*2+2 {
-@@ -305,7 +305,7 @@ func SignPKCS1v15(random io.Reader, priv *PrivateKey, hash crypto.Hash, hashed [
- 		return nil, errors.New("crypto/rsa: use of hash functions other than SHA-2 or SHA-3 is not allowed in FIPS 140-only mode")
- 	}
- 
--	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) {
-+	if boring.Enabled && boring.IsRSAKeySupported(len(priv.Primes)) && boring.IsPKCS1v15HashSupported(hash) {
- 		bkey, err := boringPrivateKey(priv)
- 		if err != nil {
- 			return nil, err
-@@ -339,7 +339,7 @@ func VerifyPKCS1v15(pub *PublicKey, hash crypto.Hash, hashed []byte, sig []byte)
- 		return errors.New("crypto/rsa: use of hash functions other than SHA-2 or SHA-3 is not allowed in FIPS 140-only mode")
- 	}
- 
--	if boring.Enabled {
-+	if boring.Enabled && boring.IsPKCS1v15HashSupported(hash) {
- 		bkey, err := boringPublicKey(pub)
- 		if err != nil {
- 			return err
-diff --git a/src/crypto/rsa/pss_test.go b/src/crypto/rsa/pss_test.go
-index 7d7115cff81cea..d3ba67fe4d0611 100644
---- a/src/crypto/rsa/pss_test.go
-+++ b/src/crypto/rsa/pss_test.go
-@@ -15,6 +15,7 @@ import (
- 	"crypto/sha256"
- 	"crypto/sha512"
- 	"encoding/hex"
-+	"internal/goexperiment"
- 	"math/big"
- 	"os"
- 	"strconv"
-@@ -103,8 +104,10 @@ func TestPSSGolden(t *testing.T) {
- 			h.Reset()
- 			h.Write(msg)
- 			hashed = h.Sum(hashed[:0])
--
- 			if err := VerifyPSS(key, hash, hashed, sig, opts); err != nil {
-+				if goexperiment.DarwinCrypto && key.N.BitLen() == 1025 {
-+					t.Skip("CommonCrypto doesn't support golden test entries with this key size")
-+				}
- 				t.Error(err)
- 			}
- 		default:
-diff --git a/src/go.mod b/src/go.mod
-index 96bdcd421e1129..04eb0c1c82ebb8 100644
---- a/src/go.mod
-+++ b/src/go.mod
-@@ -4,6 +4,7 @@ go 1.24
- 
- require (
- 	github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337
-+	github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146
- 	github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37
- 	golang.org/x/crypto v0.30.0
- 	golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1
-diff --git a/src/go.sum b/src/go.sum
-index abebb59dcd7739..5683f4da5e4f04 100644
---- a/src/go.sum
-+++ b/src/go.sum
-@@ -1,5 +1,7 @@
- github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337 h1:OhuURhDVbg+f/BvlG+qT5sQVkutwhI0Kmsy7koQ4l9A=
- github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
-+github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146 h1:xg58D1m8jeq0lkMf7TmcLZXCAK/PRlT0aG02PYlA6C0=
-+github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146/go.mod h1:LyP4oZ0QcysEJdqUTOk9ngNFArRFK94YRImkoJ8julQ=
- github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37 h1:KB8xmJcFSPlZFMg2mxz5b6DCE8k1qpHy2HFevAJLELI=
- github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37/go.mod h1:JkxQeL8dGcyCuKjn1Etz4NmQrOMImMy4BA9hptEfVFA=
- golang.org/x/crypto v0.30.0 h1:RwoQn3GkWiMkzlX562cLB7OxWvjH1L8xutO2WoJcRoY=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index 997244c84e57c5..4b0585fe1bea25 100644
+index c2846667df81de..46de13a781292c 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -519,6 +519,8 @@ var depsRules = `
+@@ -520,6 +520,8 @@ var depsRules = `
  	< github.com/microsoft/go-crypto-winnative/internal/sysdll
  	< github.com/microsoft/go-crypto-winnative/internal/bcrypt
  	< github.com/microsoft/go-crypto-winnative/cng
@@ -805,7 +563,7 @@ index 997244c84e57c5..4b0585fe1bea25 100644
  	< github.com/golang-fips/openssl/v2/internal/subtle
  	< github.com/golang-fips/openssl/v2
  	< crypto/internal/boring
-@@ -546,6 +548,7 @@ var depsRules = `
+@@ -547,6 +549,7 @@ var depsRules = `
  	CRYPTO, FMT, math/big
  	< github.com/microsoft/go-crypto-winnative/cng/bbig
  	< github.com/golang-fips/openssl/v2/bbig
@@ -813,7 +571,7 @@ index 997244c84e57c5..4b0585fe1bea25 100644
  	< crypto/internal/boring/bbig
  	< crypto/internal/backend/bbig
  	< crypto/rand
-@@ -860,7 +863,7 @@ func findImports(pkg string) ([]string, error) {
+@@ -861,7 +864,7 @@ func findImports(pkg string) ([]string, error) {
  	}
  	var imports []string
  	var haveImport = map[string]bool{}
@@ -834,48 +592,6 @@ index 1d0b9b20e9b1d4..6092c93d4c5b26 100644
  }
  
  // Verify that the vendor directories contain only packages matching the list above.
-diff --git a/src/internal/goexperiment/exp_darwincrypto_off.go b/src/internal/goexperiment/exp_darwincrypto_off.go
-new file mode 100644
-index 00000000000000..bc4440e01419fb
---- /dev/null
-+++ b/src/internal/goexperiment/exp_darwincrypto_off.go
-@@ -0,0 +1,9 @@
-+// Code generated by mkconsts.go. DO NOT EDIT.
-+
-+//go:build !goexperiment.darwincrypto
-+// +build !goexperiment.darwincrypto
-+
-+package goexperiment
-+
-+const DarwinCrypto = false
-+const DarwinCryptoInt = 0
-diff --git a/src/internal/goexperiment/exp_darwincrypto_on.go b/src/internal/goexperiment/exp_darwincrypto_on.go
-new file mode 100644
-index 00000000000000..3215ce2784e94d
---- /dev/null
-+++ b/src/internal/goexperiment/exp_darwincrypto_on.go
-@@ -0,0 +1,9 @@
-+// Code generated by mkconsts.go. DO NOT EDIT.
-+
-+//go:build goexperiment.darwincrypto
-+// +build goexperiment.darwincrypto
-+
-+package goexperiment
-+
-+const DarwinCrypto = true
-+const DarwinCryptoInt = 1
-diff --git a/src/internal/goexperiment/flags.go b/src/internal/goexperiment/flags.go
-index c6f64c18bdd13f..e6c9b7d5e62dc0 100644
---- a/src/internal/goexperiment/flags.go
-+++ b/src/internal/goexperiment/flags.go
-@@ -61,6 +61,7 @@ type Flags struct {
- 	BoringCrypto      bool
- 	OpenSSLCrypto     bool
- 	CNGCrypto         bool
-+	DarwinCrypto      bool
- 
- 	// SystemCrypto enables the OpenSSL, CNG or Darwin crypto experiment depending on
- 	// which one is appropriate on the target GOOS.
 diff --git a/src/net/lookup_test.go b/src/net/lookup_test.go
 index 514cbd098ae772..8ec689416dde1d 100644
 --- a/src/net/lookup_test.go

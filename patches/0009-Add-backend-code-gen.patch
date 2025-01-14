@@ -378,7 +378,7 @@ index 00000000000000..1ba948c8f207e5
 +	return bs
 +}
 diff --git a/src/crypto/internal/backend/nobackend.go b/src/crypto/internal/backend/nobackend.go
-index 06e19c55345187..cf748c3ef8e0cf 100644
+index 5c2f56d000a2a8..6f87fc053bb4b1 100644
 --- a/src/crypto/internal/backend/nobackend.go
 +++ b/src/crypto/internal/backend/nobackend.go
 @@ -4,7 +4,7 @@
@@ -421,10 +421,10 @@ index 00000000000000..8d0c3fde9ab5e8
 +const AllowCryptoFallback = true
 +const AllowCryptoFallbackInt = 1
 diff --git a/src/internal/goexperiment/flags.go b/src/internal/goexperiment/flags.go
-index c6f64c18bdd13f..eb21eb48f2524b 100644
+index e6c9b7d5e62dc0..65d339be7dde32 100644
 --- a/src/internal/goexperiment/flags.go
 +++ b/src/internal/goexperiment/flags.go
-@@ -77,6 +77,14 @@ type Flags struct {
+@@ -78,6 +78,14 @@ type Flags struct {
  	// being used to build the Go program.
  	SystemCrypto bool
  

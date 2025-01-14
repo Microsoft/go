@@ -9,14 +9,43 @@ parameters:
     type: string
     default: 'nil'
 
+  - name: ReleaseJob
+    type: boolean
+    default: false
+
 steps:
-  - ${{ if eq(parameters.runID, 'nil') }}:
+  - ${{ if parameters.ReleaseJob }}:
+
+    - task: 1ES.DownloadPipelineArtifact@1
+      displayName: 'Download: Binaries Signed'
+      inputs:
+        ${{ if eq(parameters.runID, 'nil') }}:
+          buildType: current
+        ${{ else }}:
+          buildType: specific
+          runVersion: 'specific'
+          runId: ${{ parameters.runID }}
+        project: $(System.TeamProject)
+        definition: $(System.DefinitionId)
+        artifactName: Binaries Signed
+        targetPath: '$(Pipeline.Workspace)/Binaries Signed'
+
+    # The 1ES step tries to validate the SBOM manifests after download, so we can't assign
+    # 'patterns' to filter them out. Instead, remove them after validation is done.
+    - pwsh: |
+        Remove-Item -Path '$(Pipeline.Workspace)/Binaries Signed/_manifest' -Recurse -Force
+      displayName: Delete SBOM manifests
+
+  - ${{ elseif eq(parameters.runID, 'nil') }}:
+
     - download: current
       artifact: Binaries Signed
       # Filter out manifests added by 1ES pipeline template.
       patterns: '!_manifest/**'
       displayName: 'Download: Binaries Signed'
+
   - ${{ else }}:
+
     - task: DownloadPipelineArtifact@2
       displayName: 'Download: Binaries Signed (Specific)'
       inputs:

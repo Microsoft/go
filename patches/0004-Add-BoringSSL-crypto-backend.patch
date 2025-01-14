@@ -5,9 +5,9 @@ Subject: [PATCH] Add BoringSSL crypto backend
 
 ---
  .../internal/backend/bbig/big_boring.go       |  12 +
- src/crypto/internal/backend/boring_linux.go   | 267 ++++++++++++++++++
+ src/crypto/internal/backend/boring_linux.go   | 275 ++++++++++++++++++
  src/crypto/internal/backend/fips140/boring.go |  11 +
- 3 files changed, 290 insertions(+)
+ 3 files changed, 298 insertions(+)
  create mode 100644 src/crypto/internal/backend/bbig/big_boring.go
  create mode 100644 src/crypto/internal/backend/boring_linux.go
  create mode 100644 src/crypto/internal/backend/fips140/boring.go
@@ -32,10 +32,10 @@ index 00000000000000..0b62cef68546d0
 +var Dec = bbig.Dec
 diff --git a/src/crypto/internal/backend/boring_linux.go b/src/crypto/internal/backend/boring_linux.go
 new file mode 100644
-index 00000000000000..94bc444f10eb2b
+index 00000000000000..c49291c2f62b4c
 --- /dev/null
 +++ b/src/crypto/internal/backend/boring_linux.go
-@@ -0,0 +1,267 @@
+@@ -0,0 +1,275 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -114,6 +114,14 @@ index 00000000000000..94bc444f10eb2b
 +
 +func VerifyECDSA(pub *boring.PublicKeyECDSA, hash []byte, sig []byte) bool {
 +	return boring.VerifyECDSA(pub, hash, sig)
++}
++
++func SupportsRSAKeyPrimes(primes int) bool {
++	return true
++}
++
++func SupportsRSASaltLength(sign bool, salt int) bool {
++	return true
 +}
 +
 +type PublicKeyRSA = boring.PublicKeyRSA
