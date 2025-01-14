@@ -4,59 +4,15 @@ Date: Tue, 19 Jul 2022 15:58:02 +0200
 Subject: [PATCH] Add CNG crypto backend
 
 ---
- src/crypto/ecdsa/badlinkname.go             |  17 ++
- src/crypto/internal/backend/backend_test.go |   4 +-
  src/crypto/internal/backend/bbig/big_cng.go |  12 +
- src/crypto/internal/backend/cng_windows.go  | 320 ++++++++++++++++++++
- src/crypto/internal/backend/common.go       |   9 +-
+ src/crypto/internal/backend/cng_windows.go  | 329 ++++++++++++++++++++
  src/crypto/internal/backend/fips140/cng.go  |  33 ++
- src/crypto/rsa/pss_test.go                  |   2 +-
  src/go/build/deps_test.go                   |   5 +
- src/go/build/vendor_test.go                 |   1 +
- 9 files changed, 398 insertions(+), 5 deletions(-)
- create mode 100644 src/crypto/ecdsa/badlinkname.go
+ 4 files changed, 379 insertions(+)
  create mode 100644 src/crypto/internal/backend/bbig/big_cng.go
  create mode 100644 src/crypto/internal/backend/cng_windows.go
  create mode 100644 src/crypto/internal/backend/fips140/cng.go
 
-diff --git a/src/crypto/ecdsa/badlinkname.go b/src/crypto/ecdsa/badlinkname.go
-new file mode 100644
-index 00000000000000..0d00b7bb3a7fc8
---- /dev/null
-+++ b/src/crypto/ecdsa/badlinkname.go
-@@ -0,0 +1,17 @@
-+// Copyright 2024 The Go Authors. All rights reserved.
-+// Use of this source code is governed by a BSD-style
-+// license that can be found in the LICENSE file.
-+
-+package ecdsa
-+
-+import _ "unsafe"
-+
-+// The symbols below are pulled by the CNG backend in the Microsoft Go compiler.
-+// We provide a push linkname here, to keep them accessible with pull linknames.
-+
-+//go:linkname encodeSignature
-+//go:linkname parseSignature
-+
-+// This supplements other linknames that are already added by
-+// https://github.com/golang/go/commit/41aab30bd260297ad8ddad47e98fdf8390a9a67e
-+// See that commit for more information.
-diff --git a/src/crypto/internal/backend/backend_test.go b/src/crypto/internal/backend/backend_test.go
-index c2c06d3bff8c74..837cff477e257e 100644
---- a/src/crypto/internal/backend/backend_test.go
-+++ b/src/crypto/internal/backend/backend_test.go
-@@ -4,9 +4,7 @@
- 
- package backend
- 
--import (
--	"testing"
--)
-+import "testing"
- 
- // Test that Unreachable panics.
- func TestUnreachable(t *testing.T) {
 diff --git a/src/crypto/internal/backend/bbig/big_cng.go b/src/crypto/internal/backend/bbig/big_cng.go
 new file mode 100644
 index 00000000000000..92623031fd87d0
@@ -77,10 +33,10 @@ index 00000000000000..92623031fd87d0
 +var Dec = bbig.Dec
 diff --git a/src/crypto/internal/backend/cng_windows.go b/src/crypto/internal/backend/cng_windows.go
 new file mode 100644
-index 00000000000000..495260a08dd029
+index 00000000000000..6bfbdc57f0518b
 --- /dev/null
 +++ b/src/crypto/internal/backend/cng_windows.go
-@@ -0,0 +1,320 @@
+@@ -0,0 +1,329 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -204,6 +160,15 @@ index 00000000000000..495260a08dd029
 +
 +func VerifyECDSARaw(pub *cng.PublicKeyECDSA, hash []byte, r, s cng.BigInt) bool {
 +	return cng.VerifyECDSA(pub, hash, r, s)
++}
++
++func SupportsRSAKeyPrimes(primes int) bool {
++	// CNG only supports 2-prime RSA keys.
++	return primes == 2
++}
++
++func SupportsRSASaltLength(salt int) bool {
++	return salt != 0 // rsa.PSSSaltLengthAuto
 +}
 +
 +type PublicKeyRSA = cng.PublicKeyRSA
@@ -401,32 +366,6 @@ index 00000000000000..495260a08dd029
 +func VerifyDSA(pub *PublicKeyDSA, hashed []byte, r, s cng.BigInt, encodeSignature func(r, s cng.BigInt) ([]byte, error)) bool {
 +	return cng.VerifyDSA(pub, hashed, r, s)
 +}
-diff --git a/src/crypto/internal/backend/common.go b/src/crypto/internal/backend/common.go
-index 858e76e3c51c06..91223c0ef0f810 100644
---- a/src/crypto/internal/backend/common.go
-+++ b/src/crypto/internal/backend/common.go
-@@ -44,7 +44,11 @@ func hasSuffix(s, t string) bool {
- // UnreachableExceptTests marks code that should be unreachable
- // when backend is in use. It panics.
- func UnreachableExceptTests() {
--	if Enabled {
-+	// runtime_arg0 is not supported on windows.
-+	// We are going through the same code patch on linux,
-+	// so if we are unintentionally calling an 'unreachable' function,
-+	// we will catch it there.
-+	if Enabled && !goexperiment.CNGCrypto {
- 		name := runtime_arg0()
- 		// If ran on Windows we'd need to allow _test.exe and .test.exe as well.
- 		if !hasSuffix(name, "_test") && !hasSuffix(name, ".test") {
-@@ -68,5 +72,8 @@ func IsRSAKeySupported(primes int) bool {
- }
- 
- func IsSaltSupported(salt int) bool {
-+	if goexperiment.CNGCrypto {
-+		return salt != 0 // rsa.PSSSaltLengthAuto
-+	}
- 	return true
- }
 diff --git a/src/crypto/internal/backend/fips140/cng.go b/src/crypto/internal/backend/fips140/cng.go
 new file mode 100644
 index 00000000000000..f769d15f94ab05
@@ -466,19 +405,6 @@ index 00000000000000..f769d15f94ab05
 +	}
 +	return enabled != 0
 +}
-diff --git a/src/crypto/rsa/pss_test.go b/src/crypto/rsa/pss_test.go
-index a4af0a2144870a..7d7115cff81cea 100644
---- a/src/crypto/rsa/pss_test.go
-+++ b/src/crypto/rsa/pss_test.go
-@@ -246,7 +246,7 @@ func fromHex(hexStr string) []byte {
- 
- func TestInvalidPSSSaltLength(t *testing.T) {
- 	t.Setenv("GODEBUG", "rsa1024min=0")
--	key, err := GenerateKey(rand.Reader, 245)
-+	key, err := GenerateKey(rand.Reader, 512)
- 	if err != nil {
- 		t.Fatal(err)
- 	}
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
 index 3de94c93629e3d..8effe9041f3f5f 100644
 --- a/src/go/build/deps_test.go
@@ -502,15 +428,3 @@ index 3de94c93629e3d..8effe9041f3f5f 100644
  	< github.com/golang-fips/openssl/v2/bbig
  	< crypto/internal/boring/bbig
  	< crypto/internal/backend/bbig
-diff --git a/src/go/build/vendor_test.go b/src/go/build/vendor_test.go
-index 7c821ae4bc5727..1d0b9b20e9b1d4 100644
---- a/src/go/build/vendor_test.go
-+++ b/src/go/build/vendor_test.go
-@@ -23,6 +23,7 @@ var allowedPackagePrefixes = []string{
- 	"github.com/ianlancetaylor/demangle",
- 	"rsc.io/markdown",
- 	"github.com/golang-fips/openssl",
-+	"github.com/microsoft/go-crypto-winnative",
- }
- 
- // Verify that the vendor directories contain only packages matching the list above.
