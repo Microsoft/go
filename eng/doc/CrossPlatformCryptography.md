@@ -1,6 +1,6 @@
 # Cross-Platform Cryptography in Microsoft Go
 
-Cryptographic operations in Microsoft Go are delegated to the operating system (OS) libraries. This dependency has advantages:
+Cryptographic operations in Microsoft Go are delegated to the operating system (OS) libraries in some conditions. This dependency has advantages:
 
 * Go apps benefit from OS reliability. Keeping cryptography libraries safe from vulnerabilities is a high priority for OS vendors. To do that, they provide updates that system administrators should be applying.
 * Go apps have access to FIPS-validated algorithms if the OS libraries are FIPS-validated.
@@ -9,7 +9,7 @@ Cryptographic operations in Microsoft Go are delegated to the operating system (
 > Starting with Go 1.24, Go will also be FIPS 140-3 compliant, see https://github.com/golang/go/issues/69536.
 > If the only reason you are using Microsoft Go is for FIPS 140-3 compliance, you should consider using Microsoft Go 1.24 or later.
 
-Go apps will fall back to native Go implementations if the OS libraries doesn't support the algorithm.
+Go apps will fall back to native Go implementations if the OS libraries don't support the algorithm.
 This article identifies the features that are supported on each platform.
 
 This article assumes you have a working familiarity with cryptography in Go.
@@ -20,17 +20,17 @@ Microsoft Go supports the following platforms:
 
 ### Windows
 
-On Windows, Microsoft Go uses the [Cryptography API: Next Generation](https://learn.microsoft.com/en-us/windows/win32/seccng/cng-portal) library, CNG from now on, for cryptographic operations.
+On Windows, Microsoft Go uses the [CNG library (Cryptography API: Next Generation)](https://learn.microsoft.com/en-us/windows/win32/seccng/cng-portal) for cryptographic operations.
 CNG is available since Windows Vista and Windows Server 2008 and it doesn't require any additional installation nor configuration.
 
 ### Linux
 
-On Linux, Microsoft Go uses the [OpenSSL crypto library](https://docs.openssl.org/3.0/man7/crypto/), OpenSSL from now on, for cryptographic operations.
+On Linux, Microsoft Go uses the [OpenSSL crypto library](https://docs.openssl.org/3.0/man7/crypto/) for cryptographic operations.
 OpenSSL is normally available on Linux distributions, but it may not be installed by default.
 If it is not installed, you can install it using the package manager of your distribution.
 
 OpenSSL 3 implements all the cryptographic algorithms using [Providers](https://docs.openssl.org/3.0/man7/crypto/#providers).
-Microsoft Go officially supports the built-in providers and the [SymCrypt provider](https://github.com/microsoft/SymCrypt-OpenSSL), SCOSSL from now on.
+Microsoft Go officially supports the built-in providers and [SCOSSL (SymCrypt provider for OpenSSL)](https://github.com/microsoft/SymCrypt-OpenSSL).
 The minimum SCOSSL version required is v1.6.1.
 The following tables assume that the SCOSSL provider is used together with the built-in providers.
 
@@ -69,7 +69,7 @@ This section includes the following packages:
 
 <sup>2</sup>Requires OpenSSL 1.1.1 or later.
 
-<sup>3</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
+<sup>3</sup>Supports only hash algorithms that are supported as standalone hash functions.
 
 ## Symmetric encryption
 
@@ -181,7 +181,7 @@ This section includes the following packages:
 
 #### Random number generation
 
-For those operations that require random numbers, only the [rand.Reader](https://pkg.go.dev/crypto/rand#Reader) is supported.
+Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
 
 ### ECDH
 
@@ -248,8 +248,8 @@ This section includes the following packages:
 
 | Parameters    | Windows     | Linux        |
 |---------------|-------------|--------------|
-|768            | ❌          | ❌          |
-|1024           | ❌          | ❌          |
+| 768           | ❌          | ❌          |
+| 1024          | ❌          | ❌          |
 
 ## TLS
 
