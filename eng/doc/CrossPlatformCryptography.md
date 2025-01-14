@@ -1,13 +1,6 @@
 # Cross-Platform Cryptography in Microsoft Go
 
-Cryptographic operations in Microsoft Go are delegated to the operating system (OS) libraries in some conditions. This dependency has advantages:
-
-* Go apps benefit from OS reliability. Keeping cryptography libraries safe from vulnerabilities is a high priority for OS vendors. To do that, they provide updates that system administrators should be applying.
-* Go apps have access to FIPS-validated algorithms if the OS libraries are FIPS-validated.
-
-> [!NOTE]
-> Starting with Go 1.24, Go will also be FIPS 140-3 compliant, see https://github.com/golang/go/issues/69536.
-> If the only reason you are using Microsoft Go is for FIPS 140-3 compliance, you should consider using Microsoft Go 1.24 or later.
+Cryptographic operations in Microsoft Go are delegated to the operating system (OS) libraries in some conditions.
 
 Go apps will fall back to native Go implementations if the OS libraries don't support the algorithm.
 This article identifies the features that are supported on each platform.
