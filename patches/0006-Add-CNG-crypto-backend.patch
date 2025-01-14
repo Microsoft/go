@@ -11,11 +11,9 @@ Subject: [PATCH] Add CNG crypto backend
  src/crypto/internal/backend/common.go       |   9 +-
  src/crypto/internal/backend/fips140/cng.go  |  33 ++
  src/crypto/rsa/pss_test.go                  |   2 +-
- src/go.mod                                  |   1 +
- src/go.sum                                  |   2 +
  src/go/build/deps_test.go                   |   5 +
  src/go/build/vendor_test.go                 |   1 +
- 11 files changed, 401 insertions(+), 5 deletions(-)
+ 9 files changed, 398 insertions(+), 5 deletions(-)
  create mode 100644 src/crypto/ecdsa/badlinkname.go
  create mode 100644 src/crypto/internal/backend/bbig/big_cng.go
  create mode 100644 src/crypto/internal/backend/cng_windows.go
@@ -481,30 +479,6 @@ index a4af0a2144870a..7d7115cff81cea 100644
  	if err != nil {
  		t.Fatal(err)
  	}
-diff --git a/src/go.mod b/src/go.mod
-index f12d9b4d9172ab..96bdcd421e1129 100644
---- a/src/go.mod
-+++ b/src/go.mod
-@@ -4,6 +4,7 @@ go 1.24
- 
- require (
- 	github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337
-+	github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37
- 	golang.org/x/crypto v0.30.0
- 	golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1
- )
-diff --git a/src/go.sum b/src/go.sum
-index e51f0f57540a83..abebb59dcd7739 100644
---- a/src/go.sum
-+++ b/src/go.sum
-@@ -1,5 +1,7 @@
- github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337 h1:OhuURhDVbg+f/BvlG+qT5sQVkutwhI0Kmsy7koQ4l9A=
- github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
-+github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37 h1:KB8xmJcFSPlZFMg2mxz5b6DCE8k1qpHy2HFevAJLELI=
-+github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37/go.mod h1:JkxQeL8dGcyCuKjn1Etz4NmQrOMImMy4BA9hptEfVFA=
- golang.org/x/crypto v0.30.0 h1:RwoQn3GkWiMkzlX562cLB7OxWvjH1L8xutO2WoJcRoY=
- golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
- golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1 h1:+Yk1FZ5E+/ewA0nOO/HRYs9E4yeqpGOShuSAdzCNNoQ=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
 index 3de94c93629e3d..8effe9041f3f5f 100644
 --- a/src/go/build/deps_test.go
