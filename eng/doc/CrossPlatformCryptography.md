@@ -1,8 +1,8 @@
 # Cross-Platform Cryptography in Microsoft Go
 
-Cryptographic operations in Microsoft Go are delegated to the operating system (OS) libraries in some conditions.
-
-Go apps will fall back to native Go implementations if the OS libraries don't support the algorithm.
+Cryptographic operations in Microsoft Go are delegated to the operating system (OS) libraries in some conditions described.
+The high level conditions and the benefits of delegating cryptographic operations are described in the [Microsoft Go FIPS README](./Readme.md).
+At a fine-grained level, Go apps will fall back to the native Go implementation of an algorithm if the OS libraries don't support it.
 This article identifies the features that are supported on each platform.
 
 This article assumes you have a working familiarity with cryptography in Go.
@@ -24,11 +24,11 @@ If it is not installed, you can install it using the package manager of your dis
 
 OpenSSL 3 implements all the cryptographic algorithms using [Providers](https://docs.openssl.org/3.0/man7/crypto/#providers).
 Microsoft Go officially supports the built-in providers and [SCOSSL (SymCrypt provider for OpenSSL)](https://github.com/microsoft/SymCrypt-OpenSSL) v1.6.1 or later.
-SCOSSL is expected to be used with the default built-in provider enable as a fallback (which is the case when using [Azure Linux 3](https://github.com/microsoft/AzureLinux)).
+SCOSSL is expected to be used with the default built-in provider enabled as a fallback (which is the case when using [Azure Linux 3](https://github.com/microsoft/AzureLinux)).
 
 ## Table legend
 
-The following table legend is used to indicate the level of support for each cryptographic algorithm:
+The following legend describes the symbols used in the tables to indicate the level of support for each cryptographic algorithm:
 
 | Symbol | Meaning                                                                                                            |
 |--------|--------------------------------------------------------------------------------------------------------------------|
@@ -36,7 +36,7 @@ The following table legend is used to indicate the level of support for each cry
 | ⚠️     | Supported with limitations that require user action                                                                |
 | ❌     | Not supported                                                                                                      |
 
-When an algorithm is not supported or the limitations are not met, Microsoft Go will fall back to the Go implementation.
+When an algorithm is not supported or the limitations are exceeded, Microsoft Go will fall back to the Go implementation.
 
 ## Hash and Message Authentication Algorithms
 
@@ -149,7 +149,7 @@ This section includes the following packages:
 | PKCS1v15 Signature (SHA-2)<sup>1</sup> | ✔️                   | ✔️                 |
 | PKCS1v15 Signature (SHA-3)             | ❌                  | ❌                 |
 
-<sup>1</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
+<sup>1</sup>Supports only hash algorithms that are [supported as standalone hash functions](#hash-and-message-authentication-algorithms).
 
 <sup>2</sup>Available starting in Microsoft Go 1.24.
 
@@ -167,7 +167,7 @@ On Windows, when verifying a PSS signature, [rsa.PSSSaltLengthAuto](https://pkg.
 
 #### Random number generation
 
-For those operations that require random numbers, only the [rand.Reader](https://pkg.go.dev/crypto/rand#Reader) is supported.
+Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
 
 ### ECDSA
 
@@ -203,7 +203,7 @@ This section includes the following packages:
 
 #### Random number generation
 
-For those operations that require random numbers, only the [rand.Reader](https://pkg.go.dev/crypto/rand#Reader) is supported.
+Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
 
 ### Ed25519
 
@@ -219,7 +219,7 @@ This section includes the following packages:
 
 #### Random number generation
 
-For those operations that require random numbers, only the [rand.Reader](https://pkg.go.dev/crypto/rand#Reader) is supported.
+Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
 
 ### DSA
 
@@ -242,7 +242,7 @@ This section includes the following packages:
 | PBKDF2        | ✔️ <sup>1</sup>  | ✔️ <sup>1</sup>  |
 | HKDF          | ✔️ <sup>1</sup>  | ✔️ <sup>1</sup>  |
 
-<sup>1</sup>The supported hash algorithms are the same as the ones supported as standalone hash functions.
+<sup>1</sup>Supports only hash algorithms that are [supported as standalone hash functions](#hash-and-message-authentication-algorithms).
 
 ## ML-KEM
 
