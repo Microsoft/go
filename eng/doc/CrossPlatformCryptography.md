@@ -30,11 +30,11 @@ SCOSSL is expected to be used with the default built-in provider enabled as a fa
 
 The following legend describes the symbols used in the tables to indicate the level of support for each cryptographic algorithm:
 
-| Symbol | Meaning                                                                                                            |
-|--------|--------------------------------------------------------------------------------------------------------------------|
-| ✔️     | Supported, possibly with minor limitations that don't require user action when using the latest Go and OS versions |
-| ⚠️     | Supported with limitations that require user action                                                                |
-| ❌     | Not supported                                                                                                      |
+| Symbol | Meaning                                                                                                                      |
+|--------|------------------------------------------------------------------------------------------------------------------------------|
+| ✔️     | Supported, possibly with minor limitations that don't require special configuration when using the latest Go and OS versions |
+| ⚠️     | Supported with limitations that require special configuration action                                                         |
+| ❌     | Not supported                                                                                                                |
 
 When an algorithm is not supported or the limitations are exceeded, Microsoft Go will fall back to the Go implementation.
 
@@ -159,7 +159,9 @@ This section includes the following packages:
 
 Multi-prime RSA keys are not supported.
 
-The RSA key size is subject to the limitations of the underlying cryptographic library. For example, on Windows and when using SCOSSL, the key size should be multiple of 8.
+The RSA key size is subject to the limitations of the underlying cryptographic library.
+For example, on some Windows and SCOSSL configurations, the key size should be multiple of 8.
+Please refer to the documentation of the underlying cryptographic library for the specific limitations.
 
 #### PSS salt length
 
