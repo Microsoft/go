@@ -8,9 +8,9 @@ Subject: [PATCH] Add OpenSSL crypto backend
  src/cmd/link/internal/ld/lib.go               |   1 +
  .../internal/backend/bbig/big_openssl.go      |  12 +
  .../internal/backend/fips140/openssl.go       |  41 ++
- src/crypto/internal/backend/openssl_linux.go  | 358 ++++++++++++++++++
+ src/crypto/internal/backend/openssl_linux.go  | 362 ++++++++++++++++++
  src/os/exec/exec_test.go                      |   9 +
- 6 files changed, 422 insertions(+), 2 deletions(-)
+ 6 files changed, 426 insertions(+), 2 deletions(-)
  create mode 100644 src/crypto/internal/backend/bbig/big_openssl.go
  create mode 100644 src/crypto/internal/backend/fips140/openssl.go
  create mode 100644 src/crypto/internal/backend/openssl_linux.go
@@ -112,10 +112,10 @@ index 00000000000000..118efa3a492a7d
 +}
 diff --git a/src/crypto/internal/backend/openssl_linux.go b/src/crypto/internal/backend/openssl_linux.go
 new file mode 100644
-index 00000000000000..0f3aea733ac2a5
+index 00000000000000..57293ff2128dd6
 --- /dev/null
 +++ b/src/crypto/internal/backend/openssl_linux.go
-@@ -0,0 +1,358 @@
+@@ -0,0 +1,362 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -203,6 +203,10 @@ index 00000000000000..0f3aea733ac2a5
 +	return openssl.SupportsHash(h)
 +}
 +
++func SupportsCurve(curve string) bool            { return true }
++func SupportsRSAOAEPLabel(label []byte) bool     { return true }
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool { return true }
++
 +func NewMD5() hash.Hash        { return openssl.NewMD5() }
 +func NewSHA1() hash.Hash       { return openssl.NewSHA1() }
 +func NewSHA224() hash.Hash     { return openssl.NewSHA224() }
@@ -259,7 +263,7 @@ index 00000000000000..0f3aea733ac2a5
 +	return primes == 2
 +}
 +
-+func SupportsRSASaltLength(salt int) bool {
++func SupportsRSASaltLength(sign bool, salt int) bool {
 +	return true
 +}
 +
@@ -391,40 +395,40 @@ index 00000000000000..0f3aea733ac2a5
 +
 +func SupportsEd25519() bool { return openssl.SupportsEd25519() }
 +
-+type PublicKeyEd25519 = openssl.PublicKeyEd25519
-+type PrivateKeyEd25519 = openssl.PrivateKeyEd25519
++type PublicKeyEd25519 = *openssl.PublicKeyEd25519
++type PrivateKeyEd25519 = *openssl.PrivateKeyEd25519
 +
-+func GenerateKeyEd25519() (*PrivateKeyEd25519, error) {
++func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
 +	return openssl.GenerateKeyEd25519()
 +}
 +
 +// Deprecated: use NewPrivateKeyEd25519 instead.
-+func NewPrivateKeyEd25119(priv []byte) (*PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25119(priv []byte) (PrivateKeyEd25519, error) {
 +	return openssl.NewPrivateKeyEd25519(priv)
 +}
 +
 +// Deprecated: use NewPublicKeyEd25519 instead.
-+func NewPublicKeyEd25119(pub []byte) (*PublicKeyEd25519, error) {
++func NewPublicKeyEd25119(pub []byte) (PublicKeyEd25519, error) {
 +	return openssl.NewPublicKeyEd25519(pub)
 +}
 +
-+func NewPrivateKeyEd25519(priv []byte) (*PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
 +	return openssl.NewPrivateKeyEd25519(priv)
 +}
 +
-+func NewPublicKeyEd25519(pub []byte) (*PublicKeyEd25519, error) {
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
 +	return openssl.NewPublicKeyEd25519(pub)
 +}
 +
-+func NewPrivateKeyEd25519FromSeed(seed []byte) (*PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
 +	return openssl.NewPrivateKeyEd25519FromSeed(seed)
 +}
 +
-+func SignEd25519(priv *PrivateKeyEd25519, message []byte) ([]byte, error) {
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
 +	return openssl.SignEd25519(priv, message)
 +}
 +
-+func VerifyEd25519(pub *PublicKeyEd25519, message, sig []byte) error {
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
 +	return openssl.VerifyEd25519(pub, message, sig)
 +}
 +

@@ -11,11 +11,11 @@ Subject: [PATCH] Add crypto backend foundation
  .../internal/backend/fips140/isrequirefips.go |   9 +
  .../internal/backend/fips140/norequirefips.go |   9 +
  .../backend/fips140/nosystemcrypto.go         |  11 +
- src/crypto/internal/backend/nobackend.go      | 236 ++++++++++++++++++
+ src/crypto/internal/backend/nobackend.go      | 240 ++++++++++++++++++
  src/crypto/internal/backend/stub.s            |  10 +
  src/go/build/deps_test.go                     |   7 +-
  src/runtime/runtime_boring.go                 |   5 +
- 11 files changed, 446 insertions(+), 1 deletion(-)
+ 11 files changed, 450 insertions(+), 1 deletion(-)
  create mode 100644 src/crypto/internal/backend/backend_test.go
  create mode 100644 src/crypto/internal/backend/bbig/big.go
  create mode 100644 src/crypto/internal/backend/common.go
@@ -64,7 +64,7 @@ index 00000000000000..c2c06d3bff8c74
 +}
 diff --git a/src/crypto/internal/backend/bbig/big.go b/src/crypto/internal/backend/bbig/big.go
 new file mode 100644
-index 00000000000000..20251a290dc2e0
+index 00000000000000..ab3f30825dcfa1
 --- /dev/null
 +++ b/src/crypto/internal/backend/bbig/big.go
 @@ -0,0 +1,17 @@
@@ -72,7 +72,7 @@ index 00000000000000..20251a290dc2e0
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
 +
-+//go:build !goexperiment.systemcrypto
++//go:build !goexperiment.systemcrypto || (goexperiment.darwincrypto && !cgo)
 +
 +package bbig
 +
@@ -87,7 +87,7 @@ index 00000000000000..20251a290dc2e0
 +}
 diff --git a/src/crypto/internal/backend/common.go b/src/crypto/internal/backend/common.go
 new file mode 100644
-index 00000000000000..0402524861dc53
+index 00000000000000..84447174284ffd
 --- /dev/null
 +++ b/src/crypto/internal/backend/common.go
 @@ -0,0 +1,58 @@
@@ -106,7 +106,7 @@ index 00000000000000..0402524861dc53
 +func init() {
 +	if fips140.Enabled() {
 +		if !Enabled {
-+			if runtime.GOOS != "linux" && runtime.GOOS != "windows" {
++			if runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
 +				panic("FIPS mode requested (" + fips140.Message + ") but no crypto backend is supported on " + runtime.GOOS)
 +			}
 +			panic("FIPS mode requested (" + fips140.Message + ") but no supported crypto backend is enabled")
@@ -262,10 +262,10 @@ index 00000000000000..83691d7dd42d51
 +}
 diff --git a/src/crypto/internal/backend/nobackend.go b/src/crypto/internal/backend/nobackend.go
 new file mode 100644
-index 00000000000000..4a3d8b729da30f
+index 00000000000000..eca1ceab2a04b9
 --- /dev/null
 +++ b/src/crypto/internal/backend/nobackend.go
-@@ -0,0 +1,236 @@
+@@ -0,0 +1,240 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -293,6 +293,10 @@ index 00000000000000..4a3d8b729da30f
 +const RandReader = randReader(0)
 +
 +func SupportsHash(h crypto.Hash) bool { panic("cryptobackend: not available") }
++
++func SupportsCurve(curve string) bool            { panic("cryptobackend: not available") }
++func SupportsRSAOAEPLabel(label []byte) bool     { panic("cryptobackend: not available") }
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool { panic("cryptobackend: not available") }
 +
 +func NewMD5() hash.Hash        { panic("cryptobackend: not available") }
 +func NewSHA1() hash.Hash       { panic("cryptobackend: not available") }
@@ -337,8 +341,8 @@ index 00000000000000..4a3d8b729da30f
 +	panic("cryptobackend: not available")
 +}
 +
-+func SupportsRSAKeyPrimes(primes int) bool { panic("cryptobackend: not available") }
-+func SupportsRSASaltLength(salt int) bool  { panic("cryptobackend: not available") }
++func SupportsRSAKeyPrimes(primes int) bool           { panic("cryptobackend: not available") }
++func SupportsRSASaltLength(sign bool, salt int) bool { panic("cryptobackend: not available") }
 +
 +type PublicKeyRSA struct{ _ int }
 +type PrivateKeyRSA struct{ _ int }
@@ -438,37 +442,37 @@ index 00000000000000..4a3d8b729da30f
 +
 +type PublicKeyEd25519 struct{}
 +
-+func (k *PublicKeyEd25519) Bytes() ([]byte, error) {
++func (k PublicKeyEd25519) Bytes() ([]byte, error) {
 +	panic("cryptobackend: not available")
 +}
 +
 +type PrivateKeyEd25519 struct{}
 +
-+func (k *PrivateKeyEd25519) Bytes() ([]byte, error) {
++func (k PrivateKeyEd25519) Bytes() ([]byte, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func GenerateKeyEd25519() (*PrivateKeyEd25519, error) {
++func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPrivateKeyEd25519(priv []byte) (*PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPublicKeyEd25519(pub []byte) (*PublicKeyEd25519, error) {
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPrivateKeyEd25519FromSeed(seed []byte) (*PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func SignEd25519(priv *PrivateKeyEd25519, message []byte) ([]byte, error) {
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func VerifyEd25519(pub *PublicKeyEd25519, message, sig []byte) error {
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
 +	panic("cryptobackend: not available")
 +}
 +
@@ -519,7 +523,7 @@ index 00000000000000..5e4b436554d44d
 +// from complaining about the missing body
 +// (because the implementation might be here).
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index 5551a24f8a844e..c86b63454c6f7a 100644
+index e017efb1562379..ab5539f978a266 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -493,6 +493,8 @@ var depsRules = `
@@ -541,7 +545,7 @@ index 5551a24f8a844e..c86b63454c6f7a 100644
  	< crypto/internal/fips140only
  	< crypto
  	< crypto/subtle
-@@ -520,6 +523,7 @@ var depsRules = `
+@@ -522,6 +525,7 @@ var depsRules = `
  	< github.com/microsoft/go-crypto-winnative/internal/bcrypt
  	< github.com/microsoft/go-crypto-winnative/cng
  	< crypto/internal/boring
@@ -549,8 +553,8 @@ index 5551a24f8a844e..c86b63454c6f7a 100644
  	< crypto/boring
  	< crypto/aes,
  	  crypto/des,
-@@ -543,6 +547,7 @@ var depsRules = `
- 	< github.com/golang-fips/openssl/v2/bbig
+@@ -546,6 +550,7 @@ var depsRules = `
+ 	< github.com/microsoft/go-crypto-darwin/bbig
  	< github.com/microsoft/go-crypto-winnative/cng/bbig
  	< crypto/internal/boring/bbig
 +	< crypto/internal/backend/bbig

@@ -5,9 +5,9 @@ Subject: [PATCH] Add BoringSSL crypto backend
 
 ---
  .../internal/backend/bbig/big_boring.go       |  12 +
- src/crypto/internal/backend/boring_linux.go   | 275 ++++++++++++++++++
+ src/crypto/internal/backend/boring_linux.go   | 279 ++++++++++++++++++
  src/crypto/internal/backend/fips140/boring.go |  11 +
- 3 files changed, 298 insertions(+)
+ 3 files changed, 302 insertions(+)
  create mode 100644 src/crypto/internal/backend/bbig/big_boring.go
  create mode 100644 src/crypto/internal/backend/boring_linux.go
  create mode 100644 src/crypto/internal/backend/fips140/boring.go
@@ -32,10 +32,10 @@ index 00000000000000..0b62cef68546d0
 +var Dec = bbig.Dec
 diff --git a/src/crypto/internal/backend/boring_linux.go b/src/crypto/internal/backend/boring_linux.go
 new file mode 100644
-index 00000000000000..c49291c2f62b4c
+index 00000000000000..f06fcc63b5af11
 --- /dev/null
 +++ b/src/crypto/internal/backend/boring_linux.go
-@@ -0,0 +1,275 @@
+@@ -0,0 +1,279 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -68,6 +68,10 @@ index 00000000000000..c49291c2f62b4c
 +		return false
 +	}
 +}
++
++func SupportsCurve(curve string) bool            { return true }
++func SupportsRSAOAEPLabel(label []byte) bool     { return true }
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool { return true }
 +
 +func NewMD5() hash.Hash        { panic("cryptobackend: not available") }
 +func NewSHA1() hash.Hash       { return boring.NewSHA1() }
@@ -120,7 +124,7 @@ index 00000000000000..c49291c2f62b4c
 +	return true
 +}
 +
-+func SupportsRSASaltLength(salt int) bool {
++func SupportsRSASaltLength(sign bool, salt int) bool {
 +	return true
 +}
 +
@@ -247,37 +251,37 @@ index 00000000000000..c49291c2f62b4c
 +
 +type PublicKeyEd25519 struct{}
 +
-+func (k *PublicKeyEd25519) Bytes() ([]byte, error) {
++func (k PublicKeyEd25519) Bytes() ([]byte, error) {
 +	panic("cryptobackend: not available")
 +}
 +
 +type PrivateKeyEd25519 struct{}
 +
-+func (k *PrivateKeyEd25519) Bytes() ([]byte, error) {
++func (k PrivateKeyEd25519) Bytes() ([]byte, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func GenerateKeyEd25519() (*PrivateKeyEd25519, error) {
++func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPrivateKeyEd25519(priv []byte) (*PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPublicKeyEd25519(pub []byte) (*PublicKeyEd25519, error) {
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func NewPrivateKeyEd25519FromSeed(seed []byte) (*PrivateKeyEd25519, error) {
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func SignEd25519(priv *PrivateKeyEd25519, message []byte) ([]byte, error) {
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
 +	panic("cryptobackend: not available")
 +}
 +
-+func VerifyEd25519(pub *PublicKeyEd25519, message, sig []byte) error {
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
 +	panic("cryptobackend: not available")
 +}
 +

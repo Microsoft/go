@@ -91,6 +91,7 @@ func AppendExperimentEnv(experiment string) {
 	if strings.Contains(experiment, "opensslcrypto") ||
 		strings.Contains(experiment, "cngcrypto") ||
 		strings.Contains(experiment, "boringcrypto") ||
+		strings.Contains(experiment, "darwincrypto") ||
 		strings.Contains(experiment, "systemcrypto") {
 
 		experiment += ",allowcryptofallback"
@@ -102,4 +103,20 @@ func AppendExperimentEnv(experiment string) {
 	if err := os.Setenv("GOEXPERIMENT", experiment); err != nil {
 		panic(err)
 	}
+}
+
+// UnassignGOROOT unsets the GOROOT env var if it is set.
+//
+// Setting GOROOT explicitly in the environment has not been necessary since Go
+// 1.9 (https://go.dev/doc/go1.9#goroot), but a dev or build machine may still
+// have it set. It interferes with attempts to run the built Go (such as when
+// building the race runtime), so remove the explicit GOROOT if set.
+func UnassignGOROOT() error {
+	if explicitRoot, ok := os.LookupEnv("GOROOT"); ok {
+		fmt.Printf("---- Removing explicit GOROOT from environment: %v\n", explicitRoot)
+		if err := os.Unsetenv("GOROOT"); err != nil {
+			return err
+		}
+	}
+	return nil
 }

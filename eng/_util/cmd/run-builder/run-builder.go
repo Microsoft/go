@@ -105,6 +105,10 @@ func main() {
 		env("GO_TEST_TIMEOUT_SCALE", strconv.Itoa(timeoutScale))
 	}
 
+	if err := buildutil.UnassignGOROOT(); err != nil {
+		log.Fatal(err)
+	}
+
 	buildCmdline := []string{"pwsh", "eng/run.ps1", "build"}
 
 	// run.ps1 compiles Go code, so we can't use the experiment yet. We must pass the experiment

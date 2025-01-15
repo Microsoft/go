@@ -1,0 +1,547 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: George Adams <gadams@microsoft.com>
+Date: Tue, 17 Dec 2024 13:17:39 +0000
+Subject: [PATCH] Add Darwin crypto backend
+
+---
+ .gitignore                                    |   2 +
+ .../internal/backend/bbig/big_darwin.go       |  12 +
+ src/crypto/internal/backend/darwin_darwin.go  | 359 ++++++++++++++++++
+ src/crypto/internal/backend/fips140/darwin.go |  11 +
+ src/crypto/rsa/darwin.go                      |  71 ++++
+ src/net/lookup_test.go                        |   3 +
+ src/runtime/pprof/vminfo_darwin_test.go       |   6 +
+ 7 files changed, 464 insertions(+)
+ create mode 100644 src/crypto/internal/backend/bbig/big_darwin.go
+ create mode 100644 src/crypto/internal/backend/darwin_darwin.go
+ create mode 100644 src/crypto/internal/backend/fips140/darwin.go
+ create mode 100644 src/crypto/rsa/darwin.go
+
+diff --git a/.gitignore b/.gitignore
+index c6512e64a4ef39..b3b01db73b009d 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -46,6 +46,8 @@ _testmain.go
+ /test/run.out
+ /test/times.out
+ 
++!/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/CryptoKit.o
++
+ # This file includes artifacts of Go build that should not be checked in.
+ # For files created by specific development environment (e.g. editor),
+ # use alternative ways to exclude files from git.
+diff --git a/src/crypto/internal/backend/bbig/big_darwin.go b/src/crypto/internal/backend/bbig/big_darwin.go
+new file mode 100644
+index 00000000000000..77f3ca5d262769
+--- /dev/null
++++ b/src/crypto/internal/backend/bbig/big_darwin.go
+@@ -0,0 +1,12 @@
++// Copyright 2022 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.darwincrypto && cgo
++
++package bbig
++
++import "github.com/microsoft/go-crypto-darwin/bbig"
++
++var Enc = bbig.Enc
++var Dec = bbig.Dec
+diff --git a/src/crypto/internal/backend/darwin_darwin.go b/src/crypto/internal/backend/darwin_darwin.go
+new file mode 100644
+index 00000000000000..2250852ada8cc8
+--- /dev/null
++++ b/src/crypto/internal/backend/darwin_darwin.go
+@@ -0,0 +1,359 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.darwincrypto && darwin && cgo
++
++// Package darwin provides access to DarwinCrypto implementation functions.
++// Check the variable Enabled to find out whether DarwinCrypto is available.
++// If DarwinCrypto is not available, the functions in this package all panic.
++package backend
++
++import (
++	"crypto"
++	"crypto/cipher"
++	"crypto/internal/boring/sig"
++	"crypto/internal/fips140/nistec"
++	"errors"
++	"hash"
++	_ "unsafe"
++
++	"github.com/microsoft/go-crypto-darwin/xcrypto"
++)
++
++// Enabled controls whether FIPS crypto is enabled.
++const Enabled = true
++
++type BigInt = xcrypto.BigInt
++
++func init() {
++	sig.BoringCrypto()
++}
++
++const RandReader = xcrypto.RandReader
++
++func SupportsHash(h crypto.Hash) bool {
++	return xcrypto.SupportsHash(h)
++}
++
++func SupportsCurve(curve string) bool {
++	switch curve {
++	case "P-256", "P-384", "P-521":
++		return true
++	}
++	return false
++}
++
++func SupportsRSAOAEPLabel(label []byte) bool {
++	// CommonCrypto doesn't support labels
++	// https://github.com/microsoft/go-crypto-darwin/issues/22
++	return len(label) == 0
++}
++
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool {
++	switch hash {
++	case crypto.SHA1, crypto.SHA224, crypto.SHA256, crypto.SHA384, crypto.SHA512, 0:
++		return true
++	}
++	return false
++}
++
++func NewMD5() hash.Hash    { return xcrypto.NewMD5() }
++func NewSHA1() hash.Hash   { return xcrypto.NewSHA1() }
++func NewSHA224() hash.Hash { return xcrypto.NewSHA224() }
++func NewSHA256() hash.Hash { return xcrypto.NewSHA256() }
++func NewSHA384() hash.Hash { return xcrypto.NewSHA384() }
++func NewSHA512() hash.Hash { return xcrypto.NewSHA512() }
++
++func MD5(p []byte) (sum [16]byte)        { return xcrypto.MD5(p) }
++func SHA1(p []byte) (sum [20]byte)       { return xcrypto.SHA1(p) }
++func SHA224(p []byte) (sum [28]byte)     { return xcrypto.SHA224(p) }
++func SHA256(p []byte) (sum [32]byte)     { return xcrypto.SHA256(p) }
++func SHA384(p []byte) (sum [48]byte)     { return xcrypto.SHA384(p) }
++func SHA512(p []byte) (sum [64]byte)     { return xcrypto.SHA512(p) }
++func SHA512_224(p []byte) (sum [28]byte) { panic("cryptobackend: not available") }
++func SHA512_256(p []byte) (sum [32]byte) { panic("cryptobackend: not available") }
++
++func NewHMAC(h func() hash.Hash, key []byte) hash.Hash {
++	return xcrypto.NewHMAC(h, key)
++}
++
++func NewAESCipher(key []byte) (cipher.Block, error) {
++	return xcrypto.NewAESCipher(key)
++}
++
++func NewGCMTLS(c cipher.Block) (cipher.AEAD, error) {
++	return xcrypto.NewGCMTLS(c)
++}
++
++func NewGCMTLS13(c cipher.Block) (cipher.AEAD, error) {
++	return xcrypto.NewGCMTLS13(c)
++}
++
++type PublicKeyECDSA = xcrypto.PublicKeyECDSA
++type PrivateKeyECDSA = xcrypto.PrivateKeyECDSA
++
++func GenerateKeyECDSA(curve string) (X, Y, D xcrypto.BigInt, err error) {
++	return xcrypto.GenerateKeyECDSA(curve)
++}
++
++func NewPrivateKeyECDSA(curve string, X, Y, D xcrypto.BigInt) (*xcrypto.PrivateKeyECDSA, error) {
++	return xcrypto.NewPrivateKeyECDSA(curve, X, Y, D)
++}
++
++func NewPublicKeyECDSA(curve string, X, Y xcrypto.BigInt) (*xcrypto.PublicKeyECDSA, error) {
++	return xcrypto.NewPublicKeyECDSA(curve, X, Y)
++}
++
++//go:linkname encodeSignature crypto/ecdsa.encodeSignature
++func encodeSignature(r, s []byte) ([]byte, error)
++
++//go:linkname parseSignature crypto/ecdsa.parseSignature
++func parseSignature(sig []byte) (r, s []byte, err error)
++
++func SignMarshalECDSA(priv *xcrypto.PrivateKeyECDSA, hash []byte) ([]byte, error) {
++	return xcrypto.SignMarshalECDSA(priv, hash)
++}
++
++func VerifyECDSA(pub *xcrypto.PublicKeyECDSA, hash []byte, sig []byte) bool {
++	return xcrypto.VerifyECDSA(pub, hash, sig)
++}
++
++func SupportsRSAKeyPrimes(primes int) bool {
++	return primes == 2
++}
++
++func SupportsRSASaltLength(sign bool, salt int) bool {
++	// CommonCrypto doesn't support custom salt length
++	return salt == -1
++}
++
++type PublicKeyRSA = xcrypto.PublicKeyRSA
++type PrivateKeyRSA = xcrypto.PrivateKeyRSA
++
++func DecryptRSAOAEP(h, mgfHash hash.Hash, priv *xcrypto.PrivateKeyRSA, ciphertext, label []byte) ([]byte, error) {
++	return xcrypto.DecryptRSAOAEP(h, priv, ciphertext, label)
++}
++
++func DecryptRSAPKCS1(priv *xcrypto.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return xcrypto.DecryptRSAPKCS1(priv, ciphertext)
++}
++
++func DecryptRSANoPadding(priv *xcrypto.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return xcrypto.DecryptRSANoPadding(priv, ciphertext)
++}
++
++func EncryptRSAOAEP(h, mgfHash hash.Hash, pub *xcrypto.PublicKeyRSA, msg, label []byte) ([]byte, error) {
++	return xcrypto.EncryptRSAOAEP(h, pub, msg, label)
++}
++
++func EncryptRSAPKCS1(pub *xcrypto.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return xcrypto.EncryptRSAPKCS1(pub, msg)
++}
++
++func EncryptRSANoPadding(pub *xcrypto.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return xcrypto.EncryptRSANoPadding(pub, msg)
++}
++
++//go:linkname decodeKeyRSA crypto/rsa.decodeKey
++func decodeKeyRSA(data []byte) (N, E, D, P, Q, Dp, Dq, Qinv xcrypto.BigInt, err error)
++
++//go:linkname encodeKeyRSA crypto/rsa.encodeKey
++func encodeKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv xcrypto.BigInt) ([]byte, error)
++
++//go:linkname encodePublicKeyRSA crypto/rsa.encodePublicKey
++func encodePublicKeyRSA(N, E xcrypto.BigInt) ([]byte, error)
++
++func GenerateKeyRSA(bits int) (N, E, D, P, Q, Dp, Dq, Qinv xcrypto.BigInt, err error) {
++	data, err := xcrypto.GenerateKeyRSA(bits)
++	if err != nil {
++		return
++	}
++	return decodeKeyRSA(data)
++}
++
++func NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv xcrypto.BigInt) (*xcrypto.PrivateKeyRSA, error) {
++	encoded, err := encodeKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv)
++	if err != nil {
++		return nil, err
++	}
++	return xcrypto.NewPrivateKeyRSA(encoded)
++}
++
++func NewPublicKeyRSA(N, E xcrypto.BigInt) (*xcrypto.PublicKeyRSA, error) {
++	encoded, err := encodePublicKeyRSA(N, E)
++	if err != nil {
++		return nil, err
++	}
++	return xcrypto.NewPublicKeyRSA(encoded)
++}
++
++func SignRSAPKCS1v15(priv *xcrypto.PrivateKeyRSA, h crypto.Hash, hashed []byte) ([]byte, error) {
++	return xcrypto.SignRSAPKCS1v15(priv, h, hashed)
++}
++
++func SignRSAPSS(priv *xcrypto.PrivateKeyRSA, h crypto.Hash, hashed []byte, saltLen int) ([]byte, error) {
++	return xcrypto.SignRSAPSS(priv, h, hashed, saltLen)
++}
++
++func VerifyRSAPKCS1v15(pub *xcrypto.PublicKeyRSA, h crypto.Hash, hashed, sig []byte) error {
++	return xcrypto.VerifyRSAPKCS1v15(pub, h, hashed, sig)
++}
++
++func VerifyRSAPSS(pub *xcrypto.PublicKeyRSA, h crypto.Hash, hashed, sig []byte, saltLen int) error {
++	return xcrypto.VerifyRSAPSS(pub, h, hashed, sig, saltLen)
++}
++
++type PrivateKeyECDH = xcrypto.PrivateKeyECDH
++type PublicKeyECDH = xcrypto.PublicKeyECDH
++
++func ECDH(priv *xcrypto.PrivateKeyECDH, pub *xcrypto.PublicKeyECDH) ([]byte, error) {
++	return xcrypto.ECDH(priv, pub)
++}
++
++func GenerateKeyECDH(curve string) (*xcrypto.PrivateKeyECDH, []byte, error) {
++	return xcrypto.GenerateKeyECDH(curve)
++}
++
++func NewPrivateKeyECDH(curve string, bytes []byte) (*xcrypto.PrivateKeyECDH, error) {
++	var key []byte
++	switch curve {
++	case "P-256":
++		p, err := nistec.NewP256Point().ScalarBaseMult(bytes)
++		if err != nil {
++			return nil, err
++		}
++		key = p.Bytes()
++	case "P-384":
++		p, err := nistec.NewP384Point().ScalarBaseMult(bytes)
++		if err != nil {
++			return nil, err
++		}
++		key = p.Bytes()
++	case "P-521":
++		p, err := nistec.NewP521Point().ScalarBaseMult(bytes)
++		if err != nil {
++			return nil, err
++		}
++		key = p.Bytes()
++	default:
++		return nil, errors.New("NewPrivateKeyECDH: unsupported curve: " + curve)
++	}
++	return xcrypto.NewPrivateKeyECDH(curve, key, bytes)
++}
++
++func NewPublicKeyECDH(curve string, bytes []byte) (*xcrypto.PublicKeyECDH, error) {
++	return xcrypto.NewPublicKeyECDH(curve, bytes)
++}
++
++func SupportsHKDF() bool {
++	return true
++}
++
++func ExpandHKDF(h func() hash.Hash, pseudorandomKey, info []byte, keyLength int) ([]byte, error) {
++	return xcrypto.ExpandHKDF(h, pseudorandomKey, info, keyLength)
++}
++
++func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
++	return xcrypto.ExtractHKDF(h, secret, salt)
++}
++
++func SupportsPBKDF2() bool {
++	return true
++}
++
++func PBKDF2(pass, salt []byte, iter, keyLen int, h func() hash.Hash) ([]byte, error) {
++	return xcrypto.PBKDF2(pass, salt, iter, keyLen, h)
++}
++
++func SupportsTLS1PRF() bool {
++	return false
++}
++
++func TLS1PRF(result, secret, label, seed []byte, h func() hash.Hash) error {
++	panic("cryptobackend: not available")
++}
++
++func SupportsDESCipher() bool {
++	return true
++}
++
++func SupportsTripleDESCipher() bool {
++	return true
++}
++
++func NewDESCipher(key []byte) (cipher.Block, error) {
++	return xcrypto.NewDESCipher(key)
++}
++
++func NewTripleDESCipher(key []byte) (cipher.Block, error) {
++	return xcrypto.NewTripleDESCipher(key)
++}
++
++func SupportsRC4() bool { return true }
++
++type RC4Cipher = xcrypto.RC4Cipher
++
++func NewRC4Cipher(key []byte) (*RC4Cipher, error) { return xcrypto.NewRC4Cipher(key) }
++
++func SupportsEd25519() bool {
++	return true
++}
++
++type PublicKeyEd25519 = xcrypto.PublicKeyEd25519
++type PrivateKeyEd25519 = xcrypto.PrivateKeyEd25519
++
++func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
++	return xcrypto.GenerateKeyEd25519(), nil
++}
++
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
++	return xcrypto.NewPrivateKeyEd25519(priv)
++}
++
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
++	return xcrypto.NewPublicKeyEd25519(pub)
++}
++
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
++	return xcrypto.NewPrivateKeyEd25519FromSeed(seed)
++}
++
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
++	return xcrypto.SignEd25519(priv, message)
++}
++
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
++	return xcrypto.VerifyEd25519(pub, message, sig)
++}
++
++func SupportsDSA(l, n int) bool {
++	return false
++}
++
++func GenerateParametersDSA(l, n int) (p, q, g xcrypto.BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++type PrivateKeyDSA struct{}
++type PublicKeyDSA struct{}
++
++func GenerateKeyDSA(p, q, g xcrypto.BigInt) (x, y xcrypto.BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyDSA(p, q, g, x, y xcrypto.BigInt) (*PrivateKeyDSA, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPublicKeyDSA(p, q, g, y xcrypto.BigInt) (*PublicKeyDSA, error) {
++	panic("cryptobackend: not available")
++}
++
++func SignDSA(priv *PrivateKeyDSA, hash []byte, parseSignature func([]byte) (xcrypto.BigInt, xcrypto.BigInt, error)) (r, s xcrypto.BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++func VerifyDSA(pub *PublicKeyDSA, hashed []byte, r, s xcrypto.BigInt, encodeSignature func(r, s xcrypto.BigInt) ([]byte, error)) bool {
++	panic("cryptobackend: not available")
++}
+diff --git a/src/crypto/internal/backend/fips140/darwin.go b/src/crypto/internal/backend/fips140/darwin.go
+new file mode 100644
+index 00000000000000..ef5af5d956163e
+--- /dev/null
++++ b/src/crypto/internal/backend/fips140/darwin.go
+@@ -0,0 +1,11 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.darwincrypto
++
++package fips140
++
++func systemFIPSMode() bool {
++	return false
++}
+diff --git a/src/crypto/rsa/darwin.go b/src/crypto/rsa/darwin.go
+new file mode 100644
+index 00000000000000..1b9c63523ee90e
+--- /dev/null
++++ b/src/crypto/rsa/darwin.go
+@@ -0,0 +1,71 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.darwincrypto
++
++package rsa
++
++import (
++	"crypto/internal/backend"
++	"crypto/internal/backend/bbig"
++	"errors"
++	"math/big"
++	_ "unsafe"
++
++	"golang.org/x/crypto/cryptobyte"
++	"golang.org/x/crypto/cryptobyte/asn1"
++)
++
++//go:linkname decodeKey
++func decodeKey(data []byte) (N, E, D, P, Q, Dp, Dq, Qinv backend.BigInt, err error) {
++	bad := func(e error) (N, E, D, P, Q, Dp, Dq, Qinv backend.BigInt, err error) {
++		return nil, nil, nil, nil, nil, nil, nil, nil, e
++	}
++	input := cryptobyte.String(data)
++	var version int
++	n, e, d, p, q, dp, dq, qinv := new(big.Int), new(big.Int), new(big.Int), new(big.Int),
++		new(big.Int), new(big.Int), new(big.Int), new(big.Int)
++	// Parse the ASN.1 sequence
++	if !input.ReadASN1(&input, asn1.SEQUENCE) {
++		return bad(errors.New("invalid ASN.1 structure: not a sequence"))
++	}
++	if !input.ReadASN1Integer(&version) || version != 0 {
++		return bad(errors.New("invalid ASN.1 structure: unsupported version"))
++	}
++	if !input.ReadASN1Integer(n) || !input.ReadASN1Integer(e) ||
++		!input.ReadASN1Integer(d) || !input.ReadASN1Integer(p) ||
++		!input.ReadASN1Integer(q) || !input.ReadASN1Integer(dp) ||
++		!input.ReadASN1Integer(dq) || !input.ReadASN1Integer(qinv) {
++		return bad(errors.New("invalid ASN.1 structure"))
++	}
++	return bbig.Enc(n), bbig.Enc(e), bbig.Enc(d), bbig.Enc(p), bbig.Enc(q),
++		bbig.Enc(dp), bbig.Enc(dq), bbig.Enc(qinv), nil
++}
++
++//go:linkname encodeKey
++func encodeKey(N, E, D, P, Q, Dp, Dq, Qinv backend.BigInt) ([]byte, error) {
++	builder := cryptobyte.NewBuilder(nil)
++	builder.AddASN1(asn1.SEQUENCE, func(b *cryptobyte.Builder) {
++		b.AddASN1Int64(0)               // Add version as int64
++		b.AddASN1BigInt(bbig.Dec(N))    // Add modulus
++		b.AddASN1BigInt(bbig.Dec(E))    // Add public exponent
++		b.AddASN1BigInt(bbig.Dec(D))    // Add private exponent
++		b.AddASN1BigInt(bbig.Dec(P))    // Add prime1
++		b.AddASN1BigInt(bbig.Dec(Q))    // Add prime2
++		b.AddASN1BigInt(bbig.Dec(Dp))   // Add exponent1
++		b.AddASN1BigInt(bbig.Dec(Dq))   // Add exponent2
++		b.AddASN1BigInt(bbig.Dec(Qinv)) // Add coefficient
++	})
++	return builder.Bytes()
++}
++
++//go:linkname encodePublicKey
++func encodePublicKey(N, E backend.BigInt) ([]byte, error) {
++	builder := cryptobyte.NewBuilder(nil)
++	builder.AddASN1(asn1.SEQUENCE, func(b *cryptobyte.Builder) {
++		b.AddASN1BigInt(bbig.Dec(N)) // Add modulus
++		b.AddASN1BigInt(bbig.Dec(E)) // Add public exponent
++	})
++	return builder.Bytes()
++}
+diff --git a/src/net/lookup_test.go b/src/net/lookup_test.go
+index 514cbd098ae772..8ec689416dde1d 100644
+--- a/src/net/lookup_test.go
++++ b/src/net/lookup_test.go
+@@ -1501,6 +1501,9 @@ func TestLookupPortIPNetworkString(t *testing.T) {
+ }
+ 
+ func TestLookupNoSuchHost(t *testing.T) {
++	if runtime.GOOS == "darwin" {
++		t.Skip("skipping on darwin; see https://github.com/microsoft/go/issues/1394")
++	}
+ 	mustHaveExternalNetwork(t)
+ 
+ 	const testNXDOMAIN = "invalid.invalid."
+diff --git a/src/runtime/pprof/vminfo_darwin_test.go b/src/runtime/pprof/vminfo_darwin_test.go
+index 6d375c5d53368a..39154b000ddc67 100644
+--- a/src/runtime/pprof/vminfo_darwin_test.go
++++ b/src/runtime/pprof/vminfo_darwin_test.go
+@@ -11,6 +11,7 @@ import (
+ 	"bytes"
+ 	"fmt"
+ 	"internal/abi"
++	"internal/goexperiment"
+ 	"internal/testenv"
+ 	"os"
+ 	"os/exec"
+@@ -21,6 +22,11 @@ import (
+ )
+ 
+ func TestVMInfo(t *testing.T) {
++	if goexperiment.DarwinCrypto {
++		// Fails on macOS when using system crypto.
++		// https://github.com/microsoft/go/issues/1466
++		t.Skip("skipping on Darwin")
++	}
+ 	var begin, end, offset uint64
+ 	var filename string
+ 	first := true

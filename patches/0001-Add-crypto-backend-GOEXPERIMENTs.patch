@@ -11,22 +11,24 @@ information about the behavior.
 Includes new tests in "build_test.go" and "buildbackend_test.go" to help
 maintain this feature. For more information, see the test files.
 ---
- src/cmd/go/internal/modindex/build.go         | 54 ++++++++++++++
- src/cmd/go/internal/modindex/build_test.go    | 73 +++++++++++++++++++
- src/go/build/build.go                         | 54 ++++++++++++++
- src/go/build/buildbackend_test.go             | 66 +++++++++++++++++
+ src/cmd/go/internal/modindex/build.go         | 57 +++++++++++++
+ src/cmd/go/internal/modindex/build_test.go    | 73 ++++++++++++++++
+ src/go/build/build.go                         | 57 +++++++++++++
+ src/go/build/buildbackend_test.go             | 84 +++++++++++++++++++
  .../testdata/backendtags_openssl/main.go      |  3 +
  .../testdata/backendtags_openssl/openssl.go   |  3 +
  .../build/testdata/backendtags_system/main.go |  3 +
  .../backendtags_system/systemcrypto.go        |  3 +
  .../goexperiment/exp_cngcrypto_off.go         |  8 ++
  src/internal/goexperiment/exp_cngcrypto_on.go |  8 ++
+ .../goexperiment/exp_darwincrypto_off.go      |  8 ++
+ .../goexperiment/exp_darwincrypto_on.go       |  8 ++
  .../goexperiment/exp_opensslcrypto_off.go     |  8 ++
  .../goexperiment/exp_opensslcrypto_on.go      |  8 ++
  .../goexperiment/exp_systemcrypto_off.go      |  8 ++
  .../goexperiment/exp_systemcrypto_on.go       |  8 ++
- src/internal/goexperiment/flags.go            | 17 +++++
- 15 files changed, 324 insertions(+)
+ src/internal/goexperiment/flags.go            | 18 ++++
+ 17 files changed, 365 insertions(+)
  create mode 100644 src/cmd/go/internal/modindex/build_test.go
  create mode 100644 src/go/build/buildbackend_test.go
  create mode 100644 src/go/build/testdata/backendtags_openssl/main.go
@@ -35,22 +37,25 @@ maintain this feature. For more information, see the test files.
  create mode 100644 src/go/build/testdata/backendtags_system/systemcrypto.go
  create mode 100644 src/internal/goexperiment/exp_cngcrypto_off.go
  create mode 100644 src/internal/goexperiment/exp_cngcrypto_on.go
+ create mode 100644 src/internal/goexperiment/exp_darwincrypto_off.go
+ create mode 100644 src/internal/goexperiment/exp_darwincrypto_on.go
  create mode 100644 src/internal/goexperiment/exp_opensslcrypto_off.go
  create mode 100644 src/internal/goexperiment/exp_opensslcrypto_on.go
  create mode 100644 src/internal/goexperiment/exp_systemcrypto_off.go
  create mode 100644 src/internal/goexperiment/exp_systemcrypto_on.go
 
 diff --git a/src/cmd/go/internal/modindex/build.go b/src/cmd/go/internal/modindex/build.go
-index b4dacb0f523a8d..615ae461eb8cdc 100644
+index b4dacb0f523a8d..4315c288d10cb3 100644
 --- a/src/cmd/go/internal/modindex/build.go
 +++ b/src/cmd/go/internal/modindex/build.go
-@@ -886,13 +886,67 @@ func (ctxt *Context) matchTag(name string, allTags map[string]bool) bool {
+@@ -886,13 +886,70 @@ func (ctxt *Context) matchTag(name string, allTags map[string]bool) bool {
  		name = "goexperiment.boringcrypto" // boringcrypto is an old name for goexperiment.boringcrypto
  	}
  
 +	const system = "goexperiment.systemcrypto"
 +	const openssl = "goexperiment.opensslcrypto"
 +	const cng = "goexperiment.cngcrypto"
++	const darwin = "goexperiment.darwincrypto"
 +	const boring = "goexperiment.boringcrypto"
 +	// Implement the SystemCrypto GOEXPERIMENT logic. This is done here rather
 +	// than during GOEXPERIMENT parsing so "-tags goexperiment.systemcrypto"
@@ -71,11 +76,12 @@ index b4dacb0f523a8d..615ae461eb8cdc 100644
 +	satisfiedByAnyBackend := name == system
 +	satisfiedBySystemCrypto :=
 +		(ctxt.GOOS == "linux" && name == openssl) ||
-+			(ctxt.GOOS == "windows" && name == cng)
++			(ctxt.GOOS == "windows" && name == cng) ||
++			(ctxt.GOOS == "darwin" && name == darwin)
 +	satisfiedBy := func(tag string) bool {
 +		if satisfiedByAnyBackend {
 +			switch tag {
-+			case openssl, cng, boring:
++			case openssl, cng, darwin, boring:
 +				return true
 +			}
 +		}
@@ -89,6 +95,7 @@ index b4dacb0f523a8d..615ae461eb8cdc 100644
 +		if satisfiedByAnyBackend {
 +			allTags[openssl] = true
 +			allTags[cng] = true
++			allTags[darwin] = true
 +			allTags[boring] = true
 +		}
 +		if satisfiedBySystemCrypto {
@@ -192,16 +199,17 @@ index 00000000000000..1756c5d027fee0
 +	}
 +}
 diff --git a/src/go/build/build.go b/src/go/build/build.go
-index 9ffffda08a99b1..570937cba3cb85 100644
+index 9ffffda08a99b1..78fd536fa6a6d1 100644
 --- a/src/go/build/build.go
 +++ b/src/go/build/build.go
-@@ -1984,13 +1984,67 @@ func (ctxt *Context) matchTag(name string, allTags map[string]bool) bool {
+@@ -1984,13 +1984,70 @@ func (ctxt *Context) matchTag(name string, allTags map[string]bool) bool {
  		name = "goexperiment.boringcrypto" // boringcrypto is an old name for goexperiment.boringcrypto
  	}
  
 +	const system = "goexperiment.systemcrypto"
 +	const openssl = "goexperiment.opensslcrypto"
 +	const cng = "goexperiment.cngcrypto"
++	const darwin = "goexperiment.darwincrypto"
 +	const boring = "goexperiment.boringcrypto"
 +	// Implement the SystemCrypto GOEXPERIMENT logic. This is done here rather
 +	// than during GOEXPERIMENT parsing so "-tags goexperiment.systemcrypto"
@@ -222,11 +230,12 @@ index 9ffffda08a99b1..570937cba3cb85 100644
 +	satisfiedByAnyBackend := name == system
 +	satisfiedBySystemCrypto :=
 +		(ctxt.GOOS == "linux" && name == openssl) ||
-+			(ctxt.GOOS == "windows" && name == cng)
++			(ctxt.GOOS == "windows" && name == cng) ||
++			(ctxt.GOOS == "darwin" && name == darwin)
 +	satisfiedBy := func(tag string) bool {
 +		if satisfiedByAnyBackend {
 +			switch tag {
-+			case openssl, cng, boring:
++			case openssl, cng, darwin, boring:
 +				return true
 +			}
 +		}
@@ -240,6 +249,7 @@ index 9ffffda08a99b1..570937cba3cb85 100644
 +		if satisfiedByAnyBackend {
 +			allTags[openssl] = true
 +			allTags[cng] = true
++			allTags[darwin] = true
 +			allTags[boring] = true
 +		}
 +		if satisfiedBySystemCrypto {
@@ -265,10 +275,10 @@ index 9ffffda08a99b1..570937cba3cb85 100644
  		}
 diff --git a/src/go/build/buildbackend_test.go b/src/go/build/buildbackend_test.go
 new file mode 100644
-index 00000000000000..a22abbb42e37c0
+index 00000000000000..aa3c5f1007ed79
 --- /dev/null
 +++ b/src/go/build/buildbackend_test.go
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,84 @@
 +// Copyright 2023 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -326,11 +336,29 @@ index 00000000000000..a22abbb42e37c0
 +	if err != nil {
 +		t.Fatal(err)
 +	}
-+	want = []string{"goexperiment.boringcrypto", "goexperiment.cngcrypto", "goexperiment.opensslcrypto", "goexperiment.systemcrypto"}
++	want = []string{"goexperiment.boringcrypto", "goexperiment.cngcrypto", "goexperiment.darwincrypto", "goexperiment.opensslcrypto", "goexperiment.systemcrypto"}
 +	if !reflect.DeepEqual(p.AllTags, want) {
 +		t.Errorf("AllTags = %v, want %v", p.AllTags, want)
 +	}
 +	wantFiles = []string{"main.go", "systemcrypto.go"}
++	if !reflect.DeepEqual(p.GoFiles, wantFiles) {
++		t.Errorf("GoFiles = %v, want %v", p.GoFiles, wantFiles)
++	}
++
++	ctxt.GOARCH = "amd64"
++	ctxt.GOOS = "darwin"
++	ctxt.BuildTags = []string{"goexperiment.darwincrypto"}
++	p, err = ctxt.ImportDir("testdata/backendtags_openssl", 0)
++	if err != nil {
++		t.Fatal(err)
++	}
++	// Given the current GOOS (darwin), systemcrypto would not affect the
++	// decision, so we don't want it to be included in AllTags.
++	want = []string{"goexperiment.opensslcrypto"}
++	if !reflect.DeepEqual(p.AllTags, want) {
++		t.Errorf("AllTags = %v, want %v", p.AllTags, want)
++	}
++	wantFiles = []string{"main.go"}
 +	if !reflect.DeepEqual(p.GoFiles, wantFiles) {
 +		t.Errorf("GoFiles = %v, want %v", p.GoFiles, wantFiles)
 +	}
@@ -399,6 +427,34 @@ index 00000000000000..5b0a55d6c5772e
 +
 +const CNGCrypto = true
 +const CNGCryptoInt = 1
+diff --git a/src/internal/goexperiment/exp_darwincrypto_off.go b/src/internal/goexperiment/exp_darwincrypto_off.go
+new file mode 100644
+index 00000000000000..331111ce4759f7
+--- /dev/null
++++ b/src/internal/goexperiment/exp_darwincrypto_off.go
+@@ -0,0 +1,8 @@
++// Code generated by mkconsts.go. DO NOT EDIT.
++
++//go:build !goexperiment.darwincrypto
++
++package goexperiment
++
++const DarwinCrypto = false
++const DarwinCryptoInt = 0
+diff --git a/src/internal/goexperiment/exp_darwincrypto_on.go b/src/internal/goexperiment/exp_darwincrypto_on.go
+new file mode 100644
+index 00000000000000..4bf785b999ecce
+--- /dev/null
++++ b/src/internal/goexperiment/exp_darwincrypto_on.go
+@@ -0,0 +1,8 @@
++// Code generated by mkconsts.go. DO NOT EDIT.
++
++//go:build goexperiment.darwincrypto
++
++package goexperiment
++
++const DarwinCrypto = true
++const DarwinCryptoInt = 1
 diff --git a/src/internal/goexperiment/exp_opensslcrypto_off.go b/src/internal/goexperiment/exp_opensslcrypto_off.go
 new file mode 100644
 index 00000000000000..b28c0976a94cb0
@@ -456,17 +512,18 @@ index 00000000000000..fcd4cb9da0d162
 +const SystemCrypto = true
 +const SystemCryptoInt = 1
 diff --git a/src/internal/goexperiment/flags.go b/src/internal/goexperiment/flags.go
-index 31b3d0315b64f8..8c140f0dbed134 100644
+index 31b3d0315b64f8..e6c9b7d5e62dc0 100644
 --- a/src/internal/goexperiment/flags.go
 +++ b/src/internal/goexperiment/flags.go
-@@ -59,6 +59,23 @@ type Flags struct {
+@@ -59,6 +59,24 @@ type Flags struct {
  	PreemptibleLoops  bool
  	StaticLockRanking bool
  	BoringCrypto      bool
 +	OpenSSLCrypto     bool
 +	CNGCrypto         bool
++	DarwinCrypto      bool
 +
-+	// SystemCrypto enables the OpenSSL or CNG crypto experiment depending on
++	// SystemCrypto enables the OpenSSL, CNG or Darwin crypto experiment depending on
 +	// which one is appropriate on the target GOOS.
 +	//
 +	// If SystemCrypto is enabled but no crypto experiment is appropriate on the

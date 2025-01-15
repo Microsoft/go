@@ -7,10 +7,10 @@ To reproduce changes in 'src/vendor', run 'go mod vendor' in 'src'.
 Use a 'go' that was recently built by the current branch to ensure stable results.
 ---
  src/crypto/internal/backend/deps_ignore.go    |  19 +
- src/go.mod                                    |   5 +
- src/go.sum                                    |   4 +
- src/go/build/deps_test.go                     |  14 +-
- src/go/build/vendor_test.go                   |   2 +
+ src/go.mod                                    |   6 +
+ src/go.sum                                    |   6 +
+ src/go/build/deps_test.go                     |  17 +-
+ src/go/build/vendor_test.go                   |   3 +
  .../golang-fips/openssl/v2/.gitignore         |   1 +
  .../golang-fips/openssl/v2/.gitleaks.toml     |   9 +
  .../github.com/golang-fips/openssl/v2/LICENSE |  20 +
@@ -49,6 +49,32 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  .../openssl/v2/thread_setup_windows.c         |  64 ++
  .../golang-fips/openssl/v2/tls1prf.go         | 160 ++++
  .../github.com/golang-fips/openssl/v2/zaes.go |  86 +++
+ .../microsoft/go-crypto-darwin/LICENSE        |  21 +
+ .../microsoft/go-crypto-darwin/bbig/big.go    |  31 +
+ .../internal/cryptokit/CryptoKit.o            | Bin 0 -> 100952 bytes
+ .../internal/cryptokit/cryptokit.go           |  34 +
+ .../internal/cryptokit/cryptokit.h            |  43 ++
+ .../internal/cryptokit/ed25519.go             |  72 ++
+ .../internal/cryptokit/gcm.go                 |  36 +
+ .../internal/cryptokit/hkdf.go                |  77 ++
+ .../microsoft/go-crypto-darwin/xcrypto/aes.go | 306 ++++++++
+ .../microsoft/go-crypto-darwin/xcrypto/big.go |  16 +
+ .../go-crypto-darwin/xcrypto/cgo_go124.go     |  21 +
+ .../go-crypto-darwin/xcrypto/cipher.go        | 122 +++
+ .../microsoft/go-crypto-darwin/xcrypto/des.go | 117 +++
+ .../microsoft/go-crypto-darwin/xcrypto/ec.go  |  32 +
+ .../go-crypto-darwin/xcrypto/ecdh.go          | 135 ++++
+ .../go-crypto-darwin/xcrypto/ecdsa.go         | 181 +++++
+ .../go-crypto-darwin/xcrypto/ed25519.go       | 100 +++
+ .../microsoft/go-crypto-darwin/xcrypto/evp.go | 338 +++++++++
+ .../go-crypto-darwin/xcrypto/hash.go          | 391 ++++++++++
+ .../go-crypto-darwin/xcrypto/hkdf.go          |  66 ++
+ .../go-crypto-darwin/xcrypto/hmac.go          | 113 +++
+ .../go-crypto-darwin/xcrypto/pbkdf2.go        |  65 ++
+ .../go-crypto-darwin/xcrypto/rand.go          |  26 +
+ .../microsoft/go-crypto-darwin/xcrypto/rc4.go |  83 ++
+ .../microsoft/go-crypto-darwin/xcrypto/rsa.go | 194 +++++
+ .../go-crypto-darwin/xcrypto/xcrypto.go       |  59 ++
  .../microsoft/go-crypto-winnative/LICENSE     |  21 +
  .../microsoft/go-crypto-winnative/cng/aes.go  | 393 ++++++++++
  .../go-crypto-winnative/cng/bbig/big.go       |  31 +
@@ -74,8 +100,8 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  .../internal/bcrypt/zsyscall_windows.go       | 412 ++++++++++
  .../internal/subtle/aliasing.go               |  32 +
  .../internal/sysdll/sys_windows.go            |  55 ++
- src/vendor/modules.txt                        |  11 +
- 69 files changed, 11016 insertions(+), 3 deletions(-)
+ src/vendor/modules.txt                        |  16 +
+ 95 files changed, 13707 insertions(+), 3 deletions(-)
  create mode 100644 src/crypto/internal/backend/deps_ignore.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitignore
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitleaks.toml
@@ -115,6 +141,32 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/thread_setup_windows.c
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/tls1prf.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/zaes.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/LICENSE
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/bbig/big.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/CryptoKit.o
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/cryptokit.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/cryptokit.h
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/ed25519.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/gcm.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/hkdf.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/aes.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/big.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/cgo_go124.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/cipher.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/des.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ec.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ecdh.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ecdsa.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ed25519.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/evp.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hash.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hkdf.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hmac.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/pbkdf2.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rand.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rc4.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rsa.go
+ create mode 100644 src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/xcrypto.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/LICENSE
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/cng/aes.go
  create mode 100644 src/vendor/github.com/microsoft/go-crypto-winnative/cng/bbig/big.go
@@ -167,32 +219,35 @@ index 00000000000000..ba6d196a54f69d
 +// that are used by the backend package. This allows to track
 +// their versions in a single patch file.
 diff --git a/src/go.mod b/src/go.mod
-index 7a1318dcac32ba..4ca039fa96ba3c 100644
+index 7a1318dcac32ba..45152e6f54937b 100644
 --- a/src/go.mod
 +++ b/src/go.mod
-@@ -11,3 +11,8 @@ require (
+@@ -11,3 +11,9 @@ require (
  	golang.org/x/sys v0.28.0 // indirect
  	golang.org/x/text v0.21.0 // indirect
  )
 +
 +require (
 +	github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337
++	github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146
 +	github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37
 +)
 diff --git a/src/go.sum b/src/go.sum
-index 9e661352f16e0b..abebb59dcd7739 100644
+index 9e661352f16e0b..5683f4da5e4f04 100644
 --- a/src/go.sum
 +++ b/src/go.sum
-@@ -1,3 +1,7 @@
+@@ -1,3 +1,9 @@
 +github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337 h1:OhuURhDVbg+f/BvlG+qT5sQVkutwhI0Kmsy7koQ4l9A=
 +github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
++github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146 h1:xg58D1m8jeq0lkMf7TmcLZXCAK/PRlT0aG02PYlA6C0=
++github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146/go.mod h1:LyP4oZ0QcysEJdqUTOk9ngNFArRFK94YRImkoJ8julQ=
 +github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37 h1:KB8xmJcFSPlZFMg2mxz5b6DCE8k1qpHy2HFevAJLELI=
 +github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37/go.mod h1:JkxQeL8dGcyCuKjn1Etz4NmQrOMImMy4BA9hptEfVFA=
  golang.org/x/crypto v0.30.0 h1:RwoQn3GkWiMkzlX562cLB7OxWvjH1L8xutO2WoJcRoY=
  golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
  golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1 h1:+Yk1FZ5E+/ewA0nOO/HRYs9E4yeqpGOShuSAdzCNNoQ=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index e3e01077c18b17..5551a24f8a844e 100644
+index e3e01077c18b17..e017efb1562379 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -503,7 +503,7 @@ var depsRules = `
@@ -204,12 +259,14 @@ index e3e01077c18b17..5551a24f8a844e 100644
  	crypto/internal/boring/sig,
  	crypto/internal/boring/syso,
  	crypto/internal/boring/bcache
-@@ -513,6 +513,12 @@ var depsRules = `
+@@ -513,6 +513,14 @@ var depsRules = `
  	< crypto/sha3
  	< crypto/internal/fips140hash
  	< crypto/cipher
 +	< github.com/golang-fips/openssl/v2/internal/subtle
 +	< github.com/golang-fips/openssl/v2
++	< github.com/microsoft/go-crypto-darwin/internal/cryptokit
++	< github.com/microsoft/go-crypto-darwin/xcrypto
 +	< github.com/microsoft/go-crypto-winnative/internal/subtle
 +	< github.com/microsoft/go-crypto-winnative/internal/sysdll
 +	< github.com/microsoft/go-crypto-winnative/internal/bcrypt
@@ -217,16 +274,17 @@ index e3e01077c18b17..5551a24f8a844e 100644
  	< crypto/internal/boring
  	< crypto/boring
  	< crypto/aes,
-@@ -534,6 +540,8 @@ var depsRules = `
+@@ -534,6 +542,9 @@ var depsRules = `
  	# CRYPTO-MATH is crypto that exposes math/big APIs - no cgo, net; fmt now ok.
  
  	CRYPTO, FMT, math/big
 +	< github.com/golang-fips/openssl/v2/bbig
++	< github.com/microsoft/go-crypto-darwin/bbig
 +	< github.com/microsoft/go-crypto-winnative/cng/bbig
  	< crypto/internal/boring/bbig
  	< crypto/rand
  	< crypto/ed25519 # depends on crypto/rand.Reader
-@@ -837,7 +845,7 @@ var buildIgnore = []byte("\n//go:build ignore")
+@@ -837,7 +848,7 @@ var buildIgnore = []byte("\n//go:build ignore")
  
  func findImports(pkg string) ([]string, error) {
  	vpkg := pkg
@@ -235,25 +293,26 @@ index e3e01077c18b17..5551a24f8a844e 100644
  		vpkg = "vendor/" + pkg
  	}
  	dir := filepath.Join(Default.GOROOT, "src", vpkg)
-@@ -847,7 +855,7 @@ func findImports(pkg string) ([]string, error) {
+@@ -847,7 +858,7 @@ func findImports(pkg string) ([]string, error) {
  	}
  	var imports []string
  	var haveImport = map[string]bool{}
 -	if pkg == "crypto/internal/boring" {
-+	if pkg == "crypto/internal/boring" || pkg == "github.com/golang-fips/openssl/v2" {
++	if pkg == "crypto/internal/boring" || pkg == "github.com/golang-fips/openssl/v2" || strings.HasPrefix(pkg, "github.com/microsoft/go-crypto-darwin") {
  		haveImport["C"] = true // kludge: prevent C from appearing in crypto/internal/boring imports
  	}
  	fset := token.NewFileSet()
 diff --git a/src/go/build/vendor_test.go b/src/go/build/vendor_test.go
-index 7f6237ffd59c11..1d0b9b20e9b1d4 100644
+index 7f6237ffd59c11..6092c93d4c5b26 100644
 --- a/src/go/build/vendor_test.go
 +++ b/src/go/build/vendor_test.go
-@@ -22,6 +22,8 @@ var allowedPackagePrefixes = []string{
+@@ -22,6 +22,9 @@ var allowedPackagePrefixes = []string{
  	"github.com/google/pprof",
  	"github.com/ianlancetaylor/demangle",
  	"rsc.io/markdown",
 +	"github.com/golang-fips/openssl",
 +	"github.com/microsoft/go-crypto-winnative",
++	"github.com/microsoft/go-crypto-darwin",
  }
  
  // Verify that the vendor directories contain only packages matching the list above.
@@ -7265,6 +7324,3401 @@ index 00000000000000..e60a5dde390be6
 +	}
 +	return block
 +}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/LICENSE b/src/vendor/github.com/microsoft/go-crypto-darwin/LICENSE
+new file mode 100644
+index 00000000000000..9e841e7a26e4eb
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/LICENSE
+@@ -0,0 +1,21 @@
++    MIT License
++
++    Copyright (c) Microsoft Corporation.
++
++    Permission is hereby granted, free of charge, to any person obtaining a copy
++    of this software and associated documentation files (the "Software"), to deal
++    in the Software without restriction, including without limitation the rights
++    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++    copies of the Software, and to permit persons to whom the Software is
++    furnished to do so, subject to the following conditions:
++
++    The above copyright notice and this permission notice shall be included in all
++    copies or substantial portions of the Software.
++
++    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++    SOFTWARE
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/bbig/big.go b/src/vendor/github.com/microsoft/go-crypto-darwin/bbig/big.go
+new file mode 100644
+index 00000000000000..73891afeab93d7
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/bbig/big.go
+@@ -0,0 +1,31 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++package bbig
++
++import (
++	"math/big"
++
++	"github.com/microsoft/go-crypto-darwin/xcrypto"
++)
++
++func Enc(b *big.Int) xcrypto.BigInt {
++	if b == nil {
++		return nil
++	}
++	x := b.Bytes()
++	if len(x) == 0 {
++		return xcrypto.BigInt{}
++	}
++	return x
++}
++
++func Dec(b xcrypto.BigInt) *big.Int {
++	if b == nil {
++		return nil
++	}
++	if len(b) == 0 {
++		return new(big.Int)
++	}
++	return new(big.Int).SetBytes(b)
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/CryptoKit.o b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/CryptoKit.o
+new file mode 100644
+index 0000000000000000000000000000000000000000..cedd5b03bd3078586649300d1baa94c8b12549f1
+GIT binary patch
+literal 100952
+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%0A<{JV{e1^+TQDXp?>zBg5$#8
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/cryptokit.go b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/cryptokit.go
+new file mode 100644
+index 00000000000000..5d331b8ed22252
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/cryptokit.go
+@@ -0,0 +1,34 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package cryptokit
++
++// #cgo CFLAGS: -Wno-deprecated-declarations
++// #cgo LDFLAGS: -L /Library/Developer/CommandLineTools/usr/lib/swift/macosx ${SRCDIR}/CryptoKit.o
++import "C"
++import "unsafe"
++
++// base returns the address of the underlying array in b,
++// being careful not to panic when b has zero length.
++func base(b []byte) *C.uchar {
++	if len(b) == 0 {
++		return nil
++	}
++	return (*C.uchar)(unsafe.Pointer(&b[0]))
++}
++
++func sbase(b []byte) *C.char {
++	if len(b) == 0 {
++		return nil
++	}
++	return (*C.char)(unsafe.Pointer(&b[0]))
++}
++
++func pbase(b []byte) unsafe.Pointer {
++	if len(b) == 0 {
++		return nil
++	}
++	return unsafe.Pointer(&b[0])
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/cryptokit.h b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/cryptokit.h
+new file mode 100644
+index 00000000000000..dfc73697c392f8
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/cryptokit.h
+@@ -0,0 +1,43 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++#ifndef CRYPTOKIT_H
++#define CRYPTOKIT_H
++
++#include <stdint.h>
++#include <stddef.h>
++
++// AES GCM encryption and decryption
++int encryptAESGCM(const uint8_t* key, size_t keyLength, 
++                         const uint8_t* data, size_t dataLength, 
++                         const uint8_t* nonce, size_t nonceLength, 
++                         const uint8_t* aad, size_t aadLength, 
++                         uint8_t* cipherText, size_t cipherTextLength, 
++                         uint8_t* tag);
++int decryptAESGCM(const uint8_t* key, size_t keyLength, 
++                         const uint8_t* data, size_t dataLength, 
++                         const uint8_t* nonce, size_t nonceLength, 
++                         const uint8_t* aad, size_t aadLength, 
++                         const uint8_t* tag, size_t tagLength, 
++                         uint8_t* out, size_t* outLength);
++
++// Generates an Ed25519 keypair.
++// The private key is 64 bytes (first 32 bytes are the seed, next 32 bytes are the public key).
++// The public key is 32 bytes.
++void generateKeyEd25519(uint8_t* key);
++int newPrivateKeyEd25519FromSeed(uint8_t* key, const uint8_t* seed);
++int newPublicKeyEd25519(uint8_t* key, const uint8_t* pub);
++int signEd25519(const uint8_t* privateKey, const uint8_t* message, size_t messageLength, uint8_t* sigBuffer);
++int verifyEd25519(const uint8_t* publicKey, const uint8_t* message, size_t messageLength, const uint8_t* sig);
++
++// HKDF key derivation
++int extractHKDF(int32_t hashFunction, 
++                      const uint8_t* secret, size_t secretLength, 
++                      const uint8_t* salt, size_t saltLength, 
++                      uint8_t* prk, size_t prkLength);
++int expandHKDF(int32_t hashFunction,
++                        const uint8_t* prk, size_t prkLength,
++                        const uint8_t* info, size_t infoLength,
++                        uint8_t* okm, size_t okmLength);
++
++#endif /* CRYPTOKIT_H */
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/ed25519.go b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/ed25519.go
+new file mode 100644
+index 00000000000000..2fa15c8fa5529a
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/ed25519.go
+@@ -0,0 +1,72 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package cryptokit
++
++// #include "cryptokit.h"
++import "C"
++import (
++	"errors"
++)
++
++// GenerateKeyEd25519 generates an Ed25519 private key using the Swift implementation.
++func GenerateKeyEd25519(key []byte) {
++	C.generateKeyEd25519(base(key))
++}
++
++// NewPrivateKeyEd25519FromSeed generates an Ed25519 private key from a seed.
++func NewPrivateKeyEd25519FromSeed(key, seed []byte) error {
++	result := C.newPrivateKeyEd25519FromSeed(base(key), base(seed))
++	if result != 0 {
++		return errors.New("failed to generate Ed25519 key from seed")
++	}
++	return nil
++}
++
++// NewPublicKeyEd25519 creates a new Ed25519 public key from raw bytes.
++func NewPublicKeyEd25519(key, pub []byte) error {
++	result := C.newPublicKeyEd25519(base(key), base(pub))
++	if result != 0 {
++		return errors.New("failed to create Ed25519 public key")
++	}
++	return nil
++}
++
++// SignEd25519 signs a message using the provided private key.
++func SignEd25519(sig, privateKey, message []byte) error {
++	result := C.signEd25519(base(privateKey), base(message), C.size_t(len(message)), base(sig))
++	if result < 0 {
++		switch result {
++		case -1:
++			return errors.New("invalid inputs to SignEd25519")
++		case -2:
++			return errors.New("failed to reconstruct private key")
++		case -3:
++			return errors.New("failed to sign the message")
++		case -4:
++			return errors.New("signature buffer too small")
++		default:
++			return errors.New("unknown error in SignEd25519")
++		}
++	}
++	return nil
++}
++
++// VerifyEd25519 verifies a signature using the provided public key and message.
++func VerifyEd25519(publicKey, message, sig []byte) error {
++	result := C.verifyEd25519(base(publicKey), base(message), C.size_t(len(message)), base(sig))
++	switch result {
++	case 1:
++		return nil // Valid signature
++	case 0:
++		return errors.New("ed25519: invalid signature")
++	case -1:
++		return errors.New("invalid inputs to VerifyEd25519")
++	case -2:
++		return errors.New("failed to reconstruct public key")
++	default:
++		return errors.New("unknown error in VerifyEd25519")
++	}
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/gcm.go b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/gcm.go
+new file mode 100644
+index 00000000000000..458e9eb57416b1
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/gcm.go
+@@ -0,0 +1,36 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package cryptokit
++
++// #include "cryptokit.h"
++import "C"
++
++// EncryptAESGCM performs AES-GCM encryption using Swift.
++func EncryptAESGCM(key, plaintext, nonce, additionalData, ciphertext, tag []byte) int {
++	err := C.encryptAESGCM(
++		base(key), C.size_t(len(key)),
++		base(plaintext), C.size_t(len(plaintext)),
++		base(nonce), C.size_t(len(nonce)),
++		base(additionalData), C.size_t(len(additionalData)),
++		base(ciphertext), C.size_t(len(ciphertext)),
++		base(tag),
++	)
++	return int(err)
++}
++
++// DecryptAESGCM performs AES-GCM decryption using Swift.
++func DecryptAESGCM(key, ciphertext, nonce, additionalData, tag, plaintext []byte) (int, int) {
++	var decSize C.size_t
++	err := C.decryptAESGCM(
++		base(key), C.size_t(len(key)),
++		base(ciphertext), C.size_t(len(ciphertext)),
++		base(nonce), C.size_t(len(nonce)),
++		base(additionalData), C.size_t(len(additionalData)),
++		base(tag), C.size_t(len(tag)),
++		base(plaintext), &decSize,
++	)
++	return int(decSize), int(err)
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/hkdf.go b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/hkdf.go
+new file mode 100644
+index 00000000000000..da161adcd88ea6
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/hkdf.go
+@@ -0,0 +1,77 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package cryptokit
++
++// #include "cryptokit.h"
++import "C"
++import (
++	"crypto"
++	"errors"
++)
++
++// ExtractHKDF performs the extract step of HKDF using the specified hash function.
++func ExtractHKDF(hash crypto.Hash, secret, salt []byte) ([]byte, error) {
++	h, err := cryptoHashToSwift(hash)
++	if err != nil {
++		return nil, err
++	}
++
++	// Allocate buffer for derived key
++	prk := make([]byte, hash.Size())
++
++	// Call Swift function
++	result := C.extractHKDF(
++		h,
++		base(secret), C.size_t(len(secret)),
++		base(salt), C.size_t(len(salt)),
++		base(prk), C.size_t(len(prk)),
++	)
++
++	if result != 0 {
++		return nil, errors.New("HKDF derivation failed")
++	}
++
++	return prk, nil
++}
++
++func ExpandHKDF(hash crypto.Hash, pseudorandomKey, info []byte, keyLength int) ([]byte, error) {
++	h, err := cryptoHashToSwift(hash)
++	if err != nil {
++		return nil, err
++	}
++
++	// Allocate buffer for derived key
++	expandedKey := make([]byte, keyLength)
++
++	// Call Swift function
++	result := C.expandHKDF(
++		h,
++		base(pseudorandomKey), C.size_t(len(pseudorandomKey)),
++		base(info), C.size_t(len(info)),
++		base(expandedKey), C.size_t(len(expandedKey)),
++	)
++
++	if result != 0 {
++		return nil, errors.New("HKDF derivation failed")
++	}
++
++	return expandedKey, nil
++}
++
++func cryptoHashToSwift(hash crypto.Hash) (C.int32_t, error) {
++	switch hash {
++	case crypto.SHA1:
++		return 1, nil
++	case crypto.SHA256:
++		return 2, nil
++	case crypto.SHA384:
++		return 3, nil
++	case crypto.SHA512:
++		return 4, nil
++	default:
++		return 0, errors.New("unsupported hash function")
++	}
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/aes.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/aes.go
+new file mode 100644
+index 00000000000000..27a42bfc89ca06
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/aes.go
+@@ -0,0 +1,306 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <CommonCrypto/CommonCrypto.h>
++import "C"
++import (
++	"crypto/cipher"
++	"errors"
++	"slices"
++
++	"github.com/microsoft/go-crypto-darwin/internal/cryptokit"
++)
++
++//go:generate go run github.com/microsoft/go-crypto-darwin/cmd/gentestvectors -out vectors_test.go
++
++type cipherGCMTLS uint8
++
++const (
++	cipherGCMTLSNone cipherGCMTLS = iota
++	cipherGCMTLS12
++	cipherGCMTLS13
++)
++
++const (
++	// AES block size is the same for all key sizes
++	aesBlockSize         = C.kCCBlockSizeAES128
++	gcmTagSize           = 16
++	gcmStandardNonceSize = 12
++	// TLS 1.2 additional data is constructed as:
++	//
++	//     additional_data = seq_num(8) + TLSCompressed.type(1) + TLSCompressed.version(2) + TLSCompressed.length(2);
++	gcmTls12AddSize = 13
++	// TLS 1.3 additional data is constructed as:
++	//
++	//     additional_data = TLSCiphertext.opaque_type(1) || TLSCiphertext.legacy_record_version(2) || TLSCiphertext.length(2)
++	gcmTls13AddSize      = 5
++	gcmTlsFixedNonceSize = 4
++)
++
++type aesCipher struct {
++	key  []byte
++	kind C.CCAlgorithm
++}
++
++func NewAESCipher(key []byte) (cipher.Block, error) {
++	var alg C.CCAlgorithm
++	switch len(key) {
++	case 16, 24, 32:
++		alg = C.kCCAlgorithmAES
++	default:
++		return nil, errors.New("crypto/aes: invalid key size")
++	}
++	c := &aesCipher{
++		key:  slices.Clone(key),
++		kind: alg,
++	}
++	return c, nil
++}
++
++func (c *aesCipher) BlockSize() int { return aesBlockSize }
++
++func (c *aesCipher) Encrypt(dst, src []byte) {
++	blockSize := c.BlockSize()
++	if len(src) < blockSize || len(dst) < blockSize {
++		panic("crypto/aes: input or output block is too small")
++	}
++
++	src, dst = src[:blockSize], dst[:blockSize]
++
++	if inexactOverlap(dst, src) {
++		panic("crypto/aes: invalid buffer overlap")
++	}
++
++	status := C.CCCrypt(
++		C.kCCEncrypt,          // Operation
++		C.CCAlgorithm(c.kind), // Algorithm
++		0,                     // Options
++		pbase(c.key),          // Key
++		C.size_t(len(c.key)),  // Key length
++		nil,                   // IV
++		pbase(src),            // Input
++		C.size_t(blockSize),   // Input length
++		pbase(dst),            // Output
++		C.size_t(blockSize),   // Output length
++		nil,                   // Output length
++	)
++	if status != C.kCCSuccess {
++		panic("crypto/aes: encryption failed")
++	}
++}
++
++func (c *aesCipher) Decrypt(dst, src []byte) {
++	blockSize := c.BlockSize()
++	if len(src) < blockSize || len(dst) < blockSize {
++		panic("crypto/aes: input or output block is too small")
++	}
++
++	src, dst = src[:blockSize], dst[:blockSize]
++
++	if inexactOverlap(dst, src) {
++		panic("crypto/aes: invalid buffer overlap")
++	}
++
++	status := C.CCCrypt(
++		C.kCCDecrypt,          // Operation
++		C.CCAlgorithm(c.kind), // Algorithm
++		0,                     // Options
++		pbase(c.key),          // Key
++		C.size_t(len(c.key)),  // Key length
++		nil,                   // IV
++		pbase(src),            // Input
++		C.size_t(blockSize),   // Input length
++		pbase(dst),            // Output
++		C.size_t(blockSize),   // Output length
++		nil,                   // Output length
++	)
++	if status != C.kCCSuccess {
++		panic("crypto/aes: decryption failed")
++	}
++}
++
++type aesGCM struct {
++	key []byte
++	tls cipherGCMTLS
++	// minNextNonce is the minimum value that the next nonce can be, enforced by
++	// all TLS modes.
++	minNextNonce uint64
++	// mask is the nonce mask used in TLS 1.3 mode.
++	mask uint64
++	// maskInitialized is true if mask has been initialized. This happens during
++	// the first Seal. The initialized mask may be 0. Used by TLS 1.3 mode.
++	maskInitialized bool
++}
++
++type noGCM struct {
++	cipher.Block
++}
++
++// NewGCM constructs a GCM block mode for AES using the cryptokit package
++func (c *aesCipher) NewGCM(nonceSize, tagSize int) (cipher.AEAD, error) {
++	if nonceSize != gcmStandardNonceSize && tagSize != gcmTagSize {
++		return nil, errors.New("crypto/aes: GCM tag and nonce sizes can't be non-standard at the same time")
++	}
++	// Fall back to standard library for GCM with non-standard nonce or tag size.
++	if nonceSize != gcmStandardNonceSize {
++		return cipher.NewGCMWithNonceSize(&noGCM{c}, nonceSize)
++	}
++	if tagSize != gcmTagSize {
++		return cipher.NewGCMWithTagSize(&noGCM{c}, tagSize)
++	}
++	return &aesGCM{key: c.key, tls: cipherGCMTLSNone}, nil
++}
++
++func (g *aesGCM) NonceSize() int { return gcmStandardNonceSize }
++
++func (g *aesGCM) Overhead() int { return gcmTagSize }
++
++func (g *aesGCM) Seal(dst, nonce, plaintext, additionalData []byte) []byte {
++	if len(nonce) != gcmStandardNonceSize {
++		panic("cipher: incorrect nonce length given to GCM")
++	}
++	if uint64(len(plaintext)) > ((1<<32)-2)*aesBlockSize || len(plaintext)+gcmTagSize < len(plaintext) {
++		panic("cipher: message too large for GCM")
++	}
++	if len(dst)+len(plaintext)+gcmTagSize < len(dst) {
++		panic("cipher: message too large for buffer")
++	}
++
++	if g.tls != cipherGCMTLSNone {
++		if g.tls == cipherGCMTLS12 && len(additionalData) != gcmTls12AddSize {
++			panic("cipher: incorrect additional data length given to GCM TLS 1.2")
++		} else if g.tls == cipherGCMTLS13 && len(additionalData) != gcmTls13AddSize {
++			panic("cipher: incorrect additional data length given to GCM TLS 1.3")
++		}
++		counter := bigUint64(nonce[gcmTlsFixedNonceSize:])
++
++		// TLS 1.3 Masking
++		if g.tls == cipherGCMTLS13 {
++			if !g.maskInitialized {
++				g.mask = counter
++				g.maskInitialized = true
++			}
++			// Apply mask to the counter
++			counter ^= g.mask
++		}
++
++		// Enforce monotonicity and max limit
++		const maxUint64 = 1<<64 - 1
++		if counter == maxUint64 {
++			panic("cipher: nonce counter must be less than 2^64 - 1")
++		}
++		if counter < g.minNextNonce {
++			panic("cipher: nonce counter must be strictly monotonically increasing")
++		}
++
++		defer func() {
++			g.minNextNonce = counter + 1
++		}()
++	}
++
++	// Make room in dst to append plaintext+overhead.
++	ret, out := sliceForAppend(dst, len(plaintext)+gcmTagSize)
++
++	// Check delayed until now to make sure len(dst) is accurate.
++	if inexactOverlap(out, plaintext) {
++		panic("cipher: invalid buffer overlap")
++	}
++
++	tag := out[len(out)-gcmTagSize:]
++	err := cryptokit.EncryptAESGCM(g.key, plaintext, nonce, additionalData, out[:len(out)-gcmTagSize], tag)
++	if err != 0 {
++		panic("cipher: encryption failed")
++	}
++	return ret
++}
++
++var errOpen = errors.New("cipher: message authentication failed")
++
++func (g *aesGCM) Open(dst, nonce, ciphertext, additionalData []byte) ([]byte, error) {
++	if len(nonce) != gcmStandardNonceSize {
++		panic("cipher: incorrect nonce length given to GCM")
++	}
++	if len(ciphertext) < gcmTagSize {
++		return nil, errOpen
++	}
++	if uint64(len(ciphertext)) > ((1<<32)-2)*aesBlockSize+gcmTagSize {
++		return nil, errOpen
++	}
++	// BoringCrypto does not do any TLS check when decrypting, neither do we.
++
++	// Ensure we don't process if ciphertext lacks both ciphertext and tag
++	if len(ciphertext) < gcmTagSize {
++		return nil, errors.New("decryption failed: ciphertext too short for tag")
++	}
++
++	tag := ciphertext[len(ciphertext)-gcmTagSize:]
++	ciphertext = ciphertext[:len(ciphertext)-gcmTagSize]
++
++	// Make room in dst to append ciphertext without tag.
++	ret, out := sliceForAppend(dst, len(ciphertext))
++
++	// Check delayed until now to make sure len(dst) is accurate.
++	if inexactOverlap(out, ciphertext) {
++		panic("cipher: invalid buffer overlap")
++	}
++
++	decSize, err := cryptokit.DecryptAESGCM(g.key, ciphertext, nonce, additionalData, tag, out)
++	if err != 0 || int(decSize) != len(ciphertext) {
++		// If the decrypted data size does not match, zero out `out` and return `errOpen`
++		for i := range out {
++			out[i] = 0
++		}
++		return nil, errOpen
++	}
++	return ret, nil
++}
++
++// NewGCMTLS returns a GCM cipher specific to TLS
++// and should not be used for non-TLS purposes.
++func NewGCMTLS(block cipher.Block) (cipher.AEAD, error) {
++	cipher, ok := block.(*aesCipher)
++	if !ok {
++		return nil, errors.New("crypto/aes: invalid block cipher")
++	}
++	return &aesGCM{key: cipher.key, tls: cipherGCMTLS12}, nil
++}
++
++// NewGCMTLS13 returns a GCM cipher specific to TLS 1.3 and should not be used
++// for non-TLS purposes.
++func NewGCMTLS13(block cipher.Block) (cipher.AEAD, error) {
++	cipher, ok := block.(*aesCipher)
++	if !ok {
++		return nil, errors.New("crypto/aes: invalid block cipher")
++	}
++	return &aesGCM{key: cipher.key, tls: cipherGCMTLS13}, nil
++}
++
++func (c *aesCipher) NewCBCEncrypter(iv []byte) cipher.BlockMode {
++	return newCBC(C.kCCEncrypt, c.kind, c.key, iv)
++}
++
++func (c *aesCipher) NewCBCDecrypter(iv []byte) cipher.BlockMode {
++	return newCBC(C.kCCDecrypt, c.kind, c.key, iv)
++}
++
++// sliceForAppend is a mirror of crypto/cipher.sliceForAppend.
++func sliceForAppend(in []byte, n int) (head, tail []byte) {
++	if total := len(in) + n; cap(in) >= total {
++		head = in[:total]
++	} else {
++		head = make([]byte, total)
++		copy(head, in)
++	}
++	tail = head[len(in):]
++	return
++}
++
++func bigUint64(b []byte) uint64 {
++	_ = b[7] // bounds check hint to compiler; see go.dev/issue/14808
++	return uint64(b[7]) | uint64(b[6])<<8 | uint64(b[5])<<16 | uint64(b[4])<<24 |
++		uint64(b[3])<<32 | uint64(b[2])<<40 | uint64(b[1])<<48 | uint64(b[0])<<56
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/big.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/big.go
+new file mode 100644
+index 00000000000000..865e22ab6a3dda
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/big.go
+@@ -0,0 +1,16 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++package xcrypto
++
++// This file does not have build constraints to
++// facilitate using BigInt in Go crypto.
++// Go crypto references BigInt unconditionally,
++// even if it is not finally used.
++
++// A BigInt is the big-endian bytes from a math/big BigInt,
++// which are normalized to remove any leading 0 byte.
++// Windows BCrypt accepts this specific data format.
++// This definition allows us to avoid importing math/big.
++// Conversion between BigInt and *big.Int is in xcrypto/bbig.
++type BigInt []byte
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/cgo_go124.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/cgo_go124.go
+new file mode 100644
+index 00000000000000..375bc368162acb
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/cgo_go124.go
+@@ -0,0 +1,21 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build go1.24 && darwin
++
++package xcrypto
++
++// The following noescape and nocallback directives are used to prevent the Go
++// compiler from allocating function parameters on the heap. See
++// https://github.com/golang/go/blob/0733682e5ff4cd294f5eccb31cbe87a543147bc6/src/cmd/cgo/doc.go#L439-L461
++//
++// If possible, write a C wrapper function to optimize a call rather than using
++// this feature so the optimization will work for all supported Go versions.
++//
++// This is just a performance optimization. Only add functions that have been
++// observed to benefit from these directives, not every function that is merely
++// expected to meet the noescape/nocallback criteria.
++
++// #cgo noescape SecRandomCopyBytes
++// #cgo nocallback SecRandomCopyBytes
++import "C"
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/cipher.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/cipher.go
+new file mode 100644
+index 00000000000000..9f3a8f92bd43fc
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/cipher.go
+@@ -0,0 +1,122 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <CommonCrypto/CommonCrypto.h>
++import "C"
++
++import (
++	"runtime"
++	"unsafe"
++)
++
++type cbcCipher struct {
++	blockSize int
++	cryptor   C.CCCryptorRef
++}
++
++func newCBC(operation C.CCOperation, kind C.CCAlgorithm, key, iv []byte) *cbcCipher {
++	var blockSize int
++	switch kind {
++	case C.kCCAlgorithmAES:
++		blockSize = aesBlockSize
++	case C.kCCAlgorithmDES, C.kCCAlgorithm3DES:
++		blockSize = desBlockSize
++	default:
++		panic("invalid algorithm")
++	}
++
++	// Create and initialize the cbcMode struct with CCCryptorCreate here
++	x := &cbcCipher{blockSize: blockSize}
++	status := C.CCCryptorCreateWithMode(
++		operation,           // Specifies whether encryption or decryption is performed (kCCEncrypt or kCCDecrypt).
++		C.kCCModeCBC,        // Mode of operation, here explicitly set to CBC (Cipher Block Chaining).
++		C.CCAlgorithm(kind), // The encryption algorithm (e.g., kCCAlgorithmAES128, kCCAlgorithmDES).
++		C.ccNoPadding,       // Padding option, set to no padding; padding can be handled at a higher level if necessary.
++		pbase(iv),           // Initialization Vector (IV) for the cipher, required for CBC mode. Should be nil for ECB mode.
++		pbase(key),          // Pointer to the encryption key.
++		C.size_t(len(key)),  // Length of the encryption key in bytes.
++		nil,                 // Tweak key, used only for XTS mode; here set to nil as it’s not required for CBC.
++		0,                   // Length of the tweak key, set to 0 as tweak is nil.
++		0,                   // Number of rounds, mainly for RC2 and Blowfish; not used here, so set to 0.
++		0,                   // Mode options for CTR and F8 modes; not used for CBC, so set to 0.
++		&x.cryptor,          // Pointer to the CCCryptorRef output, which will hold the state for encryption or decryption.
++	)
++
++	if status != C.kCCSuccess {
++		panic("crypto/des: CCCryptorCreate failed")
++	}
++
++	runtime.SetFinalizer(x, (*cbcCipher).finalize)
++	return x
++
++}
++
++func (x *cbcCipher) finalize() {
++	if x.cryptor != nil {
++		C.CCCryptorRelease(x.cryptor)
++		x.cryptor = nil
++	}
++}
++
++func (x *cbcCipher) BlockSize() int { return x.blockSize }
++
++func (x *cbcCipher) CryptBlocks(dst, src []byte) {
++	if inexactOverlap(dst, src) {
++		panic("crypto/cipher: invalid buffer overlap")
++	}
++	if len(src)%x.blockSize != 0 {
++		panic("crypto/cipher: input not full blocks")
++	}
++	if len(dst) < len(src) {
++		panic("crypto/cipher: output smaller than input")
++	}
++	if len(src) == 0 {
++		return
++	}
++	var outLength C.size_t
++	status := C.CCCryptorUpdate(
++		x.cryptor,          // CCCryptorRef created by CCCryptorCreateWithMode; holds the encryption/decryption state.
++		pbase(src),         // Pointer to the input data (source buffer) to be encrypted or decrypted.
++		C.size_t(len(src)), // Length of the input data in bytes.
++		pbase(dst),         // Pointer to the output buffer (destination buffer) where the result will be stored.
++		C.size_t(len(dst)), // Size of the output buffer in bytes; must be large enough to hold the processed data.
++		&outLength,         // Pointer to a variable that will contain the number of bytes written to the output buffer.
++	)
++	if status != C.kCCSuccess {
++		panic("crypto/cipher: CCCryptorUpdate failed")
++	}
++	runtime.KeepAlive(x)
++}
++
++func (x *cbcCipher) SetIV(iv []byte) {
++	if len(iv) != x.blockSize {
++		panic("crypto/cipher: incorrect IV length")
++	}
++	status := C.CCCryptorReset(
++		x.cryptor, // CCCryptorRef created by CCCryptorCreateWithMode; holds the encryption/decryption state.
++		pbase(iv), // Pointer to the new IV to be set.
++	)
++	if status != C.kCCSuccess {
++		panic("crypto/cipher: CCCryptorReset failed")
++	}
++	runtime.KeepAlive(x)
++}
++
++// The following two functions are a mirror of golang.org/x/crypto/internal/subtle.
++
++func anyOverlap(x, y []byte) bool {
++	return len(x) > 0 && len(y) > 0 &&
++		uintptr(unsafe.Pointer(&x[0])) <= uintptr(unsafe.Pointer(&y[len(y)-1])) &&
++		uintptr(unsafe.Pointer(&y[0])) <= uintptr(unsafe.Pointer(&x[len(x)-1]))
++}
++
++func inexactOverlap(x, y []byte) bool {
++	if len(x) == 0 || len(y) == 0 || &x[0] == &y[0] {
++		return false
++	}
++	return anyOverlap(x, y)
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/des.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/des.go
+new file mode 100644
+index 00000000000000..ce490c1167c536
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/des.go
+@@ -0,0 +1,117 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <CommonCrypto/CommonCrypto.h>
++import "C"
++import (
++	"crypto/cipher"
++	"errors"
++	"slices"
++)
++
++const desBlockSize = C.kCCBlockSizeDES
++
++type desCipher struct {
++	key  []byte
++	kind C.CCAlgorithm
++}
++
++// NewDESCipher creates a new DES cipher block using the specified key (8 bytes).
++func NewDESCipher(key []byte) (cipher.Block, error) {
++	if len(key) != 8 {
++		return nil, errors.New("crypto/des: invalid key size for DES")
++	}
++
++	c := &desCipher{
++		key:  slices.Clone(key),
++		kind: C.kCCAlgorithmDES,
++	}
++	return c, nil
++}
++
++// NewTripleDESCipher creates a new 3DES cipher block using the specified key (24 bytes).
++func NewTripleDESCipher(key []byte) (cipher.Block, error) {
++	if len(key) != 24 {
++		return nil, errors.New("crypto/des: invalid key size for 3DES")
++	}
++
++	c := &desCipher{
++		key:  slices.Clone(key),
++		kind: C.kCCAlgorithm3DES,
++	}
++	return c, nil
++}
++
++func (c *desCipher) BlockSize() int { return desBlockSize }
++
++func (c *desCipher) Encrypt(dst, src []byte) {
++	blockSize := c.BlockSize()
++	if len(src) < blockSize || len(dst) < blockSize {
++		panic("crypto/des: input or output block is too small")
++	}
++
++	if inexactOverlap(dst[:blockSize], src[:blockSize]) {
++		panic("crypto/des: invalid buffer overlap")
++	}
++
++	var outLength C.size_t
++	status := C.CCCrypt(
++		C.kCCEncrypt,
++		C.CCAlgorithm(c.kind),
++		C.kCCOptionECBMode,
++		pbase(c.key),
++		C.size_t(len(c.key)),
++		nil,
++		pbase(src[:blockSize]),
++		C.size_t(blockSize),
++		pbase(dst[:blockSize]),
++		C.size_t(blockSize),
++		&outLength,
++	)
++	if status != C.kCCSuccess {
++		panic("crypto/des: encryption failed")
++	}
++}
++
++func (c *desCipher) Decrypt(dst, src []byte) {
++	blockSize := c.BlockSize()
++	if len(src) < blockSize || len(dst) < blockSize {
++		panic("crypto/des: input or output block is too small")
++	}
++
++	if inexactOverlap(dst[:blockSize], src[:blockSize]) {
++		panic("crypto/des: invalid buffer overlap")
++	}
++
++	var outLength C.size_t
++	status := C.CCCrypt(
++		C.kCCDecrypt,
++		C.CCAlgorithm(c.kind),
++		C.kCCOptionECBMode,
++		pbase(c.key),
++		C.size_t(len(c.key)),
++		nil,
++		pbase(src[:blockSize]),
++		C.size_t(blockSize),
++		pbase(dst[:blockSize]),
++		C.size_t(blockSize),
++		&outLength,
++	)
++	if status != C.kCCSuccess {
++		panic("crypto/des: decryption failed")
++	}
++}
++
++// CBC mode encrypter
++func (c *desCipher) NewCBCEncrypter(iv []byte) cipher.BlockMode {
++	return newCBC(C.kCCEncrypt, c.kind, c.key, iv)
++}
++
++// CBC mode decrypter
++func (c *desCipher) NewCBCDecrypter(iv []byte) cipher.BlockMode {
++	return newCBC(C.kCCDecrypt, c.kind, c.key, iv)
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ec.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ec.go
+new file mode 100644
+index 00000000000000..e57bde33af4c98
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ec.go
+@@ -0,0 +1,32 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++func curveToKeySizeInBits(curve string) int {
++	switch curve {
++	case "P-256":
++		return 256
++	case "P-384":
++		return 384
++	case "P-521":
++		return 521
++	default:
++		return 0
++	}
++}
++
++func curveToKeySizeInBytes(curve string) int {
++	switch curve {
++	case "P-256":
++		return (256 + 7) / 8
++	case "P-384":
++		return (384 + 7) / 8
++	case "P-521":
++		return (521 + 7) / 8
++	default:
++		return 0
++	}
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ecdh.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ecdh.go
+new file mode 100644
+index 00000000000000..3bdd3937670285
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ecdh.go
+@@ -0,0 +1,135 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <Security/Security.h>
++import "C"
++import (
++	"errors"
++	"runtime"
++	"slices"
++)
++
++type PublicKeyECDH struct {
++	_pkey C.SecKeyRef
++	bytes []byte
++}
++
++func (k *PublicKeyECDH) finalize() {
++	if k._pkey != 0 {
++		C.CFRelease(C.CFTypeRef(k._pkey))
++	}
++}
++
++type PrivateKeyECDH struct {
++	_pkey C.SecKeyRef
++	pub   []byte
++}
++
++func (k *PrivateKeyECDH) finalize() {
++	if k._pkey != 0 {
++		C.CFRelease(C.CFTypeRef(k._pkey))
++	}
++}
++
++func NewPublicKeyECDH(curve string, bytes []byte) (*PublicKeyECDH, error) {
++	if len(bytes) < 1 {
++		return nil, errors.New("NewPublicKeyECDH: missing key")
++	}
++	pubKeyRef, err := createSecKeyWithData(bytes, C.kSecAttrKeyTypeECSECPrimeRandom, C.kSecAttrKeyClassPublic)
++	if err != nil {
++		return nil, err
++	}
++	pubKey := &PublicKeyECDH{pubKeyRef, slices.Clone(bytes)}
++	runtime.SetFinalizer(pubKey, (*PublicKeyECDH).finalize)
++	return pubKey, nil
++}
++
++func (k *PublicKeyECDH) Bytes() []byte { return k.bytes }
++
++// bytes expects the public key to be in uncompressed ANSI X9.63 format
++func NewPrivateKeyECDH(curve string, pub, priv []byte) (*PrivateKeyECDH, error) {
++	key := append(slices.Clone(pub), priv...)
++	privKeyRef, err := createSecKeyWithData(key, C.kSecAttrKeyTypeECSECPrimeRandom, C.kSecAttrKeyClassPrivate)
++	if err != nil {
++		return nil, err
++	}
++	privKey := &PrivateKeyECDH{privKeyRef, pub}
++	runtime.SetFinalizer(privKey, (*PrivateKeyECDH).finalize)
++	return privKey, nil
++}
++
++func (k *PrivateKeyECDH) PublicKey() (*PublicKeyECDH, error) {
++	defer runtime.KeepAlive(k)
++	pubKeyRef := C.SecKeyCopyPublicKey(k._pkey)
++	if pubKeyRef == 0 {
++		return nil, errors.New("failed to extract public key")
++	}
++	pubKey := &PublicKeyECDH{pubKeyRef, k.pub}
++	runtime.SetFinalizer(pubKey, (*PublicKeyECDH).finalize)
++	return pubKey, nil
++}
++
++func ECDH(priv *PrivateKeyECDH, pub *PublicKeyECDH) ([]byte, error) {
++	defer runtime.KeepAlive(priv)
++	defer runtime.KeepAlive(pub)
++
++	var algorithm C.CFStringRef = C.kSecKeyAlgorithmECDHKeyExchangeStandard
++
++	supported := C.SecKeyIsAlgorithmSupported(priv._pkey, C.kSecKeyOperationTypeKeyExchange, algorithm)
++	if supported == 0 {
++		return nil, errors.New("ECDH algorithm not supported for the given private key")
++	}
++
++	var cfErr C.CFErrorRef
++	// Perform the key exchange
++	sharedSecretRef := C.SecKeyCopyKeyExchangeResult(
++		priv._pkey,
++		algorithm,
++		pub._pkey,
++		C.CFDictionaryRef(0),
++		&cfErr,
++	)
++	if err := goCFErrorRef(cfErr); err != nil {
++		return nil, err
++	}
++	defer C.CFRelease(C.CFTypeRef(sharedSecretRef))
++
++	sharedSecret := cfDataToBytes(sharedSecretRef)
++	return sharedSecret, nil
++}
++
++func GenerateKeyECDH(curve string) (*PrivateKeyECDH, []byte, error) {
++	keySize := curveToKeySizeInBytes(curve)
++	if keySize == 0 {
++		return nil, nil, errors.New("unsupported curve")
++	}
++	keySizeInBits := curveToKeySizeInBits(curve)
++	// Generate the private key and get its DER representation
++	privKeyDER, privKeyRef, err := createSecKeyRandom(C.kSecAttrKeyTypeECSECPrimeRandom, keySizeInBits)
++	if err != nil {
++		return nil, nil, err
++	}
++	pub, priv, err := extractECDHComponents(privKeyDER, keySize)
++	if err != nil {
++		C.CFRelease(C.CFTypeRef(privKeyRef))
++		return nil, nil, err
++	}
++	k := &PrivateKeyECDH{privKeyRef, pub}
++	runtime.SetFinalizer(k, (*PrivateKeyECDH).finalize)
++	return k, priv, nil
++}
++
++func extractECDHComponents(der []byte, keySize int) (pub, priv []byte, err error) {
++	// The private component is the last of the three equally-sized chunks
++	// for the elliptic curve private key.
++	if len(der) != 1+keySize*3 {
++		return nil, nil, errors.New("invalid key length: insufficient data for private component")
++	}
++	pub = der[:1+keySize*2]
++	priv = der[1+keySize*2:]
++	return
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ecdsa.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ecdsa.go
+new file mode 100644
+index 00000000000000..fb0e207a89ff67
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ecdsa.go
+@@ -0,0 +1,181 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <Security/Security.h>
++import "C"
++import (
++	"errors"
++	"runtime"
++)
++
++type PrivateKeyECDSA struct {
++	_pkey C.SecKeyRef
++}
++
++func (k *PrivateKeyECDSA) finalize() {
++	if k._pkey != 0 {
++		C.CFRelease(C.CFTypeRef(k._pkey))
++	}
++}
++
++func (k *PrivateKeyECDSA) withKey(f func(C.SecKeyRef) C.int) C.int {
++	defer runtime.KeepAlive(k)
++	return f(k._pkey)
++}
++
++type PublicKeyECDSA struct {
++	_pkey C.SecKeyRef
++}
++
++func (k *PublicKeyECDSA) finalize() {
++	if k._pkey != 0 {
++		C.CFRelease(C.CFTypeRef(k._pkey))
++	}
++}
++
++func (k *PublicKeyECDSA) withKey(f func(C.SecKeyRef) C.int) C.int {
++	defer runtime.KeepAlive(k)
++	return f(k._pkey)
++}
++
++func NewPublicKeyECDSA(curve string, x, y BigInt) (*PublicKeyECDSA, error) {
++	keySize := curveToKeySizeInBytes(curve)
++	if keySize == 0 {
++		return nil, errors.New("unsupported curve")
++	}
++	encodedKey, err := encodeToUncompressedAnsiX963Key(x, y, nil, keySize)
++	if err != nil {
++		return nil, errors.New("failed to encode public key to uncompressed ANSI X9.63 format")
++	}
++
++	pubKeyRef, err := createSecKeyWithData(encodedKey, C.kSecAttrKeyTypeECSECPrimeRandom, C.kSecAttrKeyClassPublic)
++	if err != nil {
++		return nil, err
++	}
++
++	pubKey := &PublicKeyECDSA{_pkey: pubKeyRef}
++	runtime.SetFinalizer(pubKey, (*PublicKeyECDSA).finalize)
++	return pubKey, nil
++}
++
++// NewPrivateKeyECDSA creates a new ECDSA private key using the provided curve name and parameters (x, y, d).
++func NewPrivateKeyECDSA(curve string, x, y, d BigInt) (*PrivateKeyECDSA, error) {
++	keySize := curveToKeySizeInBytes(curve)
++	if keySize == 0 {
++		return nil, errors.New("unsupported curve")
++	}
++	encodedKey, err := encodeToUncompressedAnsiX963Key(x, y, d, keySize)
++	if err != nil {
++		return nil, errors.New("crypto/ecdsa: failed to encode private key: " + err.Error())
++	}
++
++	privKeyRef, err := createSecKeyWithData(encodedKey, C.kSecAttrKeyTypeECSECPrimeRandom, C.kSecAttrKeyClassPrivate)
++	if err != nil {
++		return nil, err
++	}
++
++	// Wrap and finalize
++	k := &PrivateKeyECDSA{_pkey: privKeyRef}
++	runtime.SetFinalizer(k, (*PrivateKeyECDSA).finalize)
++	return k, nil
++}
++
++func GenerateKeyECDSA(curve string) (x, y, d BigInt, err error) {
++	keySize := curveToKeySizeInBytes(curve)
++	if keySize == 0 {
++		return nil, nil, nil, errors.New("unsupported curve")
++	}
++
++	keySizeInBits := curveToKeySizeInBits(curve)
++	privKeyDER, privKeyRef, err := createSecKeyRandom(C.kSecAttrKeyTypeECSECPrimeRandom, keySizeInBits)
++	if err != nil {
++		return nil, nil, nil, err
++	}
++	defer C.CFRelease(C.CFTypeRef(privKeyRef))
++	return decodeFromUncompressedAnsiX963Key(privKeyDER, keySize)
++}
++
++func SignMarshalECDSA(priv *PrivateKeyECDSA, hashed []byte) ([]byte, error) {
++	return evpSign(priv.withKey, algorithmTypeECDSA, 0, hashed)
++}
++
++func VerifyECDSA(pub *PublicKeyECDSA, hashed []byte, sig []byte) bool {
++	return evpVerify(pub.withKey, algorithmTypeECDSA, 0, hashed, sig) == nil
++}
++
++// encodeToUncompressedAnsiX963Key encodes the given elliptic curve point (x, y) and optional private key (d)
++// into an uncompressed ANSI X9.63 format byte slice.
++func encodeToUncompressedAnsiX963Key(x, y, d BigInt, keySize int) ([]byte, error) {
++	// Build the uncompressed key point (0x04 || x || y { || d })
++	size := 1 + keySize*2
++	if d != nil {
++		size += keySize
++	}
++	out := make([]byte, size)
++	out[0] = 0x04
++	err := encodeBigInt(out[1:], []sizedBigInt{
++		{x, keySize}, {y, keySize},
++		{d, keySize},
++	})
++	if err != nil {
++		return nil, err
++	}
++	return out, nil
++}
++
++// decodeFromUncompressedAnsiX963Key decodes the given uncompressed ANSI X9.63 format byte slice into
++// the elliptic curve point (x, y) and optional private key (d).
++func decodeFromUncompressedAnsiX963Key(key []byte, keySize int) (x, y, d BigInt, err error) {
++	if len(key) < 1 || key[0] != 0x04 {
++		return nil, nil, nil, errors.New("invalid uncompressed key format")
++	}
++	if len(key) < 1+keySize*2 {
++		return nil, nil, nil, errors.New("invalid key length")
++	}
++	x = normalizeBigInt(key[1 : 1+keySize])
++	y = normalizeBigInt(key[1+keySize : 1+keySize*2])
++	if len(key) > 1+keySize*2 {
++		d = normalizeBigInt(key[1+keySize*2:])
++		return x, y, d, nil
++	}
++	return x, y, nil, nil
++}
++
++func normalizeBigInt(b []byte) BigInt {
++	// Remove leading zero bytes
++	for len(b) > 0 && b[0] == 0 {
++		b = b[1:]
++	}
++	return b
++}
++
++// sizedBigInt defines a big integer with
++// a size that can be different from the
++// one provided by len(b).
++type sizedBigInt struct {
++	b    BigInt
++	size int
++}
++
++// encodeBigInt encodes ints into data.
++// It stops iterating over ints when it finds one nil element.
++func encodeBigInt(data []byte, ints []sizedBigInt) error {
++	for _, v := range ints {
++		if v.b == nil {
++			return nil
++		}
++		normalized := normalizeBigInt(v.b)
++		// b might be shorter than size if the original big number contained leading zeros.
++		leadingZeros := int(v.size) - len(normalized)
++		if leadingZeros < 0 {
++			return errors.New("commoncrypto: invalid parameters")
++		}
++		copy(data[leadingZeros:], normalized)
++		data = data[v.size:]
++	}
++	return nil
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ed25519.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ed25519.go
+new file mode 100644
+index 00000000000000..f59e6f9af58cd4
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/ed25519.go
+@@ -0,0 +1,100 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin && cgo
++
++package xcrypto
++
++import (
++	"strconv"
++
++	"github.com/microsoft/go-crypto-darwin/internal/cryptokit"
++)
++
++const (
++	// publicKeySizeEd25519 is the size, in bytes, of public keys as used in crypto/ed25519.
++	publicKeySizeEd25519 = 32
++	// privateKeySizeEd25519 is the size, in bytes, of private keys as used in crypto/ed25519.
++	privateKeySizeEd25519 = 64
++	// signatureSizeEd25519 is the size, in bytes, of signatures generated and verified by crypto/ed25519.
++	signatureSizeEd25519 = 64
++	// seedSizeEd25519 is the size, in bytes, of private key seeds. These are the private key representations used by RFC 8032.
++	seedSizeEd25519 = 32
++)
++
++// PublicKeyEd25519 represents an Ed25519 public key.
++type PublicKeyEd25519 []byte
++
++// PrivateKeyEd25519 represents an Ed25519 private key.
++type PrivateKeyEd25519 []byte
++
++func (k PrivateKeyEd25519) Public() PublicKeyEd25519 {
++	publicKey := make([]byte, publicKeySizeEd25519)
++	copy(publicKey, k[seedSizeEd25519:])
++	return PublicKeyEd25519(publicKey)
++}
++
++// GenerateKeyEd25519 generates a new Ed25519 private key.
++func GenerateKeyEd25519() PrivateKeyEd25519 {
++	pkeyPriv := make([]byte, privateKeySizeEd25519)
++	cryptokit.GenerateKeyEd25519(pkeyPriv)
++	return pkeyPriv
++}
++
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
++	if len(priv) != privateKeySizeEd25519 {
++		panic("ed25519: bad private key length: " + strconv.Itoa(len(priv)))
++	}
++	return NewPrivateKeyEd25519FromSeed(priv[:seedSizeEd25519])
++}
++
++func (k PrivateKeyEd25519) Bytes() ([]byte, error) {
++	return k, nil
++}
++
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
++	if len(pub) != publicKeySizeEd25519 {
++		panic("ed25519: bad public key length: " + strconv.Itoa(len(pub)))
++	}
++	pkey := make([]byte, publicKeySizeEd25519)
++	err := cryptokit.NewPublicKeyEd25519(pkey, pub)
++	if err != nil {
++		return nil, err
++	}
++	return pkey, nil
++}
++
++func (k PublicKeyEd25519) Bytes() ([]byte, error) {
++	return k, nil
++}
++
++// NewPrivateKeyEd25519FromSeed calculates a private key from a seed. It will panic if
++// len(seed) is not [SeedSize]. RFC 8032's private keys correspond to seeds in this
++// package.
++// NewPrivateKeyEd25519FromSeed creates an Ed25519 private key from a seed.
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
++	if len(seed) != seedSizeEd25519 {
++		panic("ed25519: bad seed length: " + strconv.Itoa(len(seed)))
++	}
++	pkey := make([]byte, privateKeySizeEd25519)
++	err := cryptokit.NewPrivateKeyEd25519FromSeed(pkey, seed)
++	if err != nil {
++		return nil, err
++	}
++	return pkey, nil
++}
++
++// SignEd25519 signs the message with priv and returns a signature.
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
++	sig := make([]byte, signatureSizeEd25519)
++	err := cryptokit.SignEd25519(sig, priv, message)
++	if err != nil {
++		return nil, err
++	}
++	return sig, nil
++}
++
++// VerifyEd25519 reports whether sig is a valid signature of message by pub.
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
++	return cryptokit.VerifyEd25519(pub, message, sig)
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/evp.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/evp.go
+new file mode 100644
+index 00000000000000..fcdce4c49b6723
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/evp.go
+@@ -0,0 +1,338 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <Security/Security.h>
++import "C"
++import (
++	"crypto"
++	"errors"
++	"hash"
++	"unsafe"
++)
++
++type algorithmType int
++
++const (
++	algorithmTypePSS algorithmType = iota
++	algorithmTypeRAW
++	algorithmTypePKCS1v15Enc
++	algorithmTypePKCS1v15Sig
++	algorithmTypeOAEP
++	algorithmTypeECDSA
++)
++
++// Algorithm maps for translating crypto.Hash to SecKeyAlgorithm.
++var (
++	rsaRaw = map[crypto.Hash]C.CFStringRef{
++		0: C.kSecKeyAlgorithmRSAEncryptionRaw,
++	}
++	rsaPKCS1v15Algorithms = map[crypto.Hash]C.CFStringRef{
++		crypto.SHA1:   C.kSecKeyAlgorithmRSASignatureDigestPKCS1v15SHA1,
++		crypto.SHA224: C.kSecKeyAlgorithmRSASignatureDigestPKCS1v15SHA224,
++		crypto.SHA256: C.kSecKeyAlgorithmRSASignatureDigestPKCS1v15SHA256,
++		crypto.SHA384: C.kSecKeyAlgorithmRSASignatureDigestPKCS1v15SHA384,
++		crypto.SHA512: C.kSecKeyAlgorithmRSASignatureDigestPKCS1v15SHA512,
++		0:             C.kSecKeyAlgorithmRSASignatureDigestPKCS1v15Raw,
++	}
++	rsaPSSAlgorithms = map[crypto.Hash]C.CFStringRef{
++		crypto.SHA1:   C.kSecKeyAlgorithmRSASignatureDigestPSSSHA1,
++		crypto.SHA224: C.kSecKeyAlgorithmRSASignatureDigestPSSSHA224,
++		crypto.SHA256: C.kSecKeyAlgorithmRSASignatureDigestPSSSHA256,
++		crypto.SHA384: C.kSecKeyAlgorithmRSASignatureDigestPSSSHA384,
++		crypto.SHA512: C.kSecKeyAlgorithmRSASignatureDigestPSSSHA512,
++	}
++	rsaOAEPAlgorithms = map[crypto.Hash]C.CFStringRef{
++		crypto.SHA1:   C.kSecKeyAlgorithmRSAEncryptionOAEPSHA1,
++		crypto.SHA224: C.kSecKeyAlgorithmRSAEncryptionOAEPSHA224,
++		crypto.SHA256: C.kSecKeyAlgorithmRSAEncryptionOAEPSHA256,
++		crypto.SHA384: C.kSecKeyAlgorithmRSAEncryptionOAEPSHA384,
++		crypto.SHA512: C.kSecKeyAlgorithmRSAEncryptionOAEPSHA512,
++	}
++)
++
++type withKeyFunc func(func(C.SecKeyRef) C.int) C.int
++
++// Encrypt encrypts a plaintext message using a given key and algorithm.
++func evpEncrypt(withKey withKeyFunc, algorithmType algorithmType, plaintext []byte, hash hash.Hash) ([]byte, error) {
++	var cryptoHash crypto.Hash
++	if hash != nil {
++		var err error
++		cryptoHash, err = hashToCryptoHash(hash)
++		if err != nil {
++			return nil, err
++		}
++	}
++	algorithm, err := selectAlgorithm(cryptoHash, algorithmType)
++	if err != nil {
++		return nil, err
++	}
++
++	dataRef := bytesToCFData(plaintext)
++	defer cfRelease(unsafe.Pointer(dataRef))
++
++	var encryptedDataRef C.CFDataRef
++	result := withKey(func(key C.SecKeyRef) C.int {
++		if C.SecKeyIsAlgorithmSupported(key, C.kSecKeyOperationTypeEncrypt, algorithm) != 1 {
++			return -1 // Algorithm not supported by the key
++		}
++		encryptedDataRef = C.SecKeyCreateEncryptedData(key, algorithm, dataRef, nil)
++		if encryptedDataRef == 0 {
++			return -1 // Encryption failed
++		}
++		return 0
++	})
++	if result != 0 {
++		return nil, errors.New("encryption failed")
++	}
++	defer cfRelease(unsafe.Pointer(encryptedDataRef))
++
++	return cfDataToBytes(encryptedDataRef), nil
++}
++
++// Decrypt decrypts a ciphertext using a given key and algorithm.
++func evpDecrypt(withKey withKeyFunc, algorithmType algorithmType, ciphertext []byte, hash hash.Hash) ([]byte, error) {
++	var cryptoHash crypto.Hash
++	if hash != nil {
++		var err error
++		cryptoHash, err = hashToCryptoHash(hash)
++		if err != nil {
++			return nil, err
++		}
++	}
++	algorithm, err := selectAlgorithm(cryptoHash, algorithmType)
++	if err != nil {
++		return nil, err
++	}
++
++	msg := bytesToCFData(ciphertext)
++
++	var decryptedDataRef C.CFDataRef
++	var cfErr C.CFErrorRef
++	result := withKey(func(key C.SecKeyRef) C.int {
++		if C.SecKeyIsAlgorithmSupported(key, C.kSecKeyOperationTypeDecrypt, algorithm) != 1 {
++			return -1 // Algorithm not supported by the key
++		}
++		decryptedDataRef = C.SecKeyCreateDecryptedData(key, algorithm, msg, &cfErr)
++		if decryptedDataRef == 0 {
++			return -1 // Decryption failed
++		}
++		return 0 // Success
++	})
++
++	if err := goCFErrorRef(cfErr); err != nil {
++		return nil, err
++	}
++
++	if result != 0 || decryptedDataRef == 0 {
++		return nil, errors.New("decryption failed")
++	}
++	defer cfRelease(unsafe.Pointer(decryptedDataRef))
++
++	return cfDataToBytes(decryptedDataRef), nil
++}
++
++func evpSign(withKey withKeyFunc, algorithmType algorithmType, hash crypto.Hash, hashed []byte) ([]byte, error) {
++	algorithm, err := selectAlgorithm(hash, algorithmType)
++	if err != nil {
++		return nil, err
++	}
++
++	var signedDataRef C.CFDataRef
++	var cfErr C.CFErrorRef
++	result := withKey(func(key C.SecKeyRef) C.int {
++		if C.SecKeyIsAlgorithmSupported(key, C.kSecKeyOperationTypeSign, algorithm) != 1 {
++			return -1 // Algorithm not supported by the key
++		}
++		signedDataRef = C.SecKeyCreateSignature(key, algorithm, bytesToCFData(hashed), &cfErr)
++		if signedDataRef == 0 {
++			return -1 // Signing failed
++		}
++		return 0 // Success
++	})
++
++	if err := goCFErrorRef(cfErr); err != nil {
++		return nil, err
++	}
++
++	if result != 0 || signedDataRef == 0 {
++		return nil, errors.New("signing failed")
++	}
++	defer cfRelease(unsafe.Pointer(signedDataRef))
++
++	return cfDataToBytes(signedDataRef), nil
++}
++
++func evpVerify(withKey withKeyFunc, algorithmType algorithmType, hash crypto.Hash, hashed, signature []byte) error {
++	algorithm, err := selectAlgorithm(hash, algorithmType)
++	if err != nil {
++		return err
++	}
++
++	var cfErr C.CFErrorRef
++	result := withKey(func(key C.SecKeyRef) C.int {
++		if C.SecKeyIsAlgorithmSupported(key, C.kSecKeyOperationTypeVerify, algorithm) != 1 {
++			return -1 // Algorithm not supported by the key
++		}
++		if C.SecKeyVerifySignature(key, algorithm, bytesToCFData(hashed), bytesToCFData(signature), &cfErr) != 1 {
++			return -1 // Verification failed
++		}
++		return 0 // Success
++	})
++
++	if err := goCFErrorRef(cfErr); err != nil {
++		return err
++	}
++
++	if result != 0 {
++		return errors.New("verification failed")
++	}
++	return nil
++}
++
++// hashToCryptoHash converts a hash.Hash to a crypto.Hash.
++func hashToCryptoHash(hash hash.Hash) (crypto.Hash, error) {
++	switch hash.(type) {
++	case *sha1Hash:
++		return crypto.SHA1, nil
++	case *sha224Hash:
++		return crypto.SHA224, nil
++	case *sha256Hash:
++		return crypto.SHA256, nil
++	case *sha384Hash:
++		return crypto.SHA384, nil
++	case *sha512Hash:
++		return crypto.SHA512, nil
++	default:
++		return 0, errors.New("unsupported hash function")
++	}
++}
++
++// selectAlgorithm selects the appropriate SecKeyAlgorithm based on hash and algorithm type.
++func selectAlgorithm(hash crypto.Hash, algorithmType algorithmType) (C.CFStringRef, error) {
++	var algorithmMap map[crypto.Hash]C.CFStringRef
++	switch algorithmType {
++	case algorithmTypePSS:
++		algorithmMap = rsaPSSAlgorithms
++	case algorithmTypeRAW:
++		algorithmMap = rsaRaw
++	case algorithmTypePKCS1v15Enc:
++		return C.kSecKeyAlgorithmRSAEncryptionPKCS1, nil
++	case algorithmTypePKCS1v15Sig:
++		algorithmMap = rsaPKCS1v15Algorithms
++	case algorithmTypeOAEP:
++		algorithmMap = rsaOAEPAlgorithms
++	case algorithmTypeECDSA:
++		return C.kSecKeyAlgorithmECDSASignatureDigestX962, nil
++	default:
++		return 0, errors.New("unsupported algorithm type")
++	}
++
++	algorithm, ok := algorithmMap[hash]
++	if !ok {
++		return 0, errors.New("unsupported combination of algorithm type and hash")
++	}
++
++	return algorithm, nil
++}
++
++// bytesToCFData turns a byte slice into a CFDataRef. Caller then "owns" the
++// CFDataRef and must CFRelease the CFDataRef when done.
++func bytesToCFData(buf []byte) C.CFDataRef {
++	return C.CFDataCreate(C.kCFAllocatorDefault, base(buf), C.CFIndex(len(buf)))
++}
++
++// cfDataToBytes turns a CFDataRef into a byte slice.
++func cfDataToBytes(cfData C.CFDataRef) []byte {
++	return C.GoBytes(unsafe.Pointer(C.CFDataGetBytePtr(cfData)), C.int(C.CFDataGetLength(cfData)))
++}
++
++// cfRelease releases a CoreFoundation object.
++func cfRelease(ref unsafe.Pointer) {
++	C.CFRelease(C.CFTypeRef(ref))
++}
++
++// createSecKeyWithData creates a SecKey from the provided encoded key and attributes dictionary.
++func createSecKeyWithData(encodedKey []byte, keyType, keyClass C.CFStringRef) (C.SecKeyRef, error) {
++	encodedKeyCF := C.CFDataCreate(C.kCFAllocatorDefault, base(encodedKey), C.CFIndex(len(encodedKey)))
++	if encodedKeyCF == 0 {
++		return 0, errors.New("xcrypto: failed to create CFData for private key")
++	}
++	defer C.CFRelease(C.CFTypeRef(encodedKeyCF))
++
++	attrKeys := []C.CFTypeRef{
++		C.CFTypeRef(C.kSecAttrKeyType),
++		C.CFTypeRef(C.kSecAttrKeyClass),
++	}
++
++	attrValues := []C.CFTypeRef{
++		C.CFTypeRef(keyType),
++		C.CFTypeRef(keyClass),
++	}
++
++	// Create attributes dictionary for the key
++	attrDict := C.CFDictionaryCreate(
++		C.kCFAllocatorDefault,
++		(*unsafe.Pointer)(unsafe.Pointer(&attrKeys[0])),
++		(*unsafe.Pointer)(unsafe.Pointer(&attrValues[0])),
++		C.CFIndex(len(attrKeys)),
++		nil,
++		nil,
++	)
++	if attrDict == 0 {
++		return 0, errors.New("xcrypto: failed to create attributes dictionary")
++	}
++	defer C.CFRelease(C.CFTypeRef(attrDict))
++
++	// Generate the SecKey
++	var errorRef C.CFErrorRef
++	key := C.SecKeyCreateWithData(encodedKeyCF, attrDict, &errorRef)
++	if err := goCFErrorRef(errorRef); err != nil {
++		return 0, err
++	}
++	return key, nil
++}
++
++// createSecKeyRandom creates a new SecKey with the provided attributes dictionary.
++func createSecKeyRandom(keyType C.CFStringRef, keySize int) ([]byte, C.SecKeyRef, error) {
++	keyAttrs := C.CFDictionaryCreateMutable(C.kCFAllocatorDefault, 0, nil, nil)
++	if keyAttrs == 0 {
++		return nil, 0, errors.New("failed to create key attributes dictionary")
++	}
++	defer C.CFRelease(C.CFTypeRef(keyAttrs))
++
++	C.CFDictionarySetValue(
++		keyAttrs,
++		unsafe.Pointer(C.kSecAttrKeyType),
++		unsafe.Pointer(keyType),
++	)
++
++	C.CFDictionarySetValue(
++		keyAttrs,
++		unsafe.Pointer(C.kSecAttrKeySizeInBits),
++		unsafe.Pointer(C.CFNumberCreate(C.kCFAllocatorDefault, C.kCFNumberIntType, unsafe.Pointer(&keySize))),
++	)
++
++	// Generate the private key
++	var errorRef C.CFErrorRef
++	var privKeyRef C.SecKeyRef = C.SecKeyCreateRandomKey(C.CFDictionaryRef(keyAttrs), &errorRef)
++	if err := goCFErrorRef(errorRef); err != nil {
++		return nil, 0, err
++	}
++
++	// Export the private key as DER
++	privData := C.SecKeyCopyExternalRepresentation(privKeyRef, &errorRef)
++	if err := goCFErrorRef(errorRef); err != nil {
++		return nil, 0, err
++	}
++	defer C.CFRelease(C.CFTypeRef(privData))
++
++	privKeyDER := cfDataToBytes(privData)
++	if privKeyDER == nil {
++		return nil, 0, errors.New("failed to convert CFData to bytes")
++	}
++	return privKeyDER, privKeyRef, nil
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hash.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hash.go
+new file mode 100644
+index 00000000000000..2618e53134e915
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hash.go
+@@ -0,0 +1,391 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <CommonCrypto/CommonCrypto.h>
++import "C"
++import (
++	"crypto"
++	"errors"
++	"hash"
++	"runtime"
++	"unsafe"
++)
++
++// NOTE: Implementation ported from https://go-review.googlesource.com/c/go/+/404295.
++// The cgo calls in this file are arranged to avoid marking the parameters as escaping.
++// To do that, we call noescape (including via addr).
++// We must also make sure that the data pointer arguments have the form unsafe.Pointer(&...)
++// so that cgo does not annotate them with cgoCheckPointer calls. If it did that, it might look
++// beyond the byte slice and find Go pointers in unprocessed parts of a larger allocation.
++// To do both of these simultaneously, the idiom is unsafe.Pointer(&*addr(p)),
++// where addr returns the base pointer of p, substituting a non-nil pointer for nil,
++// and applying a noescape along the way.
++// This is all to preserve compatibility with the allocation behavior of the non-commoncrypto implementations.
++
++// SupportsHash returns true if a hash.Hash implementation is supported for h.
++func SupportsHash(h crypto.Hash) bool {
++	switch h {
++	case crypto.MD4, crypto.MD5, crypto.SHA1, crypto.SHA224, crypto.SHA256, crypto.SHA384, crypto.SHA512:
++		return true
++	default:
++		return false
++	}
++}
++
++func MD4(p []byte) (sum [16]byte) {
++	result := C.CC_MD4(unsafe.Pointer(&*addr(p)), C.CC_LONG(len(p)), (*C.uchar)(&*addr(sum[:])))
++	if result == nil {
++		panic("commoncrypto: MD4 failed")
++	}
++	return
++}
++
++func MD5(p []byte) (sum [16]byte) {
++	result := C.CC_MD5(unsafe.Pointer(&*addr(p)), C.CC_LONG(len(p)), (*C.uchar)(&*addr(sum[:])))
++	if result == nil {
++		panic("commoncrypto: MD5 failed")
++	}
++	return
++}
++
++func SHA1(p []byte) (sum [20]byte) {
++	result := C.CC_SHA1(unsafe.Pointer(&*addr(p)), C.CC_LONG(len(p)), (*C.uchar)(&*addr(sum[:])))
++	if result == nil {
++		panic("commoncrypto: SHA1 failed")
++	}
++	return
++}
++
++func SHA224(p []byte) (sum [28]byte) {
++	result := C.CC_SHA224(unsafe.Pointer(&*addr(p)), C.CC_LONG(len(p)), (*C.uchar)(&*addr(sum[:])))
++	if result == nil {
++		panic("commoncrypto: SHA224 failed")
++	}
++	return
++}
++
++func SHA256(p []byte) (sum [32]byte) {
++	result := C.CC_SHA256(unsafe.Pointer(&*addr(p)), C.CC_LONG(len(p)), (*C.uchar)(&*addr(sum[:])))
++	if result == nil {
++		panic("commoncrypto: SHA256 failed")
++	}
++	return
++}
++
++func SHA384(p []byte) (sum [48]byte) {
++	result := C.CC_SHA384(unsafe.Pointer(&*addr(p)), C.CC_LONG(len(p)), (*C.uchar)(&*addr(sum[:])))
++	if result == nil {
++		panic("commoncrypto: SHA384 failed")
++	}
++	return
++}
++
++func SHA512(p []byte) (sum [64]byte) {
++	result := C.CC_SHA512(unsafe.Pointer(&*addr(p)), C.CC_LONG(len(p)), (*C.uchar)(&*addr(sum[:])))
++	if result == nil {
++		panic("commoncrypto: SHA512 failed")
++	}
++	return
++}
++
++// cloneHash is an interface that defines a Clone method.
++//
++// hash.CloneHash will probably be added in Go 1.25, see https://golang.org/issue/69521,
++// but we need it now.
++type cloneHash interface {
++	hash.Hash
++	// Clone returns a separate Hash instance with the same state as h.
++	Clone() hash.Hash
++}
++
++var _ hash.Hash = (*evpHash)(nil)
++var _ cloneHash = (*evpHash)(nil)
++
++// evpHash implements generic hash methods.
++type evpHash struct {
++	ctx unsafe.Pointer
++	// ctx2 is used in evpHash.sum to avoid changing
++	// the state of ctx. Having it here allows reusing the
++	// same allocated object multiple times.
++	ctx2      unsafe.Pointer
++	init      func(ctx unsafe.Pointer) C.int
++	update    func(ctx unsafe.Pointer, data []byte) C.int
++	final     func(ctx unsafe.Pointer, digest []byte) C.int
++	blockSize int
++	size      int
++	ctxSize   int
++}
++
++func newEvpHash(init func(ctx unsafe.Pointer) C.int, update func(ctx unsafe.Pointer, data []byte) C.int, final func(ctx unsafe.Pointer, digest []byte) C.int, ctxSize, blockSize, size int) *evpHash {
++	h := &evpHash{
++		init:      init,
++		update:    update,
++		final:     final,
++		blockSize: blockSize,
++		size:      size,
++		ctxSize:   ctxSize,
++	}
++	runtime.SetFinalizer(h, (*evpHash).finalize)
++	return h
++}
++
++func (h *evpHash) finalize() {
++	if h.ctx != nil {
++		C.free(h.ctx)
++	}
++	if h.ctx2 != nil {
++		C.free(h.ctx2)
++	}
++}
++
++func (h *evpHash) initialize() {
++	if h.ctx == nil {
++		h.ctx = C.malloc(C.size_t(h.ctxSize))
++		h.ctx2 = C.malloc(C.size_t(h.ctxSize))
++		if h.init(h.ctx) != 1 {
++			C.free(h.ctx)
++			C.free(h.ctx2)
++			panic("commoncrypto: initialization failed")
++		}
++	}
++}
++
++func (h *evpHash) Reset() {
++	if h.ctx == nil {
++		// The hash is not initialized yet, no need to reset.
++		return
++	}
++	// There is no need to reset h.ctx2 because it is always reset after
++	// use in evpHash.sum.
++	h.init(h.ctx)
++	runtime.KeepAlive(h)
++}
++
++func (h *evpHash) Write(p []byte) (int, error) {
++	h.initialize()
++	if len(p) > 0 {
++		// Use a local variable to prevent the compiler from misinterpreting the pointer
++		data := p
++		if h.update(h.ctx, data) != 1 {
++			return 0, errors.New("commoncrypto: Update function failed")
++		}
++	}
++	runtime.KeepAlive(h) // Ensure the hash object is not garbage-collected
++	return len(p), nil
++}
++
++func (h *evpHash) WriteString(s string) (int, error) {
++	h.initialize()
++	if len(s) > 0 {
++		data := []byte(s)
++		if h.update(h.ctx, data) != 1 {
++			return 0, errors.New("commoncrypto: Update function failed")
++		}
++	}
++	runtime.KeepAlive(h)
++	return len(s), nil
++}
++
++func (h *evpHash) WriteByte(c byte) error {
++	h.initialize()
++	if h.update(h.ctx, []byte{c}) != 1 {
++		return errors.New("commoncrypto: Update function failed")
++	}
++	runtime.KeepAlive(h)
++	return nil
++}
++func (h *evpHash) Size() int {
++	return h.size
++}
++
++func (h *evpHash) BlockSize() int {
++	return h.blockSize
++}
++
++func (h *evpHash) Sum(b []byte) []byte {
++	h.initialize()
++	digest := make([]byte, h.size)
++	C.memcpy(h.ctx2, h.ctx, C.size_t(h.ctxSize))
++	h.final(h.ctx2, digest)
++	return append(b, digest...)
++}
++
++// Clone returns a new evpHash object that is a deep clone of itself.
++// The duplicate object contains all state and data contained in the
++// original object at the point of duplication.
++func (h *evpHash) Clone() hash.Hash {
++	h.initialize()
++	cloned := &evpHash{
++		init:      h.init,
++		update:    h.update,
++		final:     h.final,
++		blockSize: h.blockSize,
++		size:      h.size,
++		ctxSize:   h.ctxSize,
++	}
++	cloned.ctx = C.malloc(C.size_t(h.ctxSize))
++	cloned.ctx2 = C.malloc(C.size_t(h.ctxSize))
++	C.memcpy(cloned.ctx, h.ctx, C.size_t(h.ctxSize))
++	C.memcpy(cloned.ctx2, h.ctx2, C.size_t(h.ctxSize))
++	runtime.SetFinalizer(cloned, (*evpHash).finalize)
++	runtime.KeepAlive(h)
++	return cloned
++}
++
++type md4Hash struct {
++	*evpHash
++}
++
++// NewMD4 initializes a new MD4 hasher.
++func NewMD4() hash.Hash {
++	return &md4Hash{
++		evpHash: newEvpHash(
++			func(ctx unsafe.Pointer) C.int { return C.CC_MD4_Init((*C.CC_MD4_CTX)(ctx)) },
++			func(ctx unsafe.Pointer, data []byte) C.int {
++				return C.CC_MD4_Update((*C.CC_MD4_CTX)(ctx), unsafe.Pointer(&*addr(data)), C.CC_LONG(len(data)))
++			},
++			func(ctx unsafe.Pointer, digest []byte) C.int {
++				return C.CC_MD4_Final(base(digest), (*C.CC_MD4_CTX)(ctx))
++			},
++			C.sizeof_CC_MD4_CTX,
++			C.CC_MD4_BLOCK_BYTES,
++			C.CC_MD4_DIGEST_LENGTH,
++		),
++	}
++}
++
++type md5Hash struct {
++	*evpHash
++}
++
++// NewMD5 initializes a new MD5 hasher.
++func NewMD5() hash.Hash {
++	return &md5Hash{
++		evpHash: newEvpHash(
++			func(ctx unsafe.Pointer) C.int { return C.CC_MD5_Init((*C.CC_MD5_CTX)(ctx)) },
++			func(ctx unsafe.Pointer, data []byte) C.int {
++				return C.CC_MD5_Update((*C.CC_MD5_CTX)(ctx), unsafe.Pointer(&*addr(data)), C.CC_LONG(len(data)))
++			},
++			func(ctx unsafe.Pointer, digest []byte) C.int {
++				return C.CC_MD5_Final(base(digest), (*C.CC_MD5_CTX)(ctx))
++			},
++			C.sizeof_CC_MD5_CTX,
++			C.CC_MD5_BLOCK_BYTES,
++			C.CC_MD5_DIGEST_LENGTH,
++		),
++	}
++}
++
++type sha1Hash struct {
++	*evpHash
++}
++
++// NewSHA1 initializes a new SHA1 hasher.
++func NewSHA1() hash.Hash {
++	return &sha1Hash{
++		evpHash: newEvpHash(
++			func(ctx unsafe.Pointer) C.int { return C.CC_SHA1_Init((*C.CC_SHA1_CTX)(ctx)) },
++			func(ctx unsafe.Pointer, data []byte) C.int {
++				return C.CC_SHA1_Update((*C.CC_SHA1_CTX)(ctx), unsafe.Pointer(&*addr(data)), C.CC_LONG(len(data)))
++			},
++			func(ctx unsafe.Pointer, digest []byte) C.int {
++				return C.CC_SHA1_Final(base(digest), (*C.CC_SHA1_CTX)(ctx))
++			},
++			C.sizeof_CC_SHA1_CTX,
++			C.CC_SHA1_BLOCK_BYTES,
++			C.CC_SHA1_DIGEST_LENGTH,
++		),
++	}
++}
++
++type sha224Hash struct {
++	*evpHash
++}
++
++// NewSHA224 initializes a new SHA224 hasher.
++func NewSHA224() hash.Hash {
++	return &sha224Hash{
++		evpHash: newEvpHash(
++			func(ctx unsafe.Pointer) C.int { return C.CC_SHA224_Init((*C.CC_SHA256_CTX)(ctx)) },
++			func(ctx unsafe.Pointer, data []byte) C.int {
++				return C.CC_SHA224_Update((*C.CC_SHA256_CTX)(ctx), unsafe.Pointer(&*addr(data)), C.CC_LONG(len(data)))
++			},
++			func(ctx unsafe.Pointer, digest []byte) C.int {
++				return C.CC_SHA224_Final(base(digest), (*C.CC_SHA256_CTX)(ctx))
++			},
++			C.sizeof_CC_SHA256_CTX,
++			C.CC_SHA224_BLOCK_BYTES,
++			C.CC_SHA224_DIGEST_LENGTH,
++		),
++	}
++}
++
++type sha256Hash struct {
++	*evpHash
++}
++
++// NewSHA256 initializes a new SHA256 hasher.
++func NewSHA256() hash.Hash {
++	return &sha256Hash{
++		evpHash: newEvpHash(
++			func(ctx unsafe.Pointer) C.int { return C.CC_SHA256_Init((*C.CC_SHA256_CTX)(ctx)) },
++			func(ctx unsafe.Pointer, data []byte) C.int {
++				return C.CC_SHA256_Update((*C.CC_SHA256_CTX)(ctx), unsafe.Pointer(&*addr(data)), C.CC_LONG(len(data)))
++			},
++			func(ctx unsafe.Pointer, digest []byte) C.int {
++				return C.CC_SHA256_Final(base(digest), (*C.CC_SHA256_CTX)(ctx))
++			},
++			C.sizeof_CC_SHA256_CTX,
++			C.CC_SHA256_BLOCK_BYTES,
++			C.CC_SHA256_DIGEST_LENGTH,
++		),
++	}
++}
++
++type sha384Hash struct {
++	*evpHash
++}
++
++// NewSHA384 initializes a new SHA384 hasher.
++func NewSHA384() hash.Hash {
++	return &sha384Hash{
++		evpHash: newEvpHash(
++			func(ctx unsafe.Pointer) C.int { return C.CC_SHA384_Init((*C.CC_SHA512_CTX)(ctx)) },
++			func(ctx unsafe.Pointer, data []byte) C.int {
++				return C.CC_SHA384_Update((*C.CC_SHA512_CTX)(ctx), unsafe.Pointer(&*addr(data)), C.CC_LONG(len(data)))
++			},
++			func(ctx unsafe.Pointer, digest []byte) C.int {
++				return C.CC_SHA384_Final(base(digest), (*C.CC_SHA512_CTX)(ctx))
++			},
++			C.sizeof_CC_SHA512_CTX,
++			C.CC_SHA384_BLOCK_BYTES,
++			C.CC_SHA384_DIGEST_LENGTH,
++		),
++	}
++}
++
++type sha512Hash struct {
++	*evpHash
++}
++
++// NewSHA512 initializes a new SHA512 hasher.
++func NewSHA512() hash.Hash {
++	return &sha512Hash{
++		evpHash: newEvpHash(
++			func(ctx unsafe.Pointer) C.int { return C.CC_SHA512_Init((*C.CC_SHA512_CTX)(ctx)) },
++			func(ctx unsafe.Pointer, data []byte) C.int {
++				return C.CC_SHA512_Update((*C.CC_SHA512_CTX)(ctx), unsafe.Pointer(&*addr(data)), C.CC_LONG(len(data)))
++			},
++			func(ctx unsafe.Pointer, digest []byte) C.int {
++				return C.CC_SHA512_Final(base(digest), (*C.CC_SHA512_CTX)(ctx))
++			},
++			C.sizeof_CC_SHA512_CTX,
++			C.CC_SHA512_BLOCK_BYTES,
++			C.CC_SHA512_DIGEST_LENGTH,
++		),
++	}
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hkdf.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hkdf.go
+new file mode 100644
+index 00000000000000..3cc2d5d31927e0
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hkdf.go
+@@ -0,0 +1,66 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin && cgo
++
++package xcrypto
++
++import (
++	"errors"
++	"hash"
++
++	"github.com/microsoft/go-crypto-darwin/internal/cryptokit"
++)
++
++// ExtractHKDF performs the extract step of HKDF using the specified hash function.
++func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
++	// Handle empty secret
++	if len(secret) == 0 {
++		return nil, errors.New("secret cannot be empty")
++	}
++
++	hash, err := hashToCryptoHash(h())
++	if err != nil {
++		return nil, err
++	}
++
++	// Default salt to a zero-filled array if not provided
++	if len(salt) == 0 {
++		salt = make([]byte, hash.Size())
++	}
++
++	prk, err := cryptokit.ExtractHKDF(hash, secret, salt)
++	if err != nil {
++		return nil, err
++	}
++
++	return prk, nil
++}
++
++// ExpandHKDF performs the expand step of HKDF using the specified hash function.
++func ExpandHKDF(h func() hash.Hash, pseudorandomKey, info []byte, keyLength int) ([]byte, error) {
++	// Handle empty secret
++	if len(pseudorandomKey) == 0 {
++		return nil, errors.New("pseudorandom key cannot be empty")
++	}
++
++	hash, err := hashToCryptoHash(h())
++	if err != nil {
++		return nil, err
++	}
++
++	// Determine the maximum expandable key length based on the hash function
++	maxAllowedLength := hash.Size() * 255
++
++	// Validate requested key length
++	if keyLength > maxAllowedLength {
++		return nil, errors.New("requested key length exceeds maximum allowable size")
++	}
++
++	expandedKey, err := cryptokit.ExpandHKDF(hash, pseudorandomKey, info, keyLength)
++	if err != nil {
++		return nil, err
++	}
++
++	return expandedKey, nil
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hmac.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hmac.go
+new file mode 100644
+index 00000000000000..1b22b0a331f825
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hmac.go
+@@ -0,0 +1,113 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <CommonCrypto/CommonCrypto.h>
++import "C"
++import (
++	"errors"
++	"hash"
++	"runtime"
++	"slices"
++	"unsafe"
++)
++
++// commonCryptoHMAC encapsulates an HMAC using xcrypto.
++type commonCryptoHMAC struct {
++	ctx       C.CCHmacContext
++	alg       C.CCAlgorithm
++	key       []byte
++	output    []byte
++	size      int
++	blockSize int
++}
++
++// NewHMAC returns a new HMAC using xcrypto.
++// The function h must return a hash implemented by
++// CommonCrypto (for example, h could be xcrypto.NewSHA256).
++// If h is not recognized, NewHMAC returns nil.
++func NewHMAC(fh func() hash.Hash, key []byte) hash.Hash {
++	h := fh()
++	ccDigest, err := hashToCCDigestHMAC(h)
++	if err != nil {
++		return nil // Unsupported hash function.
++	}
++
++	// Handle empty key case to match CommonCrypto's behavior.
++	if len(key) == 0 {
++		key = make([]byte, C.CC_SHA512_DIGEST_LENGTH)
++	} else {
++		key = slices.Clone(key)
++	}
++
++	hmac := &commonCryptoHMAC{
++		alg:       ccDigest,
++		key:       key,
++		size:      h.Size(),
++		blockSize: h.BlockSize(),
++	}
++
++	// Initialize the HMAC context with xcrypto.
++	C.CCHmacInit(&hmac.ctx, hmac.alg, pbase(hmac.key), C.size_t(len(hmac.key)))
++	return hmac
++}
++
++// Write adds more data to the running HMAC hash.
++func (h *commonCryptoHMAC) Write(p []byte) (int, error) {
++	if len(p) > 0 {
++		C.CCHmacUpdate(&h.ctx, unsafe.Pointer(&*addr(p)), C.size_t(len(p)))
++	}
++	runtime.KeepAlive(h)
++	return len(p), nil
++}
++
++// Sum appends the current HMAC of the data to `in`.
++func (h *commonCryptoHMAC) Sum(in []byte) []byte {
++	if h.output == nil {
++		h.output = make([]byte, h.size)
++	}
++	// Copy the context to preserve it for further operations after Sum is called.
++	hmacCtxCopy := h.ctx
++	C.CCHmacFinal(&hmacCtxCopy, pbase(h.output))
++	return append(in, h.output...)
++}
++
++// Reset resets the HMAC state to initial values.
++func (h *commonCryptoHMAC) Reset() {
++	// Re-initialize the HMAC context with the stored key and algorithm.
++	C.CCHmacInit(&h.ctx, h.alg, pbase(h.key), C.size_t(len(h.key)))
++	runtime.KeepAlive(h)
++}
++
++// Size returns the size of the HMAC output.
++func (h commonCryptoHMAC) Size() int {
++	return h.size
++}
++
++// BlockSize returns the block size of the underlying hash function.
++func (h commonCryptoHMAC) BlockSize() int {
++	return h.blockSize
++}
++
++// Mapping Go hash functions to CommonCrypto hash constants
++func hashToCCDigestHMAC(hash hash.Hash) (C.CCAlgorithm, error) {
++	switch hash.(type) {
++	case *md5Hash:
++		return C.kCCHmacAlgMD5, nil
++	case *sha1Hash:
++		return C.kCCHmacAlgSHA1, nil
++	case *sha224Hash:
++		return C.kCCHmacAlgSHA224, nil
++	case *sha256Hash:
++		return C.kCCHmacAlgSHA256, nil
++	case *sha384Hash:
++		return C.kCCHmacAlgSHA384, nil
++	case *sha512Hash:
++		return C.kCCHmacAlgSHA512, nil
++	default:
++		return 0, errors.New("unsupported hash function")
++	}
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/pbkdf2.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/pbkdf2.go
+new file mode 100644
+index 00000000000000..e49dc1c0de3cef
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/pbkdf2.go
+@@ -0,0 +1,65 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <CommonCrypto/CommonCrypto.h>
++import "C"
++import (
++	"errors"
++	"hash"
++	"unsafe"
++)
++
++func PBKDF2(password, salt []byte, iter, keyLen int, fh func() hash.Hash) ([]byte, error) {
++	// Map Go hash function to CommonCrypto hash constant
++	ccDigest, err := hashToCCDigestPBKDF2(fh())
++	if err != nil {
++		return nil, err
++	}
++
++	if len(password) == 0 {
++		// CommonCrypto requires a non-empty password
++		// Substitute empty password with placeholder
++		password = make([]byte, 1)
++	}
++
++	// Allocate output buffer for the derived key
++	derivedKey := make([]byte, keyLen)
++
++	// Call CommonCrypto's PBKDF2 implementation
++	status := C.CCKeyDerivationPBKDF(
++		C.kCCPBKDF2,                              // PBKDF2 algorithm
++		sbase(password), C.size_t(len(password)), // Password and its length
++		base(salt), C.size_t(len(salt)), // Salt and its length
++		ccDigest,     // Digest algorithm
++		C.uint(iter), // Iteration count
++		(*C.uchar)(unsafe.Pointer(&derivedKey[0])), C.size_t(keyLen), // Output buffer for derived key and its length
++	)
++
++	if status != C.kCCSuccess {
++		return nil, errors.New("PBKDF2 key derivation failed")
++	}
++
++	return derivedKey, nil
++}
++
++// Mapping Go hash functions to CommonCrypto hash constants
++func hashToCCDigestPBKDF2(hash hash.Hash) (C.CCAlgorithm, error) {
++	switch hash.(type) {
++	case *sha1Hash:
++		return C.kCCPRFHmacAlgSHA1, nil
++	case *sha224Hash:
++		return C.kCCPRFHmacAlgSHA224, nil
++	case *sha256Hash:
++		return C.kCCPRFHmacAlgSHA256, nil
++	case *sha384Hash:
++		return C.kCCPRFHmacAlgSHA384, nil
++	case *sha512Hash:
++		return C.kCCPRFHmacAlgSHA512, nil
++	default:
++		return 0, errors.New("unsupported hash function")
++	}
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rand.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rand.go
+new file mode 100644
+index 00000000000000..e58c0b3b19a68b
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rand.go
+@@ -0,0 +1,26 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <Security/SecRandom.h>
++import "C"
++import (
++	"errors"
++	"unsafe"
++)
++
++type randReader int
++
++func (randReader) Read(b []byte) (int, error) {
++	// Note: RAND_bytes should never fail; the return value exists only for historical reasons.
++	// We check it even so.
++	if len(b) > 0 && C.SecRandomCopyBytes(C.kSecRandomDefault, C.size_t(len(b)), unsafe.Pointer(&b[0])) != 0 {
++		return 0, errors.New("crypto/rand: unable to read from source")
++	}
++	return len(b), nil
++}
++
++const RandReader = randReader(0)
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rc4.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rc4.go
+new file mode 100644
+index 00000000000000..415889c4f1bdd2
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rc4.go
+@@ -0,0 +1,83 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <CommonCrypto/CommonCrypto.h>
++import "C"
++import (
++	"errors"
++	"runtime"
++	"slices"
++	"unsafe"
++)
++
++// RC4Cipher is an instance of RC4 using a particular key.
++type RC4Cipher struct {
++	ctx C.CCCryptorRef
++}
++
++// NewRC4Cipher creates and returns a new RC4 cipher with the given key.
++func NewRC4Cipher(key []byte) (*RC4Cipher, error) {
++	// Clone the key to prevent modification.
++	key = slices.Clone(key)
++	var ctx C.CCCryptorRef
++	status := C.CCCryptorCreate(
++		C.kCCEncrypt,       // Operation (RC4 stream)
++		C.kCCAlgorithmRC4,  // Algorithm
++		0,                  // No padding or other options
++		pbase(key),         // Key
++		C.size_t(len(key)), // Key length
++		nil,                // No IV needed for RC4
++		&ctx,               // Output: CCCryptorRef
++	)
++	if status != C.kCCSuccess {
++		return nil, errors.New("failed to create RC4 cipher")
++	}
++	c := &RC4Cipher{ctx: ctx}
++	runtime.SetFinalizer(c, (*RC4Cipher).finalize)
++	return c, nil
++}
++
++// finalize releases the RC4 cipher context when no longer needed.
++func (c *RC4Cipher) finalize() {
++	if c.ctx != nil {
++		C.CCCryptorRelease(c.ctx)
++	}
++}
++
++// Reset zeros the key data and makes the cipher unusable.
++func (c *RC4Cipher) Reset() {
++	if c.ctx != nil {
++		C.CCCryptorRelease(c.ctx)
++		c.ctx = nil
++	}
++}
++
++// XORKeyStream sets dst to the result of XORing src with the key stream.
++func (c *RC4Cipher) XORKeyStream(dst, src []byte) {
++	if c.ctx == nil || len(src) == 0 {
++		return
++	}
++	if inexactOverlap(dst[:len(src)], src) {
++		panic("crypto/rc4: invalid buffer overlap")
++	}
++	// Ensures `dst` has sufficient space.
++	_ = dst[len(src)-1]
++	var outLen C.size_t
++	status := C.CCCryptorUpdate(
++		c.ctx,
++		unsafe.Pointer(&*addr(src)), C.size_t(len(src)), // Input
++		unsafe.Pointer(&*addr(dst)), C.size_t(len(dst)), // Output
++		&outLen,
++	)
++	if status != C.kCCSuccess {
++		panic("crypto/cipher: CCCryptorUpdate failed")
++	}
++	if int(outLen) != len(src) {
++		panic("crypto/rc4: src not fully XORed")
++	}
++	runtime.KeepAlive(c)
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rsa.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rsa.go
+new file mode 100644
+index 00000000000000..63df684569e671
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/rsa.go
+@@ -0,0 +1,194 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #include <Security/Security.h>
++import "C"
++import (
++	"crypto"
++	"errors"
++	"hash"
++	"runtime"
++	"strconv"
++)
++
++// GenerateKeyRSA generates an RSA key pair on macOS.
++// asn1Data is encoded as PKCS#1 ASN1 DER.
++func GenerateKeyRSA(bits int) (asn1Data []byte, err error) {
++	privKeyDER, privKeyRef, err := createSecKeyRandom(C.kSecAttrKeyTypeRSA, bits)
++	if err != nil {
++		return nil, err
++	}
++	C.CFRelease(C.CFTypeRef(privKeyRef))
++	return privKeyDER, nil
++}
++
++type PublicKeyRSA struct {
++	// _pkey MUST NOT be accessed directly. Instead, use the withKey method.
++	_pkey C.SecKeyRef
++}
++
++func (k *PublicKeyRSA) finalize() {
++	if k._pkey != 0 {
++		C.CFRelease(C.CFTypeRef(k._pkey))
++	}
++}
++
++// NewPublicKeyRSA creates a new RSA public key from ASN1 DER encoded data.
++func NewPublicKeyRSA(asn1Data []byte) (*PublicKeyRSA, error) {
++	pubKeyRef, err := createSecKeyWithData(asn1Data, C.kSecAttrKeyTypeRSA, C.kSecAttrKeyClassPublic)
++	if err != nil {
++		return nil, err
++	}
++
++	key := &PublicKeyRSA{_pkey: pubKeyRef}
++	runtime.SetFinalizer(key, (*PublicKeyRSA).finalize)
++	return key, nil
++}
++
++func (k *PublicKeyRSA) withKey(f func(C.SecKeyRef) C.int) C.int {
++	// Because of the finalizer, any time key is passed to cgo, that call must
++	// be followed by a call to runtime.KeepAlive, to make sure k is not
++	// collected (and finalized) before the cgo call returns.
++	defer runtime.KeepAlive(k)
++	return f(k._pkey)
++}
++
++type PrivateKeyRSA struct {
++	// _pkey MUST NOT be accessed directly. Instead, use the withKey method.
++	_pkey C.SecKeyRef
++}
++
++func (k *PrivateKeyRSA) finalize() {
++	if k._pkey != 0 {
++		C.CFRelease(C.CFTypeRef(k._pkey))
++	}
++}
++
++// NewPrivateKeyRSA creates a new RSA private key from ASN1 DER encoded data.
++func NewPrivateKeyRSA(asn1Data []byte) (*PrivateKeyRSA, error) {
++	privKeyRef, err := createSecKeyWithData(asn1Data, C.kSecAttrKeyTypeRSA, C.kSecAttrKeyClassPrivate)
++	if err != nil {
++		return nil, err
++	}
++
++	key := &PrivateKeyRSA{_pkey: privKeyRef}
++	runtime.SetFinalizer(key, (*PrivateKeyRSA).finalize)
++	return key, nil
++}
++
++func (k *PrivateKeyRSA) PublicKey() *PublicKeyRSA {
++	var pubKeyRef C.SecKeyRef
++	k.withKey(func(key C.SecKeyRef) C.int {
++		pubKeyRef = C.SecKeyCopyPublicKey(k._pkey)
++		return 0
++	})
++	pubKey := &PublicKeyRSA{_pkey: pubKeyRef}
++	runtime.SetFinalizer(pubKey, (*PublicKeyRSA).finalize)
++	return pubKey
++}
++
++func (k *PrivateKeyRSA) withKey(f func(C.SecKeyRef) C.int) C.int {
++	// Because of the finalizer, any time _pkey is passed to cgo, that call must
++	// be followed by a call to runtime.KeepAlive, to make sure k is not
++	// collected (and finalized) before the cgo call returns.
++	defer runtime.KeepAlive(k)
++	return f(k._pkey)
++}
++
++// DecryptRSAOAEP decrypts data using RSA-OAEP.
++func DecryptRSAOAEP(h hash.Hash, priv *PrivateKeyRSA, ciphertext, label []byte) ([]byte, error) {
++	if len(label) > 0 {
++		// https://github.com/microsoft/go-crypto-darwin/issues/22
++		panic("crypto/rsa: label is not supported on macOS")
++	}
++	return evpDecrypt(priv.withKey, algorithmTypeOAEP, ciphertext, h)
++}
++
++// EncryptRSAOAEP encrypts data using RSA-OAEP.
++func EncryptRSAOAEP(h hash.Hash, pub *PublicKeyRSA, msg, label []byte) ([]byte, error) {
++	if len(label) > 0 {
++		// https://github.com/microsoft/go-crypto-darwin/issues/22
++		panic("crypto/rsa: label is not supported on macOS")
++	}
++	return evpEncrypt(pub.withKey, algorithmTypeOAEP, msg, h)
++}
++
++// SignRSAPSS signs data with RSA-PSS.
++func SignRSAPSS(priv *PrivateKeyRSA, h crypto.Hash, hashed []byte, saltLen int) ([]byte, error) {
++	return evpSign(priv.withKey, algorithmTypePSS, h, hashed)
++}
++
++// VerifyRSAPSS verifies data with RSA-PSS.
++func VerifyRSAPSS(pub *PublicKeyRSA, h crypto.Hash, hashed, sig []byte, saltLen int) error {
++	return evpVerify(pub.withKey, algorithmTypePSS, h, hashed, sig)
++}
++
++func SignRSAPKCS1v15(priv *PrivateKeyRSA, h crypto.Hash, hashed []byte) ([]byte, error) {
++	return evpSign(priv.withKey, algorithmTypePKCS1v15Sig, h, hashed)
++}
++
++func VerifyRSAPKCS1v15(pub *PublicKeyRSA, h crypto.Hash, hashed, sig []byte) error {
++	if pub.withKey(func(key C.SecKeyRef) C.int {
++		size := C.SecKeyGetBlockSize(key)
++		if len(sig) < int(size) {
++			return 0
++		}
++		return 1
++	}) == 0 {
++		return errors.New("crypto/rsa: verification error")
++	}
++	return evpVerify(pub.withKey, algorithmTypePKCS1v15Sig, h, hashed, sig)
++}
++
++// DecryptRSAPKCS1 decrypts data using RSA PKCS#1 v1.5 padding.
++func DecryptRSAPKCS1(priv *PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return evpDecrypt(priv.withKey, algorithmTypePKCS1v15Enc, ciphertext, nil)
++}
++
++// EncryptRSAPKCS1 encrypts data using RSA PKCS#1 v1.5 padding.
++func EncryptRSAPKCS1(pub *PublicKeyRSA, msg []byte) ([]byte, error) {
++	return evpEncrypt(pub.withKey, algorithmTypePKCS1v15Enc, msg, nil)
++}
++
++func DecryptRSANoPadding(priv *PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return evpDecrypt(priv.withKey, algorithmTypeRAW, ciphertext, nil)
++}
++
++func EncryptRSANoPadding(pub *PublicKeyRSA, msg []byte) ([]byte, error) {
++	return evpEncrypt(pub.withKey, algorithmTypeRAW, msg, nil)
++}
++
++// Helper functions
++
++type cfError struct {
++	code    int
++	message string
++}
++
++func (e *cfError) Error() string {
++	if e.message == "" {
++		return "CFError(" + strconv.Itoa(e.code) + "): unknown error"
++	}
++	return "CFError(" + strconv.Itoa(e.code) + "): " + e.message
++}
++
++func goCFErrorRef(ref C.CFErrorRef) error {
++	if ref == 0 {
++		return nil
++	}
++	var message string
++	if desc := C.CFErrorCopyDescription(ref); desc != C.CFStringRef(0) {
++		defer C.CFRelease(C.CFTypeRef(desc))
++		if cstr := C.CFStringGetCStringPtr(desc, C.kCFStringEncodingUTF8); cstr != nil {
++			message = C.GoString(cstr)
++		}
++	}
++	return &cfError{
++		code:    int(C.CFErrorGetCode(ref)),
++		message: message,
++	}
++}
+diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/xcrypto.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/xcrypto.go
+new file mode 100644
+index 00000000000000..9451d05599f3a8
+--- /dev/null
++++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/xcrypto.go
+@@ -0,0 +1,59 @@
++// Copyright (c) Microsoft Corporation.
++// Licensed under the MIT License.
++
++//go:build darwin
++
++package xcrypto
++
++// #cgo CFLAGS: -Wno-deprecated-declarations
++import "C"
++import "unsafe"
++
++// noescape hides a pointer from escape analysis. noescape is
++// the identity function but escape analysis doesn't think the
++// output depends on the input. noescape is inlined and currently
++// compiles down to zero instructions.
++// USE CAREFULLY!
++//
++//go:nosplit
++func noescape(p unsafe.Pointer) unsafe.Pointer {
++	x := uintptr(p)
++	return unsafe.Pointer(x ^ 0)
++}
++
++var zero byte
++
++// addr converts p to its base addr, including a noescape along the way.
++// If p is nil, addr returns a non-nil pointer, so that the result can always
++// be dereferenced.
++//
++//go:nosplit
++func addr(p []byte) *byte {
++	if len(p) == 0 {
++		return &zero
++	}
++	return (*byte)(noescape(unsafe.Pointer(&p[0])))
++}
++
++// base returns the address of the underlying array in b,
++// being careful not to panic when b has zero length.
++func base(b []byte) *C.uchar {
++	if len(b) == 0 {
++		return nil
++	}
++	return (*C.uchar)(unsafe.Pointer(&b[0]))
++}
++
++func sbase(b []byte) *C.char {
++	if len(b) == 0 {
++		return nil
++	}
++	return (*C.char)(unsafe.Pointer(&b[0]))
++}
++
++func pbase(b []byte) unsafe.Pointer {
++	if len(b) == 0 {
++		return nil
++	}
++	return unsafe.Pointer(&b[0])
++}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/LICENSE b/src/vendor/github.com/microsoft/go-crypto-winnative/LICENSE
 new file mode 100644
 index 00000000000000..9e841e7a26e4eb
@@ -11603,14 +15057,19 @@ index 00000000000000..1722410e5af193
 +	return getSystemDirectory() + "\\" + dll
 +}
 diff --git a/src/vendor/modules.txt b/src/vendor/modules.txt
-index 1c8de570cc2f1f..5b05c5eed355ca 100644
+index 1c8de570cc2f1f..aac6c2a60b6b80 100644
 --- a/src/vendor/modules.txt
 +++ b/src/vendor/modules.txt
-@@ -1,3 +1,14 @@
+@@ -1,3 +1,19 @@
 +# github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337
 +## explicit; go 1.22
 +github.com/golang-fips/openssl/v2
 +github.com/golang-fips/openssl/v2/bbig
++# github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146
++## explicit; go 1.22
++github.com/microsoft/go-crypto-darwin/bbig
++github.com/microsoft/go-crypto-darwin/internal/cryptokit
++github.com/microsoft/go-crypto-darwin/xcrypto
 +# github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37
 +## explicit; go 1.22
 +github.com/microsoft/go-crypto-winnative/cng
