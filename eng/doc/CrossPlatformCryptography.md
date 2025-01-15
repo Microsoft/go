@@ -1,7 +1,7 @@
 # Cross-Platform Cryptography in Microsoft Go
 
-Cryptographic operations in Microsoft Go are delegated to the operating system (OS) libraries in some conditions described.
-The high level conditions and the benefits of delegating cryptographic operations are described in the [Microsoft Go FIPS README](./Readme.md).
+Cryptographic operations in Microsoft Go are delegated to the operating system (OS) libraries in some conditions.
+The high level conditions and the benefits of delegating cryptographic operations are described in the [Microsoft Go FIPS README](./fips/README.md).
 At a fine-grained level, Go apps will fall back to the native Go implementation of an algorithm if the OS libraries don't support it.
 This article identifies the features that are supported on each platform.
 
