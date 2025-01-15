@@ -131,6 +131,9 @@ This section includes the following subsections:
 
 ### RSA
 
+> [!WARNING]  
+> System Libraries might not fully implement all RSA features. Please see the subsections below for more information.
+
 This section includes the following packages:
 
 - [crypto/rsa](https://pkg.go.dev/crypto/rsa)
@@ -141,9 +144,9 @@ This section includes the following packages:
 | OAEP (SHA-1)                           | ✔️             | ✔️             | ✔️<sup>3</sup> |
 | OAEP (SHA-2)<sup>1</sup>               | ✔️             | ✔️             | ✔️<sup>3</sup> |
 | OAEP (SHA-3)                           | ❌             | ❌             | ❌             |
-| PSS (MD5)                              | ✔️             | ✔️             | ✔️<sup>4</sup> |
-| PSS (SHA-1)                            | ✔️             | ✔️             | ✔️<sup>4</sup> |
-| PSS (SHA-2)<sup>1</sup>                | ✔️             | ✔️             | ✔️<sup>4</sup> |
+| PSS (MD5)                              | ✔️             | ✔️             | ❌             |
+| PSS (SHA-1)                            | ✔️             | ✔️             | ✔️             |
+| PSS (SHA-2)<sup>1</sup>                | ✔️             | ✔️             | ✔️             |
 | PSS (SHA-3)                            | ❌             | ❌             | ❌             |
 | PKCS1v15 Signature (Unhashed)          | ✔️             | ✔️             | ✔️             |
 | PKCS1v15 Signature (RIPMED160)         | ❌             | ✔️<sup>2</sup> | ❌             |
@@ -158,13 +161,11 @@ This section includes the following packages:
 
 <sup>2</sup>Available starting in Microsoft Go 1.24.
 
-<sup>3</sup>macOS doesn't support passing a label to OAEP functions.
-
-<sup>4</sup>macOS doesn't support passing a custom salt length to PSS functions.
+<sup>3</sup>macOS doesn't support passing a custom label to OAEP functions.
 
 #### RSA key sizes
 
-[rsa.GenerateKey](https://pkg.go.dev/crypto/rsa#GenerateKey) only supports the following key sizes (in bits): 2048, 3072, 4096.
+[`rsa.GenerateKey`](https://pkg.go.dev/crypto/rsa#GenerateKey) only supports the following key sizes (in bits): 2048, 3072, 4096.
 
 Multi-prime RSA keys are not supported.
 
@@ -174,11 +175,13 @@ Please refer to the documentation of the underlying cryptographic library for th
 
 #### PSS salt length
 
-On Windows, when verifying a PSS signature, [rsa.PSSSaltLengthAuto](https://pkg.go.dev/crypto/rsa#pkg-constants) is not supported.
+On Windows, when verifying a PSS signature, [`rsa.PSSSaltLengthAuto`](https://pkg.go.dev/crypto/rsa#pkg-constants) is not supported.
+
+On macOS, custom salt lengths are not supported, it always uses the [`rsa.PSSSaltLengthEqualsHash`](https://pkg.go.dev/crypto/rsa#pkg-constants).
 
 #### Random number generation
 
-Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
+Operations that require random numbers (rand io.Reader) only support [`rand.Reader`](https://pkg.go.dev/crypto/rand#Reader).
 
 ### ECDSA
 
@@ -214,7 +217,7 @@ This section includes the following packages:
 
 #### Random number generation
 
-Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
+Operations that require random numbers (rand io.Reader) only support [`rand.Reader`](https://pkg.go.dev/crypto/rand#Reader).
 
 ### Ed25519
 
@@ -230,7 +233,7 @@ This section includes the following packages:
 
 #### Random number generation
 
-Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
+Operations that require random numbers (rand io.Reader) only support [`rand.Reader`](https://pkg.go.dev/crypto/rand#Reader).
 
 ### DSA
 
@@ -281,49 +284,54 @@ This section includes the following packages:
 
 ### TLS Versions
 
+The TLS stack is implemented using native Go code but the crypto primatives are provided by the system cryptographic libraries.
+
 | Version | Windows | Linux | macOS |
 | ------- | ------- | ----- | ----- |
 | SSL 3.0 | ❌      | ❌    | ❌    |
 | TLS 1.0 | ✔️      | ✔️    | ❌    |
-| TLS 1.2 | ✔️      | ✔️    | ❌    |
-| TLS 1.3 | ✔️      | ✔️    | ❌    |
+| TLS 1.1 | ✔️      | ✔️    | ❌    |
+| TLS 1.2 | ✔️      | ✔️    | ✔️    |
+| TLS 1.3 | ✔️      | ✔️    | ✔️    |
 
 ### Cipher Suites
 
-| Name                                          | Windows | Linux          |
-| --------------------------------------------- | ------- | -------------- |
-| TLS_RSA_WITH_RC4_128_SHA                      | ✔️      | ⚠️<sup>1</sup> |
-| TLS_RSA_WITH_3DES_EDE_CBC_SHA                 | ✔️      | ⚠️<sup>1</sup> |
-| TLS_RSA_WITH_AES_128_CBC_SHA                  | ✔️      | ✔️             |
-| TLS_RSA_WITH_AES_256_CBC_SHA                  | ✔️      | ✔️             |
-| TLS_RSA_WITH_AES_128_CBC_SHA256               | ✔️      | ✔️             |
-| TLS_RSA_WITH_AES_128_GCM_SHA256               | ✔️      | ✔️             |
-| TLS_RSA_WITH_AES_256_GCM_SHA384               | ✔️      | ✔️             |
-| TLS_ECDHE_ECDSA_WITH_RC4_128_SHA              | ✔️      | ⚠️<sup>1</sup> |
-| TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA          | ✔️      | ✔️             |
-| TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA          | ✔️      | ✔️             |
-| TLS_ECDHE_RSA_WITH_RC4_128_SHA                | ✔️      | ⚠️<sup>1</sup> |
-| TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA           | ✔️      | ⚠️<sup>1</sup> |
-| TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA            | ✔️      | ✔️             |
-| TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA            | ✔️      | ✔️             |
-| TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256       | ✔️      | ✔️             |
-| TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256         | ✔️      | ✔️             |
-| TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256         | ✔️      | ✔️             |
-| TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256       | ✔️      | ✔️             |
-| TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384         | ✔️      | ✔️             |
-| TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384       | ✔️      | ✔️             |
-| TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   | ❌      | ❌             |
-| TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 | ❌      | ❌             |
-| TLS_AES_128_GCM_SHA256                        | ✔️      | ✔️             |
-| TLS_AES_256_GCM_SHA384                        | ✔️      | ✔️             |
-| TLS_CHACHA20_POLY1305_SHA256                  | ❌      | ❌             |
-| TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305          | ❌      | ❌             |
-| TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305          | ❌      | ❌             |
-| TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305        | ❌      | ❌             |
+| Name                                          | Windows | Linux          | macOS |
+| --------------------------------------------- | ------- | -------------- | ----- |
+| TLS_RSA_WITH_RC4_128_SHA                      | ✔️      | ⚠️<sup>1</sup> | ✔️    |
+| TLS_RSA_WITH_3DES_EDE_CBC_SHA                 | ✔️      | ⚠️<sup>1</sup> | ✔️    |
+| TLS_RSA_WITH_AES_128_CBC_SHA                  | ✔️      | ✔️             | ✔️    |
+| TLS_RSA_WITH_AES_256_CBC_SHA                  | ✔️      | ✔️             | ✔️    |
+| TLS_RSA_WITH_AES_128_CBC_SHA256               | ✔️      | ✔️             | ✔️    |
+| TLS_RSA_WITH_AES_128_GCM_SHA256               | ✔️      | ✔️             | ✔️    |
+| TLS_RSA_WITH_AES_256_GCM_SHA384               | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_ECDSA_WITH_RC4_128_SHA              | ✔️      | ⚠️<sup>1</sup> | ✔️    |
+| TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA          | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA          | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_RSA_WITH_RC4_128_SHA                | ✔️      | ⚠️<sup>1</sup> | ✔️    |
+| TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA           | ✔️      | ⚠️<sup>1</sup> | ✔️    |
+| TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA            | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA            | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256       | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256         | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256         | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256       | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384         | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384       | ✔️      | ✔️             | ✔️    |
+| TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256   | ❌      | ❌             | ❌    |
+| TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 | ❌      | ❌             | ❌    |
+| TLS_AES_128_GCM_SHA256                        | ✔️      | ✔️             | ✔️    |
+| TLS_AES_256_GCM_SHA384                        | ✔️      | ✔️             | ✔️    |
+| TLS_CHACHA20_POLY1305_SHA256                  | ❌      | ❌             | ❌    |
+| TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305          | ❌      | ❌             | ❌    |
+| TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305          | ❌      | ❌             | ❌    |
+| TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305        | ❌      | ❌             | ❌    |
 
 <sup>1</sup>When using OpenSSL 3, requires the legacy provider to be enabled.
 
 ### Curves and Groups
+
+Below are the supported [`tls.CurveIDs`](https://pkg.go.dev/crypto/tls#CurveID).
 
 | Name           | Windows | Linux | macOS |
 | -------------- | ------- | ----- | ----- |
@@ -333,7 +341,9 @@ This section includes the following packages:
 | X25519         | ❌      | ❌    | ❌    |
 | X25519MLKEM768 | ❌      | ❌    | ❌    |
 
-### Signature Algorithms
+### Signature Schemes
+
+Below are the supported [`tls.SignatureSchemes`](https://pkg.go.dev/crypto/tls#SignatureScheme).
 
 | Name                   | Windows | Linux | macOS |
 | ---------------------- | ------- | ----- | ----- |
@@ -345,8 +355,8 @@ This section includes the following packages:
 | PSSWithSHA256          | ✔️      | ✔️    | ✔️    |
 | PSSWithSHA384          | ✔️      | ✔️    | ✔️    |
 | PSSWithSHA512          | ✔️      | ✔️    | ✔️    |
-| ECDSAWithP256AndSHA256 | ✔️      | ✔️    | ❌    |
-| ECDSAWithP384AndSHA384 | ✔️      | ✔️    | ❌    |
-| ECDSAWithP521AndSHA512 | ✔️      | ✔️    | ❌    |
-| ECDSAWithSHA1          | ✔️      | ✔️    | ❌    |
+| ECDSAWithSHA1          | ✔️      | ✔️    | ✔️    |
+| ECDSAWithP256AndSHA256 | ✔️      | ✔️    | ✔️    |
+| ECDSAWithP384AndSHA384 | ✔️      | ✔️    | ✔️    |
+| ECDSAWithP521AndSHA512 | ✔️      | ✔️    | ✔️    |
 | Ed25519                | ❌      | ✔️    | ✔️    |
