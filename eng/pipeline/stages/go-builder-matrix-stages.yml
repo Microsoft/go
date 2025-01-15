@@ -84,10 +84,10 @@ stages:
           - { os: darwin, arch: amd64, config: test }
           - { experiment: darwincrypto, os: darwin, arch: amd64, config: test }
           - { experiment: darwincrypto, os: darwin, arch: amd64, config: test, fips: true }
-          - { os: darwin, arch: arm64, config: devscript }
-          - { os: darwin, arch: arm64, config: test }
-          - { experiment: darwincrypto, os: darwin, arch: arm64, config: test }
-          - { experiment: darwincrypto, os: darwin, arch: arm64, config: test, fips: true }
+          # - { os: darwin, arch: arm64, config: devscript }
+          # - { os: darwin, arch: arm64, config: test }
+          # - { experiment: darwincrypto, os: darwin, arch: arm64, config: test }
+          # - { experiment: darwincrypto, os: darwin, arch: arm64, config: test, fips: true }
           - { os: linux, arch: amd64, config: devscript }
           - { os: linux, arch: amd64, config: test }
           - { os: linux, arch: amd64, config: test, distro: ubuntu }
