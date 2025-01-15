@@ -5,11 +5,12 @@ Subject: [PATCH] Use crypto backends
 
 ---
  src/cmd/api/boring_test.go                    |   2 +-
- src/cmd/dist/test.go                          |   5 +
+ src/cmd/dist/test.go                          |   8 +-
  src/cmd/go/go_boring_test.go                  |  11 +-
  src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
  .../go/testdata/script/gopath_std_vendor.txt  |   9 +
  src/cmd/link/internal/ld/config.go            |   8 +
+ src/cmd/link/internal/ld/lib.go               |   1 +
  src/crypto/aes/aes.go                         |   2 +-
  src/crypto/boring/boring.go                   |   4 +-
  src/crypto/cipher/ctr_aes_test.go             |   2 +-
@@ -45,6 +46,7 @@ Subject: [PATCH] Use crypto backends
  src/crypto/rc4/rc4.go                         |  18 ++
  src/crypto/rsa/boring.go                      |  12 +-
  src/crypto/rsa/boring_test.go                 |   2 +-
+ src/crypto/rsa/darwin.go                      |  71 +++++++
  src/crypto/rsa/fips.go                        |  14 +-
  src/crypto/rsa/notboring.go                   |   4 +-
  src/crypto/rsa/pkcs1v15.go                    |   6 +-
@@ -75,13 +77,17 @@ Subject: [PATCH] Use crypto backends
  src/hash/example_test.go                      |   2 +
  src/hash/marshal_test.go                      |   9 +
  src/hash/notboring_test.go                    |   9 +
+ src/net/lookup_test.go                        |   3 +
  src/net/smtp/smtp_test.go                     |  72 ++++---
- 72 files changed, 1052 insertions(+), 107 deletions(-)
+ src/os/exec/exec_test.go                      |   9 +
+ src/runtime/pprof/vminfo_darwin_test.go       |   6 +
+ 77 files changed, 1143 insertions(+), 109 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
  create mode 100644 src/crypto/ed25519/boring.go
  create mode 100644 src/crypto/ed25519/notboring.go
+ create mode 100644 src/crypto/rsa/darwin.go
  create mode 100644 src/crypto/tls/internal/tls13/doc.go
  create mode 100644 src/crypto/tls/internal/tls13/tls13.go
  create mode 100644 src/hash/boring_test.go
@@ -101,7 +107,7 @@ index f0e3575637c62a..9eab3b4e66e60b 100644
  package main
  
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 0de6e80fd985a3..3316bb52a61ff1 100644
+index 0c992118f4287b..3316bb52a61ff1 100644
 --- a/src/cmd/dist/test.go
 +++ b/src/cmd/dist/test.go
 @@ -1161,6 +1161,11 @@ func (t *tester) internalLink() bool {
@@ -116,6 +122,20 @@ index 0de6e80fd985a3..3316bb52a61ff1 100644
  	// Internally linking cgo is incomplete on some architectures.
  	// https://golang.org/issue/10373
  	// https://golang.org/issue/14449
+@@ -1324,12 +1329,11 @@ func (t *tester) registerCgoTests(heading string) {
+ 			// a C linker warning on Linux.
+ 			// in function `bio_ip_and_port_to_socket_and_addr':
+ 			// warning: Using 'getaddrinfo' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking
+-			if staticCheck.skip == nil && goos == "linux" && strings.Contains(goexperiment, "boringcrypto") {
++			if staticCheck.skip == nil && goos == "linux" && (strings.Contains(goexperiment, "boringcrypto") || strings.Contains(goexperiment, "opensslcrypto")) {
+ 				staticCheck.skip = func(*distTest) (string, bool) {
+ 					return "skipping static linking check on Linux when using boringcrypto to avoid C linker warning about getaddrinfo", true
+ 				}
+ 			}
+-
+ 			// Static linking tests
+ 			if goos != "android" && p != "netbsd/arm" && !t.msan && !t.asan {
+ 				// TODO(#56629): Why does this fail on netbsd-arm?
 diff --git a/src/cmd/go/go_boring_test.go b/src/cmd/go/go_boring_test.go
 index ed0fbf3d53d75b..8111b143a1295b 100644
 --- a/src/cmd/go/go_boring_test.go
@@ -201,6 +221,18 @@ index b2d4ad7cb0e7f6..2859879041ff8f 100644
  		case "darwin/arm64", "windows/arm", "windows/arm64": // On these platforms, everything is PIE
  			*mode = BuildModePIE
  		default:
+diff --git a/src/cmd/link/internal/ld/lib.go b/src/cmd/link/internal/ld/lib.go
+index 2d8f964f3594c6..a587e1abde57c9 100644
+--- a/src/cmd/link/internal/ld/lib.go
++++ b/src/cmd/link/internal/ld/lib.go
+@@ -1172,6 +1172,7 @@ var hostobj []Hostobj
+ // These packages can use internal linking mode.
+ // Others trigger external mode.
+ var internalpkg = []string{
++	"vendor/github.com/golang-fips/openssl/v2",
+ 	"crypto/internal/boring",
+ 	"crypto/internal/boring/syso",
+ 	"crypto/x509",
 diff --git a/src/crypto/aes/aes.go b/src/crypto/aes/aes.go
 index 5bc2d13d673e0a..b803c77be62a66 100644
 --- a/src/crypto/aes/aes.go
@@ -663,7 +695,7 @@ index 275c60b4de49eb..ff8bddf28c4545 100644
  	"math/big"
  )
 diff --git a/src/crypto/ecdsa/ecdsa.go b/src/crypto/ecdsa/ecdsa.go
-index cb308b41e9df86..5c841d2f021967 100644
+index cb308b41e9df86..7bfdc76759baeb 100644
 --- a/src/crypto/ecdsa/ecdsa.go
 +++ b/src/crypto/ecdsa/ecdsa.go
 @@ -20,8 +20,8 @@ import (
@@ -1321,7 +1353,7 @@ index 90943a0935befb..09ebdfd733e5d6 100644
  		return
  	}
 diff --git a/src/crypto/rsa/boring.go b/src/crypto/rsa/boring.go
-index 28d16a89f6a1cf..b276571ddf9fc8 100644
+index b9f9d3154f2589..ba66dd33a1f9f3 100644
 --- a/src/crypto/rsa/boring.go
 +++ b/src/crypto/rsa/boring.go
 @@ -2,14 +2,15 @@
@@ -1368,8 +1400,85 @@ index 838fcc1244bdbe..d89f732345e8a3 100644
  
  // Note: Can run these tests against the non-BoringCrypto
  // version of the code by using "CGO_ENABLED=0 go test".
+diff --git a/src/crypto/rsa/darwin.go b/src/crypto/rsa/darwin.go
+new file mode 100644
+index 00000000000000..1b9c63523ee90e
+--- /dev/null
++++ b/src/crypto/rsa/darwin.go
+@@ -0,0 +1,71 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.darwincrypto
++
++package rsa
++
++import (
++	"crypto/internal/backend"
++	"crypto/internal/backend/bbig"
++	"errors"
++	"math/big"
++	_ "unsafe"
++
++	"golang.org/x/crypto/cryptobyte"
++	"golang.org/x/crypto/cryptobyte/asn1"
++)
++
++//go:linkname decodeKey
++func decodeKey(data []byte) (N, E, D, P, Q, Dp, Dq, Qinv backend.BigInt, err error) {
++	bad := func(e error) (N, E, D, P, Q, Dp, Dq, Qinv backend.BigInt, err error) {
++		return nil, nil, nil, nil, nil, nil, nil, nil, e
++	}
++	input := cryptobyte.String(data)
++	var version int
++	n, e, d, p, q, dp, dq, qinv := new(big.Int), new(big.Int), new(big.Int), new(big.Int),
++		new(big.Int), new(big.Int), new(big.Int), new(big.Int)
++	// Parse the ASN.1 sequence
++	if !input.ReadASN1(&input, asn1.SEQUENCE) {
++		return bad(errors.New("invalid ASN.1 structure: not a sequence"))
++	}
++	if !input.ReadASN1Integer(&version) || version != 0 {
++		return bad(errors.New("invalid ASN.1 structure: unsupported version"))
++	}
++	if !input.ReadASN1Integer(n) || !input.ReadASN1Integer(e) ||
++		!input.ReadASN1Integer(d) || !input.ReadASN1Integer(p) ||
++		!input.ReadASN1Integer(q) || !input.ReadASN1Integer(dp) ||
++		!input.ReadASN1Integer(dq) || !input.ReadASN1Integer(qinv) {
++		return bad(errors.New("invalid ASN.1 structure"))
++	}
++	return bbig.Enc(n), bbig.Enc(e), bbig.Enc(d), bbig.Enc(p), bbig.Enc(q),
++		bbig.Enc(dp), bbig.Enc(dq), bbig.Enc(qinv), nil
++}
++
++//go:linkname encodeKey
++func encodeKey(N, E, D, P, Q, Dp, Dq, Qinv backend.BigInt) ([]byte, error) {
++	builder := cryptobyte.NewBuilder(nil)
++	builder.AddASN1(asn1.SEQUENCE, func(b *cryptobyte.Builder) {
++		b.AddASN1Int64(0)               // Add version as int64
++		b.AddASN1BigInt(bbig.Dec(N))    // Add modulus
++		b.AddASN1BigInt(bbig.Dec(E))    // Add public exponent
++		b.AddASN1BigInt(bbig.Dec(D))    // Add private exponent
++		b.AddASN1BigInt(bbig.Dec(P))    // Add prime1
++		b.AddASN1BigInt(bbig.Dec(Q))    // Add prime2
++		b.AddASN1BigInt(bbig.Dec(Dp))   // Add exponent1
++		b.AddASN1BigInt(bbig.Dec(Dq))   // Add exponent2
++		b.AddASN1BigInt(bbig.Dec(Qinv)) // Add coefficient
++	})
++	return builder.Bytes()
++}
++
++//go:linkname encodePublicKey
++func encodePublicKey(N, E backend.BigInt) ([]byte, error) {
++	builder := cryptobyte.NewBuilder(nil)
++	builder.AddASN1(asn1.SEQUENCE, func(b *cryptobyte.Builder) {
++		b.AddASN1BigInt(bbig.Dec(N)) // Add modulus
++		b.AddASN1BigInt(bbig.Dec(E)) // Add public exponent
++	})
++	return builder.Bytes()
++}
 diff --git a/src/crypto/rsa/fips.go b/src/crypto/rsa/fips.go
-index 8373c125ae3096..319fae6fb282db 100644
+index 8373c125ae3096..990ea980faf33f 100644
 --- a/src/crypto/rsa/fips.go
 +++ b/src/crypto/rsa/fips.go
 @@ -6,7 +6,7 @@ package rsa
@@ -2549,6 +2658,20 @@ index 00000000000000..11dc691600b110
 +package hash_test
 +
 +const boringEnabled = false
+diff --git a/src/net/lookup_test.go b/src/net/lookup_test.go
+index 514cbd098ae772..8ec689416dde1d 100644
+--- a/src/net/lookup_test.go
++++ b/src/net/lookup_test.go
+@@ -1501,6 +1501,9 @@ func TestLookupPortIPNetworkString(t *testing.T) {
+ }
+ 
+ func TestLookupNoSuchHost(t *testing.T) {
++	if runtime.GOOS == "darwin" {
++		t.Skip("skipping on darwin; see https://github.com/microsoft/go/issues/1394")
++	}
+ 	mustHaveExternalNetwork(t)
+ 
+ 	const testNXDOMAIN = "invalid.invalid."
 diff --git a/src/net/smtp/smtp_test.go b/src/net/smtp/smtp_test.go
 index 389eda9ad54b99..110d60beb0e70c 100644
 --- a/src/net/smtp/smtp_test.go
@@ -2640,3 +2763,54 @@ index 389eda9ad54b99..110d60beb0e70c 100644
  -----END RSA TESTING KEY-----`))
  
  func testingKey(s string) string { return strings.ReplaceAll(s, "TESTING KEY", "PRIVATE KEY") }
+diff --git a/src/os/exec/exec_test.go b/src/os/exec/exec_test.go
+index 8c623871932f7d..2fa55073f5c19c 100644
+--- a/src/os/exec/exec_test.go
++++ b/src/os/exec/exec_test.go
+@@ -14,6 +14,7 @@ import (
+ 	"errors"
+ 	"flag"
+ 	"fmt"
++	"internal/goexperiment"
+ 	"internal/poll"
+ 	"internal/testenv"
+ 	"io"
+@@ -689,6 +690,14 @@ func TestExtraFiles(t *testing.T) {
+ 		t.Skipf("skipping test on %q", runtime.GOOS)
+ 	}
+ 
++	if goexperiment.OpenSSLCrypto {
++		// OpenSSL default behavior is to maintain open FDs to any
++		// random devices that get used by the random number library.
++		// Since those FDs are not marked FD_CLOEXEC or O_CLOEXEC,
++		// they also get inherited by children.
++		t.Skip("skipping test because test was run with OpenSSLCrypto")
++	}
++
+ 	// Force network usage, to verify the epoll (or whatever) fd
+ 	// doesn't leak to the child,
+ 	ln, err := net.Listen("tcp", "127.0.0.1:0")
+diff --git a/src/runtime/pprof/vminfo_darwin_test.go b/src/runtime/pprof/vminfo_darwin_test.go
+index 6d375c5d53368a..39154b000ddc67 100644
+--- a/src/runtime/pprof/vminfo_darwin_test.go
++++ b/src/runtime/pprof/vminfo_darwin_test.go
+@@ -11,6 +11,7 @@ import (
+ 	"bytes"
+ 	"fmt"
+ 	"internal/abi"
++	"internal/goexperiment"
+ 	"internal/testenv"
+ 	"os"
+ 	"os/exec"
+@@ -21,6 +22,11 @@ import (
+ )
+ 
+ func TestVMInfo(t *testing.T) {
++	if goexperiment.DarwinCrypto {
++		// Fails on macOS when using system crypto.
++		// https://github.com/microsoft/go/issues/1466
++		t.Skip("skipping on Darwin")
++	}
+ 	var begin, end, offset uint64
+ 	var filename string
+ 	first := true

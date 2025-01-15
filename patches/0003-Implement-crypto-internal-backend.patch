@@ -1,0 +1,2166 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: qmuntal <qmuntaldiaz@microsoft.com>
+Date: Wed, 15 Jan 2025 16:32:26 +0100
+Subject: [PATCH] Implement crypto/internal/backend
+
+---
+ .gitignore                                    |   2 +
+ src/crypto/internal/backend/backend_test.go   |  30 ++
+ src/crypto/internal/backend/bbig/big.go       |  17 +
+ .../internal/backend/bbig/big_boring.go       |  12 +
+ src/crypto/internal/backend/bbig/big_cng.go   |  12 +
+ .../internal/backend/bbig/big_darwin.go       |  12 +
+ .../internal/backend/bbig/big_openssl.go      |  12 +
+ src/crypto/internal/backend/boring_linux.go   | 279 ++++++++++++++
+ src/crypto/internal/backend/cng_windows.go    | 336 ++++++++++++++++
+ src/crypto/internal/backend/common.go         |  58 +++
+ src/crypto/internal/backend/darwin_darwin.go  | 359 +++++++++++++++++
+ src/crypto/internal/backend/fips140/boring.go |  11 +
+ src/crypto/internal/backend/fips140/cng.go    |  33 ++
+ src/crypto/internal/backend/fips140/darwin.go |  11 +
+ .../internal/backend/fips140/fips140.go       |  55 +++
+ .../internal/backend/fips140/isrequirefips.go |   9 +
+ .../internal/backend/fips140/norequirefips.go |   9 +
+ .../backend/fips140/nosystemcrypto.go         |  11 +
+ .../internal/backend/fips140/openssl.go       |  41 ++
+ src/crypto/internal/backend/nobackend.go      | 240 ++++++++++++
+ src/crypto/internal/backend/openssl_linux.go  | 362 ++++++++++++++++++
+ src/crypto/internal/backend/stub.s            |  10 +
+ src/go/build/deps_test.go                     |   7 +-
+ src/runtime/runtime_boring.go                 |   5 +
+ 24 files changed, 1932 insertions(+), 1 deletion(-)
+ create mode 100644 src/crypto/internal/backend/backend_test.go
+ create mode 100644 src/crypto/internal/backend/bbig/big.go
+ create mode 100644 src/crypto/internal/backend/bbig/big_boring.go
+ create mode 100644 src/crypto/internal/backend/bbig/big_cng.go
+ create mode 100644 src/crypto/internal/backend/bbig/big_darwin.go
+ create mode 100644 src/crypto/internal/backend/bbig/big_openssl.go
+ create mode 100644 src/crypto/internal/backend/boring_linux.go
+ create mode 100644 src/crypto/internal/backend/cng_windows.go
+ create mode 100644 src/crypto/internal/backend/common.go
+ create mode 100644 src/crypto/internal/backend/darwin_darwin.go
+ create mode 100644 src/crypto/internal/backend/fips140/boring.go
+ create mode 100644 src/crypto/internal/backend/fips140/cng.go
+ create mode 100644 src/crypto/internal/backend/fips140/darwin.go
+ create mode 100644 src/crypto/internal/backend/fips140/fips140.go
+ create mode 100644 src/crypto/internal/backend/fips140/isrequirefips.go
+ create mode 100644 src/crypto/internal/backend/fips140/norequirefips.go
+ create mode 100644 src/crypto/internal/backend/fips140/nosystemcrypto.go
+ create mode 100644 src/crypto/internal/backend/fips140/openssl.go
+ create mode 100644 src/crypto/internal/backend/nobackend.go
+ create mode 100644 src/crypto/internal/backend/openssl_linux.go
+ create mode 100644 src/crypto/internal/backend/stub.s
+
+diff --git a/.gitignore b/.gitignore
+index c6512e64a4ef39..b3b01db73b009d 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -46,6 +46,8 @@ _testmain.go
+ /test/run.out
+ /test/times.out
+ 
++!/src/vendor/github.com/microsoft/go-crypto-darwin/internal/cryptokit/CryptoKit.o
++
+ # This file includes artifacts of Go build that should not be checked in.
+ # For files created by specific development environment (e.g. editor),
+ # use alternative ways to exclude files from git.
+diff --git a/src/crypto/internal/backend/backend_test.go b/src/crypto/internal/backend/backend_test.go
+new file mode 100644
+index 00000000000000..c2c06d3bff8c74
+--- /dev/null
++++ b/src/crypto/internal/backend/backend_test.go
+@@ -0,0 +1,30 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++package backend
++
++import (
++	"testing"
++)
++
++// Test that Unreachable panics.
++func TestUnreachable(t *testing.T) {
++	defer func() {
++		if Enabled {
++			if err := recover(); err == nil {
++				t.Fatal("expected Unreachable to panic")
++			}
++		} else {
++			if err := recover(); err != nil {
++				t.Fatalf("expected Unreachable to be a no-op")
++			}
++		}
++	}()
++	Unreachable()
++}
++
++// Test that UnreachableExceptTests does not panic (this is a test).
++func TestUnreachableExceptTests(t *testing.T) {
++	UnreachableExceptTests()
++}
+diff --git a/src/crypto/internal/backend/bbig/big.go b/src/crypto/internal/backend/bbig/big.go
+new file mode 100644
+index 00000000000000..ab3f30825dcfa1
+--- /dev/null
++++ b/src/crypto/internal/backend/bbig/big.go
+@@ -0,0 +1,17 @@
++// Copyright 2022 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build !goexperiment.systemcrypto || (goexperiment.darwincrypto && !cgo)
++
++package bbig
++
++import "math/big"
++
++func Enc(b *big.Int) []uint {
++	return nil
++}
++
++func Dec(b []uint) *big.Int {
++	return nil
++}
+diff --git a/src/crypto/internal/backend/bbig/big_boring.go b/src/crypto/internal/backend/bbig/big_boring.go
+new file mode 100644
+index 00000000000000..0b62cef68546d0
+--- /dev/null
++++ b/src/crypto/internal/backend/bbig/big_boring.go
+@@ -0,0 +1,12 @@
++// Copyright 2022 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.boringcrypto
++
++package bbig
++
++import "crypto/internal/boring/bbig"
++
++var Enc = bbig.Enc
++var Dec = bbig.Dec
+diff --git a/src/crypto/internal/backend/bbig/big_cng.go b/src/crypto/internal/backend/bbig/big_cng.go
+new file mode 100644
+index 00000000000000..92623031fd87d0
+--- /dev/null
++++ b/src/crypto/internal/backend/bbig/big_cng.go
+@@ -0,0 +1,12 @@
++// Copyright 2022 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.cngcrypto
++
++package bbig
++
++import "github.com/microsoft/go-crypto-winnative/cng/bbig"
++
++var Enc = bbig.Enc
++var Dec = bbig.Dec
+diff --git a/src/crypto/internal/backend/bbig/big_darwin.go b/src/crypto/internal/backend/bbig/big_darwin.go
+new file mode 100644
+index 00000000000000..77f3ca5d262769
+--- /dev/null
++++ b/src/crypto/internal/backend/bbig/big_darwin.go
+@@ -0,0 +1,12 @@
++// Copyright 2022 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.darwincrypto && cgo
++
++package bbig
++
++import "github.com/microsoft/go-crypto-darwin/bbig"
++
++var Enc = bbig.Enc
++var Dec = bbig.Dec
+diff --git a/src/crypto/internal/backend/bbig/big_openssl.go b/src/crypto/internal/backend/bbig/big_openssl.go
+new file mode 100644
+index 00000000000000..e6695dd66b1d02
+--- /dev/null
++++ b/src/crypto/internal/backend/bbig/big_openssl.go
+@@ -0,0 +1,12 @@
++// Copyright 2022 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.opensslcrypto
++
++package bbig
++
++import "github.com/golang-fips/openssl/v2/bbig"
++
++var Enc = bbig.Enc
++var Dec = bbig.Dec
+diff --git a/src/crypto/internal/backend/boring_linux.go b/src/crypto/internal/backend/boring_linux.go
+new file mode 100644
+index 00000000000000..f06fcc63b5af11
+--- /dev/null
++++ b/src/crypto/internal/backend/boring_linux.go
+@@ -0,0 +1,279 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.boringcrypto && linux && cgo && (amd64 || arm64) && !android && !msan
++
++// Package boring provides access to BoringCrypto implementation functions.
++// Check the variable Enabled to find out whether BoringCrypto is available.
++// If BoringCrypto is not available, the functions in this package all panic.
++package backend
++
++import (
++	"crypto"
++	"crypto/cipher"
++	"crypto/internal/boring"
++	"hash"
++)
++
++const Enabled = true
++
++type BigInt = boring.BigInt
++
++const RandReader = boring.RandReader
++
++func SupportsHash(h crypto.Hash) bool {
++	switch h {
++	case crypto.MD5SHA1, crypto.SHA1, crypto.SHA224, crypto.SHA256, crypto.SHA384, crypto.SHA512:
++		return true
++	default:
++		return false
++	}
++}
++
++func SupportsCurve(curve string) bool            { return true }
++func SupportsRSAOAEPLabel(label []byte) bool     { return true }
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool { return true }
++
++func NewMD5() hash.Hash        { panic("cryptobackend: not available") }
++func NewSHA1() hash.Hash       { return boring.NewSHA1() }
++func NewSHA224() hash.Hash     { return boring.NewSHA224() }
++func NewSHA256() hash.Hash     { return boring.NewSHA256() }
++func NewSHA384() hash.Hash     { return boring.NewSHA384() }
++func NewSHA512() hash.Hash     { return boring.NewSHA512() }
++func NewSHA512_224() hash.Hash { panic("cryptobackend: not available") }
++func NewSHA512_256() hash.Hash { panic("cryptobackend: not available") }
++
++func MD5(p []byte) (sum [16]byte)        { panic("cryptobackend: not available") }
++func SHA1(p []byte) (sum [20]byte)       { return boring.SHA1(p) }
++func SHA224(p []byte) (sum [28]byte)     { return boring.SHA224(p) }
++func SHA256(p []byte) (sum [32]byte)     { return boring.SHA256(p) }
++func SHA384(p []byte) (sum [48]byte)     { return boring.SHA384(p) }
++func SHA512(p []byte) (sum [64]byte)     { return boring.SHA512(p) }
++func SHA512_224(p []byte) (sum [28]byte) { panic("cryptobackend: not available") }
++func SHA512_256(p []byte) (sum [32]byte) { panic("cryptobackend: not available") }
++
++func NewHMAC(h func() hash.Hash, key []byte) hash.Hash { return boring.NewHMAC(h, key) }
++
++func NewAESCipher(key []byte) (cipher.Block, error)   { return boring.NewAESCipher(key) }
++func NewGCMTLS(c cipher.Block) (cipher.AEAD, error)   { return boring.NewGCMTLS(c) }
++func NewGCMTLS13(c cipher.Block) (cipher.AEAD, error) { return boring.NewGCMTLS13(c) }
++
++type PublicKeyECDSA = boring.PublicKeyECDSA
++type PrivateKeyECDSA = boring.PrivateKeyECDSA
++
++func GenerateKeyECDSA(curve string) (X, Y, D boring.BigInt, err error) {
++	return boring.GenerateKeyECDSA(curve)
++}
++
++func NewPrivateKeyECDSA(curve string, X, Y, D boring.BigInt) (*boring.PrivateKeyECDSA, error) {
++	return boring.NewPrivateKeyECDSA(curve, X, Y, D)
++}
++
++func NewPublicKeyECDSA(curve string, X, Y boring.BigInt) (*boring.PublicKeyECDSA, error) {
++	return boring.NewPublicKeyECDSA(curve, X, Y)
++}
++
++func SignMarshalECDSA(priv *boring.PrivateKeyECDSA, hash []byte) ([]byte, error) {
++	return boring.SignMarshalECDSA(priv, hash)
++}
++
++func VerifyECDSA(pub *boring.PublicKeyECDSA, hash []byte, sig []byte) bool {
++	return boring.VerifyECDSA(pub, hash, sig)
++}
++
++func SupportsRSAKeyPrimes(primes int) bool {
++	return true
++}
++
++func SupportsRSASaltLength(sign bool, salt int) bool {
++	return true
++}
++
++type PublicKeyRSA = boring.PublicKeyRSA
++type PrivateKeyRSA = boring.PrivateKeyRSA
++
++func DecryptRSAOAEP(h, mgfHash hash.Hash, priv *boring.PrivateKeyRSA, ciphertext, label []byte) ([]byte, error) {
++	return boring.DecryptRSAOAEP(h, mgfHash, priv, ciphertext, label)
++}
++
++func DecryptRSAPKCS1(priv *boring.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return boring.DecryptRSAPKCS1(priv, ciphertext)
++}
++
++func DecryptRSANoPadding(priv *boring.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return boring.DecryptRSANoPadding(priv, ciphertext)
++}
++
++func EncryptRSAOAEP(h, mgfHash hash.Hash, pub *boring.PublicKeyRSA, msg, label []byte) ([]byte, error) {
++	return boring.EncryptRSAOAEP(h, mgfHash, pub, msg, label)
++}
++
++func EncryptRSAPKCS1(pub *boring.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return boring.EncryptRSAPKCS1(pub, msg)
++}
++
++func EncryptRSANoPadding(pub *boring.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return boring.EncryptRSANoPadding(pub, msg)
++}
++
++func GenerateKeyRSA(bits int) (N, E, D, P, Q, Dp, Dq, Qinv boring.BigInt, err error) {
++	return boring.GenerateKeyRSA(bits)
++}
++
++func NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv boring.BigInt) (*boring.PrivateKeyRSA, error) {
++	return boring.NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv)
++}
++
++func NewPublicKeyRSA(N, E boring.BigInt) (*boring.PublicKeyRSA, error) {
++	return boring.NewPublicKeyRSA(N, E)
++}
++
++func SignRSAPKCS1v15(priv *boring.PrivateKeyRSA, h crypto.Hash, hashed []byte) ([]byte, error) {
++	return boring.SignRSAPKCS1v15(priv, h, hashed)
++}
++
++func SignRSAPSS(priv *boring.PrivateKeyRSA, h crypto.Hash, hashed []byte, saltLen int) ([]byte, error) {
++	return boring.SignRSAPSS(priv, h, hashed, saltLen)
++}
++
++func VerifyRSAPKCS1v15(pub *boring.PublicKeyRSA, h crypto.Hash, hashed, sig []byte) error {
++	return boring.VerifyRSAPKCS1v15(pub, h, hashed, sig)
++}
++
++func VerifyRSAPSS(pub *boring.PublicKeyRSA, h crypto.Hash, hashed, sig []byte, saltLen int) error {
++	return boring.VerifyRSAPSS(pub, h, hashed, sig, saltLen)
++}
++
++type PublicKeyECDH = boring.PublicKeyECDH
++type PrivateKeyECDH = boring.PrivateKeyECDH
++
++func ECDH(priv *boring.PrivateKeyECDH, pub *boring.PublicKeyECDH) ([]byte, error) {
++	return boring.ECDH(priv, pub)
++}
++
++func GenerateKeyECDH(curve string) (*boring.PrivateKeyECDH, []byte, error) {
++	return boring.GenerateKeyECDH(curve)
++}
++
++func NewPrivateKeyECDH(curve string, bytes []byte) (*boring.PrivateKeyECDH, error) {
++	return boring.NewPrivateKeyECDH(curve, bytes)
++}
++
++func NewPublicKeyECDH(curve string, bytes []byte) (*boring.PublicKeyECDH, error) {
++	return boring.NewPublicKeyECDH(curve, bytes)
++}
++
++func SupportsHKDF() bool { return false }
++
++func ExpandHKDF(h func() hash.Hash, pseudorandomKey, info []byte, keyLength int) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func SupportsPBKDF2() bool { return false }
++
++func PBKDF2(password, salt []byte, iter, keyLen int, fh func() hash.Hash) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func SupportsTLS1PRF() bool { return false }
++
++func TLS1PRF(result, secret, label, seed []byte, h func() hash.Hash) error {
++	panic("cryptobackend: not available")
++}
++
++func SupportsDESCipher() bool { return false }
++
++func SupportsTripleDESCipher() bool { return false }
++
++func NewDESCipher(key []byte) (cipher.Block, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewTripleDESCipher(key []byte) (cipher.Block, error) {
++	panic("cryptobackend: not available")
++}
++
++func SupportsRC4() bool { return false }
++
++type RC4Cipher struct{}
++
++func (c *RC4Cipher) Reset()                       { panic("cryptobackend: not available") }
++func (c *RC4Cipher) XORKeyStream(dst, src []byte) { panic("cryptobackend: not available") }
++
++func NewRC4Cipher(key []byte) (*RC4Cipher, error) {
++	panic("cryptobackend: not available")
++}
++
++func SupportsEd25519() bool { return false }
++
++type PublicKeyEd25519 struct{}
++
++func (k PublicKeyEd25519) Bytes() ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++type PrivateKeyEd25519 struct{}
++
++func (k PrivateKeyEd25519) Bytes() ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
++	panic("cryptobackend: not available")
++}
++
++func SupportsDSA(l, n int) bool {
++	return false
++}
++
++func GenerateParametersDSA(l, n int) (p, q, g boring.BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++type PrivateKeyDSA struct{}
++type PublicKeyDSA struct{}
++
++func GenerateKeyDSA(p, q, g boring.BigInt) (x, y boring.BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyDSA(p, q, g, x, y boring.BigInt) (*PrivateKeyDSA, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPublicKeyDSA(p, q, g, y boring.BigInt) (*PublicKeyDSA, error) {
++	panic("cryptobackend: not available")
++}
++
++func SignDSA(priv *PrivateKeyDSA, hash []byte, parseSignature func([]byte) (boring.BigInt, boring.BigInt, error)) (r, s boring.BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++func VerifyDSA(pub *PublicKeyDSA, hashed []byte, r, s boring.BigInt, encodeSignature func(r, s boring.BigInt) ([]byte, error)) bool {
++	panic("cryptobackend: not available")
++}
+diff --git a/src/crypto/internal/backend/cng_windows.go b/src/crypto/internal/backend/cng_windows.go
+new file mode 100644
+index 00000000000000..31dfc9b19ee63e
+--- /dev/null
++++ b/src/crypto/internal/backend/cng_windows.go
+@@ -0,0 +1,336 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.cngcrypto && windows
++
++// Package cng provides access to CNGCrypto implementation functions.
++// Check the variable Enabled to find out whether CNGCrypto is available.
++// If CNGCrypto is not available, the functions in this package all panic.
++package backend
++
++import (
++	"crypto"
++	"crypto/cipher"
++	"crypto/internal/backend/fips140"
++	"crypto/internal/boring/sig"
++	"hash"
++	_ "unsafe"
++
++	"github.com/microsoft/go-crypto-winnative/cng"
++)
++
++// Enabled controls whether FIPS crypto is enabled.
++const Enabled = true
++
++type BigInt = cng.BigInt
++
++func init() {
++	if fips140.Enabled() {
++		enabled, err := cng.FIPS()
++		if err != nil {
++			panic("cngcrypto: unknown FIPS mode: " + err.Error())
++		}
++		if !enabled {
++			panic("cngcrypto: not in FIPS mode")
++		}
++	}
++	sig.BoringCrypto()
++}
++
++const RandReader = cng.RandReader
++
++func SupportsHash(h crypto.Hash) bool {
++	return cng.SupportsHash(h)
++}
++
++func SupportsCurve(curve string) bool            { return true }
++func SupportsRSAOAEPLabel(label []byte) bool     { return true }
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool { return true }
++
++func NewMD5() hash.Hash        { return cng.NewMD5() }
++func NewSHA1() hash.Hash       { return cng.NewSHA1() }
++func NewSHA224() hash.Hash     { panic("cngcrypto: not available") }
++func NewSHA256() hash.Hash     { return cng.NewSHA256() }
++func NewSHA384() hash.Hash     { return cng.NewSHA384() }
++func NewSHA512() hash.Hash     { return cng.NewSHA512() }
++func NewSHA512_224() hash.Hash { panic("cngcrypto: not available") }
++func NewSHA512_256() hash.Hash { panic("cngcrypto: not available") }
++
++func MD5(p []byte) (sum [16]byte)        { return cng.MD5(p) }
++func SHA1(p []byte) (sum [20]byte)       { return cng.SHA1(p) }
++func SHA224(p []byte) (sum [28]byte)     { panic("cngcrypto: not available") }
++func SHA256(p []byte) (sum [32]byte)     { return cng.SHA256(p) }
++func SHA384(p []byte) (sum [48]byte)     { return cng.SHA384(p) }
++func SHA512(p []byte) (sum [64]byte)     { return cng.SHA512(p) }
++func SHA512_224(p []byte) (sum [28]byte) { panic("cngcrypto: not available") }
++func SHA512_256(p []byte) (sum [32]byte) { panic("cngcrypto: not available") }
++
++func NewHMAC(h func() hash.Hash, key []byte) hash.Hash {
++	return cng.NewHMAC(h, key)
++}
++
++func NewAESCipher(key []byte) (cipher.Block, error) {
++	return cng.NewAESCipher(key)
++}
++
++func NewGCMTLS(c cipher.Block) (cipher.AEAD, error) {
++	return cng.NewGCMTLS(c)
++}
++
++func NewGCMTLS13(c cipher.Block) (cipher.AEAD, error) {
++	return cng.NewGCMTLS13(c)
++}
++
++type PublicKeyECDSA = cng.PublicKeyECDSA
++type PrivateKeyECDSA = cng.PrivateKeyECDSA
++
++func GenerateKeyECDSA(curve string) (X, Y, D cng.BigInt, err error) {
++	return cng.GenerateKeyECDSA(curve)
++}
++
++func NewPrivateKeyECDSA(curve string, X, Y, D cng.BigInt) (*cng.PrivateKeyECDSA, error) {
++	return cng.NewPrivateKeyECDSA(curve, X, Y, D)
++}
++
++func NewPublicKeyECDSA(curve string, X, Y cng.BigInt) (*cng.PublicKeyECDSA, error) {
++	return cng.NewPublicKeyECDSA(curve, X, Y)
++}
++
++//go:linkname encodeSignature crypto/ecdsa.encodeSignature
++func encodeSignature(r, s []byte) ([]byte, error)
++
++//go:linkname parseSignature crypto/ecdsa.parseSignature
++func parseSignature(sig []byte) (r, s []byte, err error)
++
++func SignMarshalECDSA(priv *cng.PrivateKeyECDSA, hash []byte) ([]byte, error) {
++	r, s, err := cng.SignECDSA(priv, hash)
++	if err != nil {
++		return nil, err
++	}
++	return encodeSignature(r, s)
++}
++
++func VerifyECDSA(pub *cng.PublicKeyECDSA, hash []byte, sig []byte) bool {
++	rBytes, sBytes, err := parseSignature(sig)
++	if err != nil {
++		return false
++	}
++	return cng.VerifyECDSA(pub, hash, cng.BigInt(rBytes), cng.BigInt(sBytes))
++}
++
++func SignECDSA(priv *cng.PrivateKeyECDSA, hash []byte) (r, s cng.BigInt, err error) {
++	return cng.SignECDSA(priv, hash)
++}
++
++func VerifyECDSARaw(pub *cng.PublicKeyECDSA, hash []byte, r, s cng.BigInt) bool {
++	return cng.VerifyECDSA(pub, hash, r, s)
++}
++
++func SupportsRSAKeyPrimes(primes int) bool {
++	// CNG only supports 2-prime RSA keys.
++	return primes == 2
++}
++
++func SupportsRSASaltLength(sign bool, salt int) bool {
++	if sign {
++		return true
++	}
++	return salt != 0 // rsa.PSSSaltLengthAuto
++}
++
++type PublicKeyRSA = cng.PublicKeyRSA
++type PrivateKeyRSA = cng.PrivateKeyRSA
++
++func DecryptRSAOAEP(h, mgfHash hash.Hash, priv *cng.PrivateKeyRSA, ciphertext, label []byte) ([]byte, error) {
++	return cng.DecryptRSAOAEP(h, priv, ciphertext, label)
++}
++
++func DecryptRSAPKCS1(priv *cng.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return cng.DecryptRSAPKCS1(priv, ciphertext)
++}
++
++func DecryptRSANoPadding(priv *cng.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return cng.DecryptRSANoPadding(priv, ciphertext)
++}
++
++func EncryptRSAOAEP(h, mgfHash hash.Hash, pub *cng.PublicKeyRSA, msg, label []byte) ([]byte, error) {
++	return cng.EncryptRSAOAEP(h, pub, msg, label)
++}
++
++func EncryptRSAPKCS1(pub *cng.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return cng.EncryptRSAPKCS1(pub, msg)
++}
++
++func EncryptRSANoPadding(pub *cng.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return cng.EncryptRSANoPadding(pub, msg)
++}
++
++func GenerateKeyRSA(bits int) (N, E, D, P, Q, Dp, Dq, Qinv cng.BigInt, err error) {
++	return cng.GenerateKeyRSA(bits)
++}
++
++func NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv cng.BigInt) (*cng.PrivateKeyRSA, error) {
++	return cng.NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv)
++}
++
++func NewPublicKeyRSA(N, E cng.BigInt) (*cng.PublicKeyRSA, error) {
++	return cng.NewPublicKeyRSA(N, E)
++}
++
++func SignRSAPKCS1v15(priv *cng.PrivateKeyRSA, h crypto.Hash, hashed []byte) ([]byte, error) {
++	return cng.SignRSAPKCS1v15(priv, h, hashed)
++}
++
++func SignRSAPSS(priv *cng.PrivateKeyRSA, h crypto.Hash, hashed []byte, saltLen int) ([]byte, error) {
++	return cng.SignRSAPSS(priv, h, hashed, saltLen)
++}
++
++func VerifyRSAPKCS1v15(pub *cng.PublicKeyRSA, h crypto.Hash, hashed, sig []byte) error {
++	return cng.VerifyRSAPKCS1v15(pub, h, hashed, sig)
++}
++
++func VerifyRSAPSS(pub *cng.PublicKeyRSA, h crypto.Hash, hashed, sig []byte, saltLen int) error {
++	return cng.VerifyRSAPSS(pub, h, hashed, sig, saltLen)
++}
++
++type PrivateKeyECDH = cng.PrivateKeyECDH
++type PublicKeyECDH = cng.PublicKeyECDH
++
++func ECDH(priv *cng.PrivateKeyECDH, pub *cng.PublicKeyECDH) ([]byte, error) {
++	return cng.ECDH(priv, pub)
++}
++
++func GenerateKeyECDH(curve string) (*cng.PrivateKeyECDH, []byte, error) {
++	return cng.GenerateKeyECDH(curve)
++}
++
++func NewPrivateKeyECDH(curve string, bytes []byte) (*cng.PrivateKeyECDH, error) {
++	return cng.NewPrivateKeyECDH(curve, bytes)
++}
++
++func NewPublicKeyECDH(curve string, bytes []byte) (*cng.PublicKeyECDH, error) {
++	return cng.NewPublicKeyECDH(curve, bytes)
++}
++
++func SupportsHKDF() bool {
++	return cng.SupportsHKDF()
++}
++
++func ExpandHKDF(h func() hash.Hash, pseudorandomKey, info []byte, keyLength int) ([]byte, error) {
++	return cng.ExpandHKDF(h, pseudorandomKey, info, keyLength)
++}
++
++func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
++	return cng.ExtractHKDF(h, secret, salt)
++}
++
++func SupportsPBKDF2() bool { return true }
++
++func PBKDF2(password, salt []byte, iter, keyLen int, h func() hash.Hash) ([]byte, error) {
++	return cng.PBKDF2(password, salt, iter, keyLen, h)
++}
++
++func SupportsTLS1PRF() bool {
++	return true
++}
++
++func TLS1PRF(result, secret, label, seed []byte, h func() hash.Hash) error {
++	return cng.TLS1PRF(result, secret, label, seed, h)
++}
++
++func SupportsDESCipher() bool {
++	return true
++}
++
++func SupportsTripleDESCipher() bool {
++	return true
++}
++
++func NewDESCipher(key []byte) (cipher.Block, error) {
++	return cng.NewDESCipher(key)
++}
++
++func NewTripleDESCipher(key []byte) (cipher.Block, error) {
++	return cng.NewTripleDESCipher(key)
++}
++
++func SupportsRC4() bool { return true }
++
++type RC4Cipher = cng.RC4Cipher
++
++func NewRC4Cipher(key []byte) (*RC4Cipher, error) { return cng.NewRC4Cipher(key) }
++
++func SupportsEd25519() bool { return false }
++
++type PublicKeyEd25519 struct{}
++
++func (k PublicKeyEd25519) Bytes() ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++type PrivateKeyEd25519 struct{}
++
++func (k PrivateKeyEd25519) Bytes() ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
++	panic("cryptobackend: not available")
++}
++
++type PrivateKeyDSA = cng.PrivateKeyDSA
++type PublicKeyDSA = cng.PublicKeyDSA
++
++func SupportsDSA(l, n int) bool {
++	// These are the only N values supported by CNG
++	return n == 160 || n == 256
++}
++
++func GenerateParametersDSA(l, n int) (p, q, g cng.BigInt, err error) {
++	params, err := cng.GenerateParametersDSA(l)
++	if err != nil {
++		return nil, nil, nil, err
++	}
++	return params.P, params.Q, params.G, nil
++}
++
++func GenerateKeyDSA(p, q, g cng.BigInt) (x, y cng.BigInt, err error) {
++	return cng.GenerateKeyDSA(cng.DSAParameters{P: p, Q: q, G: g})
++}
++
++func NewPrivateKeyDSA(p, q, g, x, y cng.BigInt) (*cng.PrivateKeyDSA, error) {
++	return cng.NewPrivateKeyDSA(cng.DSAParameters{P: p, Q: q, G: g}, x, y)
++}
++
++func NewPublicKeyDSA(p, q, g, y cng.BigInt) (*cng.PublicKeyDSA, error) {
++	return cng.NewPublicKeyDSA(cng.DSAParameters{P: p, Q: q, G: g}, y)
++}
++
++func SignDSA(priv *PrivateKeyDSA, hash []byte, parseSignature func([]byte) (cng.BigInt, cng.BigInt, error)) (r, s cng.BigInt, err error) {
++	return cng.SignDSA(priv, hash)
++}
++
++func VerifyDSA(pub *PublicKeyDSA, hashed []byte, r, s cng.BigInt, encodeSignature func(r, s cng.BigInt) ([]byte, error)) bool {
++	return cng.VerifyDSA(pub, hashed, r, s)
++}
+diff --git a/src/crypto/internal/backend/common.go b/src/crypto/internal/backend/common.go
+new file mode 100644
+index 00000000000000..84447174284ffd
+--- /dev/null
++++ b/src/crypto/internal/backend/common.go
+@@ -0,0 +1,58 @@
++// Copyright 2022 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++package backend
++
++import (
++	"crypto/internal/backend/fips140"
++	"crypto/internal/boring/sig"
++	"runtime"
++)
++
++func init() {
++	if fips140.Enabled() {
++		if !Enabled {
++			if runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
++				panic("FIPS mode requested (" + fips140.Message + ") but no crypto backend is supported on " + runtime.GOOS)
++			}
++			panic("FIPS mode requested (" + fips140.Message + ") but no supported crypto backend is enabled")
++		}
++	}
++}
++
++// Unreachable marks code that should be unreachable
++// when backend is in use.
++func Unreachable() {
++	if Enabled {
++		panic("cryptobackend: invalid code execution")
++	} else {
++		// Code that's unreachable is exactly the code
++		// we want to detect for reporting standard Go crypto.
++		sig.StandardCrypto()
++	}
++}
++
++// Provided by runtime.crypto_backend_runtime_arg0 to avoid os import.
++func runtime_arg0() string
++
++func hasSuffix(s, t string) bool {
++	return len(s) > len(t) && s[len(s)-len(t):] == t
++}
++
++// UnreachableExceptTests marks code that should be unreachable
++// when backend is in use. It panics.
++func UnreachableExceptTests() {
++	// runtime_arg0 is not supported on windows.
++	// We are going through the same code patch on linux,
++	// so if we are unintentionally calling an 'unreachable' function,
++	// we will catch it there.
++	if Enabled && runtime.GOOS != "windows" {
++		name := runtime_arg0()
++		// If ran on Windows we'd need to allow _test.exe and .test.exe as well.
++		if !hasSuffix(name, "_test") && !hasSuffix(name, ".test") {
++			println("cryptobackend: unexpected code execution in", name)
++			panic("cryptobackend: invalid code execution")
++		}
++	}
++}
+diff --git a/src/crypto/internal/backend/darwin_darwin.go b/src/crypto/internal/backend/darwin_darwin.go
+new file mode 100644
+index 00000000000000..2250852ada8cc8
+--- /dev/null
++++ b/src/crypto/internal/backend/darwin_darwin.go
+@@ -0,0 +1,359 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.darwincrypto && darwin && cgo
++
++// Package darwin provides access to DarwinCrypto implementation functions.
++// Check the variable Enabled to find out whether DarwinCrypto is available.
++// If DarwinCrypto is not available, the functions in this package all panic.
++package backend
++
++import (
++	"crypto"
++	"crypto/cipher"
++	"crypto/internal/boring/sig"
++	"crypto/internal/fips140/nistec"
++	"errors"
++	"hash"
++	_ "unsafe"
++
++	"github.com/microsoft/go-crypto-darwin/xcrypto"
++)
++
++// Enabled controls whether FIPS crypto is enabled.
++const Enabled = true
++
++type BigInt = xcrypto.BigInt
++
++func init() {
++	sig.BoringCrypto()
++}
++
++const RandReader = xcrypto.RandReader
++
++func SupportsHash(h crypto.Hash) bool {
++	return xcrypto.SupportsHash(h)
++}
++
++func SupportsCurve(curve string) bool {
++	switch curve {
++	case "P-256", "P-384", "P-521":
++		return true
++	}
++	return false
++}
++
++func SupportsRSAOAEPLabel(label []byte) bool {
++	// CommonCrypto doesn't support labels
++	// https://github.com/microsoft/go-crypto-darwin/issues/22
++	return len(label) == 0
++}
++
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool {
++	switch hash {
++	case crypto.SHA1, crypto.SHA224, crypto.SHA256, crypto.SHA384, crypto.SHA512, 0:
++		return true
++	}
++	return false
++}
++
++func NewMD5() hash.Hash    { return xcrypto.NewMD5() }
++func NewSHA1() hash.Hash   { return xcrypto.NewSHA1() }
++func NewSHA224() hash.Hash { return xcrypto.NewSHA224() }
++func NewSHA256() hash.Hash { return xcrypto.NewSHA256() }
++func NewSHA384() hash.Hash { return xcrypto.NewSHA384() }
++func NewSHA512() hash.Hash { return xcrypto.NewSHA512() }
++
++func MD5(p []byte) (sum [16]byte)        { return xcrypto.MD5(p) }
++func SHA1(p []byte) (sum [20]byte)       { return xcrypto.SHA1(p) }
++func SHA224(p []byte) (sum [28]byte)     { return xcrypto.SHA224(p) }
++func SHA256(p []byte) (sum [32]byte)     { return xcrypto.SHA256(p) }
++func SHA384(p []byte) (sum [48]byte)     { return xcrypto.SHA384(p) }
++func SHA512(p []byte) (sum [64]byte)     { return xcrypto.SHA512(p) }
++func SHA512_224(p []byte) (sum [28]byte) { panic("cryptobackend: not available") }
++func SHA512_256(p []byte) (sum [32]byte) { panic("cryptobackend: not available") }
++
++func NewHMAC(h func() hash.Hash, key []byte) hash.Hash {
++	return xcrypto.NewHMAC(h, key)
++}
++
++func NewAESCipher(key []byte) (cipher.Block, error) {
++	return xcrypto.NewAESCipher(key)
++}
++
++func NewGCMTLS(c cipher.Block) (cipher.AEAD, error) {
++	return xcrypto.NewGCMTLS(c)
++}
++
++func NewGCMTLS13(c cipher.Block) (cipher.AEAD, error) {
++	return xcrypto.NewGCMTLS13(c)
++}
++
++type PublicKeyECDSA = xcrypto.PublicKeyECDSA
++type PrivateKeyECDSA = xcrypto.PrivateKeyECDSA
++
++func GenerateKeyECDSA(curve string) (X, Y, D xcrypto.BigInt, err error) {
++	return xcrypto.GenerateKeyECDSA(curve)
++}
++
++func NewPrivateKeyECDSA(curve string, X, Y, D xcrypto.BigInt) (*xcrypto.PrivateKeyECDSA, error) {
++	return xcrypto.NewPrivateKeyECDSA(curve, X, Y, D)
++}
++
++func NewPublicKeyECDSA(curve string, X, Y xcrypto.BigInt) (*xcrypto.PublicKeyECDSA, error) {
++	return xcrypto.NewPublicKeyECDSA(curve, X, Y)
++}
++
++//go:linkname encodeSignature crypto/ecdsa.encodeSignature
++func encodeSignature(r, s []byte) ([]byte, error)
++
++//go:linkname parseSignature crypto/ecdsa.parseSignature
++func parseSignature(sig []byte) (r, s []byte, err error)
++
++func SignMarshalECDSA(priv *xcrypto.PrivateKeyECDSA, hash []byte) ([]byte, error) {
++	return xcrypto.SignMarshalECDSA(priv, hash)
++}
++
++func VerifyECDSA(pub *xcrypto.PublicKeyECDSA, hash []byte, sig []byte) bool {
++	return xcrypto.VerifyECDSA(pub, hash, sig)
++}
++
++func SupportsRSAKeyPrimes(primes int) bool {
++	return primes == 2
++}
++
++func SupportsRSASaltLength(sign bool, salt int) bool {
++	// CommonCrypto doesn't support custom salt length
++	return salt == -1
++}
++
++type PublicKeyRSA = xcrypto.PublicKeyRSA
++type PrivateKeyRSA = xcrypto.PrivateKeyRSA
++
++func DecryptRSAOAEP(h, mgfHash hash.Hash, priv *xcrypto.PrivateKeyRSA, ciphertext, label []byte) ([]byte, error) {
++	return xcrypto.DecryptRSAOAEP(h, priv, ciphertext, label)
++}
++
++func DecryptRSAPKCS1(priv *xcrypto.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return xcrypto.DecryptRSAPKCS1(priv, ciphertext)
++}
++
++func DecryptRSANoPadding(priv *xcrypto.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return xcrypto.DecryptRSANoPadding(priv, ciphertext)
++}
++
++func EncryptRSAOAEP(h, mgfHash hash.Hash, pub *xcrypto.PublicKeyRSA, msg, label []byte) ([]byte, error) {
++	return xcrypto.EncryptRSAOAEP(h, pub, msg, label)
++}
++
++func EncryptRSAPKCS1(pub *xcrypto.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return xcrypto.EncryptRSAPKCS1(pub, msg)
++}
++
++func EncryptRSANoPadding(pub *xcrypto.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return xcrypto.EncryptRSANoPadding(pub, msg)
++}
++
++//go:linkname decodeKeyRSA crypto/rsa.decodeKey
++func decodeKeyRSA(data []byte) (N, E, D, P, Q, Dp, Dq, Qinv xcrypto.BigInt, err error)
++
++//go:linkname encodeKeyRSA crypto/rsa.encodeKey
++func encodeKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv xcrypto.BigInt) ([]byte, error)
++
++//go:linkname encodePublicKeyRSA crypto/rsa.encodePublicKey
++func encodePublicKeyRSA(N, E xcrypto.BigInt) ([]byte, error)
++
++func GenerateKeyRSA(bits int) (N, E, D, P, Q, Dp, Dq, Qinv xcrypto.BigInt, err error) {
++	data, err := xcrypto.GenerateKeyRSA(bits)
++	if err != nil {
++		return
++	}
++	return decodeKeyRSA(data)
++}
++
++func NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv xcrypto.BigInt) (*xcrypto.PrivateKeyRSA, error) {
++	encoded, err := encodeKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv)
++	if err != nil {
++		return nil, err
++	}
++	return xcrypto.NewPrivateKeyRSA(encoded)
++}
++
++func NewPublicKeyRSA(N, E xcrypto.BigInt) (*xcrypto.PublicKeyRSA, error) {
++	encoded, err := encodePublicKeyRSA(N, E)
++	if err != nil {
++		return nil, err
++	}
++	return xcrypto.NewPublicKeyRSA(encoded)
++}
++
++func SignRSAPKCS1v15(priv *xcrypto.PrivateKeyRSA, h crypto.Hash, hashed []byte) ([]byte, error) {
++	return xcrypto.SignRSAPKCS1v15(priv, h, hashed)
++}
++
++func SignRSAPSS(priv *xcrypto.PrivateKeyRSA, h crypto.Hash, hashed []byte, saltLen int) ([]byte, error) {
++	return xcrypto.SignRSAPSS(priv, h, hashed, saltLen)
++}
++
++func VerifyRSAPKCS1v15(pub *xcrypto.PublicKeyRSA, h crypto.Hash, hashed, sig []byte) error {
++	return xcrypto.VerifyRSAPKCS1v15(pub, h, hashed, sig)
++}
++
++func VerifyRSAPSS(pub *xcrypto.PublicKeyRSA, h crypto.Hash, hashed, sig []byte, saltLen int) error {
++	return xcrypto.VerifyRSAPSS(pub, h, hashed, sig, saltLen)
++}
++
++type PrivateKeyECDH = xcrypto.PrivateKeyECDH
++type PublicKeyECDH = xcrypto.PublicKeyECDH
++
++func ECDH(priv *xcrypto.PrivateKeyECDH, pub *xcrypto.PublicKeyECDH) ([]byte, error) {
++	return xcrypto.ECDH(priv, pub)
++}
++
++func GenerateKeyECDH(curve string) (*xcrypto.PrivateKeyECDH, []byte, error) {
++	return xcrypto.GenerateKeyECDH(curve)
++}
++
++func NewPrivateKeyECDH(curve string, bytes []byte) (*xcrypto.PrivateKeyECDH, error) {
++	var key []byte
++	switch curve {
++	case "P-256":
++		p, err := nistec.NewP256Point().ScalarBaseMult(bytes)
++		if err != nil {
++			return nil, err
++		}
++		key = p.Bytes()
++	case "P-384":
++		p, err := nistec.NewP384Point().ScalarBaseMult(bytes)
++		if err != nil {
++			return nil, err
++		}
++		key = p.Bytes()
++	case "P-521":
++		p, err := nistec.NewP521Point().ScalarBaseMult(bytes)
++		if err != nil {
++			return nil, err
++		}
++		key = p.Bytes()
++	default:
++		return nil, errors.New("NewPrivateKeyECDH: unsupported curve: " + curve)
++	}
++	return xcrypto.NewPrivateKeyECDH(curve, key, bytes)
++}
++
++func NewPublicKeyECDH(curve string, bytes []byte) (*xcrypto.PublicKeyECDH, error) {
++	return xcrypto.NewPublicKeyECDH(curve, bytes)
++}
++
++func SupportsHKDF() bool {
++	return true
++}
++
++func ExpandHKDF(h func() hash.Hash, pseudorandomKey, info []byte, keyLength int) ([]byte, error) {
++	return xcrypto.ExpandHKDF(h, pseudorandomKey, info, keyLength)
++}
++
++func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
++	return xcrypto.ExtractHKDF(h, secret, salt)
++}
++
++func SupportsPBKDF2() bool {
++	return true
++}
++
++func PBKDF2(pass, salt []byte, iter, keyLen int, h func() hash.Hash) ([]byte, error) {
++	return xcrypto.PBKDF2(pass, salt, iter, keyLen, h)
++}
++
++func SupportsTLS1PRF() bool {
++	return false
++}
++
++func TLS1PRF(result, secret, label, seed []byte, h func() hash.Hash) error {
++	panic("cryptobackend: not available")
++}
++
++func SupportsDESCipher() bool {
++	return true
++}
++
++func SupportsTripleDESCipher() bool {
++	return true
++}
++
++func NewDESCipher(key []byte) (cipher.Block, error) {
++	return xcrypto.NewDESCipher(key)
++}
++
++func NewTripleDESCipher(key []byte) (cipher.Block, error) {
++	return xcrypto.NewTripleDESCipher(key)
++}
++
++func SupportsRC4() bool { return true }
++
++type RC4Cipher = xcrypto.RC4Cipher
++
++func NewRC4Cipher(key []byte) (*RC4Cipher, error) { return xcrypto.NewRC4Cipher(key) }
++
++func SupportsEd25519() bool {
++	return true
++}
++
++type PublicKeyEd25519 = xcrypto.PublicKeyEd25519
++type PrivateKeyEd25519 = xcrypto.PrivateKeyEd25519
++
++func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
++	return xcrypto.GenerateKeyEd25519(), nil
++}
++
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
++	return xcrypto.NewPrivateKeyEd25519(priv)
++}
++
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
++	return xcrypto.NewPublicKeyEd25519(pub)
++}
++
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
++	return xcrypto.NewPrivateKeyEd25519FromSeed(seed)
++}
++
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
++	return xcrypto.SignEd25519(priv, message)
++}
++
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
++	return xcrypto.VerifyEd25519(pub, message, sig)
++}
++
++func SupportsDSA(l, n int) bool {
++	return false
++}
++
++func GenerateParametersDSA(l, n int) (p, q, g xcrypto.BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++type PrivateKeyDSA struct{}
++type PublicKeyDSA struct{}
++
++func GenerateKeyDSA(p, q, g xcrypto.BigInt) (x, y xcrypto.BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyDSA(p, q, g, x, y xcrypto.BigInt) (*PrivateKeyDSA, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPublicKeyDSA(p, q, g, y xcrypto.BigInt) (*PublicKeyDSA, error) {
++	panic("cryptobackend: not available")
++}
++
++func SignDSA(priv *PrivateKeyDSA, hash []byte, parseSignature func([]byte) (xcrypto.BigInt, xcrypto.BigInt, error)) (r, s xcrypto.BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++func VerifyDSA(pub *PublicKeyDSA, hashed []byte, r, s xcrypto.BigInt, encodeSignature func(r, s xcrypto.BigInt) ([]byte, error)) bool {
++	panic("cryptobackend: not available")
++}
+diff --git a/src/crypto/internal/backend/fips140/boring.go b/src/crypto/internal/backend/fips140/boring.go
+new file mode 100644
+index 00000000000000..3b583dc0eb0235
+--- /dev/null
++++ b/src/crypto/internal/backend/fips140/boring.go
+@@ -0,0 +1,11 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.boringcrypto
++
++package fips140
++
++func systemFIPSMode() bool {
++	return false
++}
+diff --git a/src/crypto/internal/backend/fips140/cng.go b/src/crypto/internal/backend/fips140/cng.go
+new file mode 100644
+index 00000000000000..f769d15f94ab05
+--- /dev/null
++++ b/src/crypto/internal/backend/fips140/cng.go
+@@ -0,0 +1,33 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.cngcrypto
++
++package fips140
++
++import (
++	"internal/syscall/windows/sysdll"
++	"syscall"
++	"unsafe"
++)
++
++// Don't use github.com/microsoft/go-crypto-winnative here.
++// The fips140 package should have minimal dependencies.
++// Also, don't directly query the system FIPS mode from the registry,
++// there are some no-longer documented legacy entries that can enable FIPS mode,
++// and BCryptGetFipsAlgorithmMode supports them all.
++var (
++	bcrypt = syscall.MustLoadDLL(sysdll.Add("bcrypt.dll"))
++
++	bcryptGetFipsAlgorithmMode = bcrypt.MustFindProc("BCryptGetFipsAlgorithmMode")
++)
++
++func systemFIPSMode() bool {
++	var enabled uint32
++	ret, _, _ := bcryptGetFipsAlgorithmMode.Call(uintptr(unsafe.Pointer(&enabled)))
++	if ret != 0 {
++		return false
++	}
++	return enabled != 0
++}
+diff --git a/src/crypto/internal/backend/fips140/darwin.go b/src/crypto/internal/backend/fips140/darwin.go
+new file mode 100644
+index 00000000000000..ef5af5d956163e
+--- /dev/null
++++ b/src/crypto/internal/backend/fips140/darwin.go
+@@ -0,0 +1,11 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.darwincrypto
++
++package fips140
++
++func systemFIPSMode() bool {
++	return false
++}
+diff --git a/src/crypto/internal/backend/fips140/fips140.go b/src/crypto/internal/backend/fips140/fips140.go
+new file mode 100644
+index 00000000000000..f54d39970319af
+--- /dev/null
++++ b/src/crypto/internal/backend/fips140/fips140.go
+@@ -0,0 +1,55 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++package fips140
++
++import "syscall"
++
++// Enabled reports whether FIPS 140 mode is enabled by using GOFIPS=1, GOLANG_FIPS=1,
++// the 'requirefips' build tag, or any other platform-specific mechanism.
++func Enabled() bool {
++	return enabled
++}
++
++var enabled bool
++
++// Disabled reports whether FIPS 140 mode is disabled by using GOFIPS=0 or GOLANG_FIPS=0.
++func Disabled() bool {
++	return disabled
++}
++
++var disabled bool
++
++// Message is a human-readable message about how [Enabled] was set.
++var Message string
++
++func init() {
++	// TODO: Decide which environment variable to use.
++	// See https://github.com/microsoft/go/issues/397.
++	var value string
++	var ok bool
++	if value, ok = syscall.Getenv("GOFIPS"); ok {
++		Message = "environment variable GOFIPS"
++	} else if value, ok = syscall.Getenv("GOLANG_FIPS"); ok {
++		Message = "environment variable GOLANG_FIPS"
++	} else if systemFIPSMode() {
++		Message = "system FIPS mode"
++		value = "1"
++	}
++	if value == "1" {
++		enabled = true
++	} else if value == "0" {
++		disabled = true
++	}
++	if isRequireFIPS {
++		if disabled {
++			panic("the 'requirefips' build tag is enabled, but it conflicts " +
++				"with the " + Message + "=" + value +
++				" which would disable FIPS mode")
++		}
++		Message = "requirefips tag set"
++		enabled = true
++		return
++	}
++}
+\ No newline at end of file
+diff --git a/src/crypto/internal/backend/fips140/isrequirefips.go b/src/crypto/internal/backend/fips140/isrequirefips.go
+new file mode 100644
+index 00000000000000..b33d08c84e2dae
+--- /dev/null
++++ b/src/crypto/internal/backend/fips140/isrequirefips.go
+@@ -0,0 +1,9 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build requirefips
++
++package fips140
++
++const isRequireFIPS = true
+\ No newline at end of file
+diff --git a/src/crypto/internal/backend/fips140/norequirefips.go b/src/crypto/internal/backend/fips140/norequirefips.go
+new file mode 100644
+index 00000000000000..6f01b9a3524dee
+--- /dev/null
++++ b/src/crypto/internal/backend/fips140/norequirefips.go
+@@ -0,0 +1,9 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build !requirefips
++
++package fips140
++
++const isRequireFIPS = false
+\ No newline at end of file
+diff --git a/src/crypto/internal/backend/fips140/nosystemcrypto.go b/src/crypto/internal/backend/fips140/nosystemcrypto.go
+new file mode 100644
+index 00000000000000..83691d7dd42d51
+--- /dev/null
++++ b/src/crypto/internal/backend/fips140/nosystemcrypto.go
+@@ -0,0 +1,11 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build !goexperiment.systemcrypto
++
++package fips140
++
++func systemFIPSMode() bool {
++	return false
++}
+diff --git a/src/crypto/internal/backend/fips140/openssl.go b/src/crypto/internal/backend/fips140/openssl.go
+new file mode 100644
+index 00000000000000..118efa3a492a7d
+--- /dev/null
++++ b/src/crypto/internal/backend/fips140/openssl.go
+@@ -0,0 +1,41 @@
++// Copyright 2024 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.opensslcrypto
++
++package fips140
++
++import "syscall"
++
++func systemFIPSMode() bool {
++	var fd int
++	for {
++		var err error
++		fd, err = syscall.Open("/proc/sys/crypto/fips_enabled", syscall.O_RDONLY, 0)
++		if err == nil {
++			break
++		}
++		switch err {
++		case syscall.EINTR:
++			continue
++		case syscall.ENOENT:
++			return false
++		default:
++			// If there is an error reading we could either panic or assume FIPS is not enabled.
++			// Panicking would be too disruptive for apps that don't require FIPS.
++			// If an app wants to be 100% sure that is running in FIPS mode
++			// it should use boring.Enabled() or GOFIPS=1.
++			return false
++		}
++	}
++	defer syscall.Close(fd)
++	var tmp [1]byte
++	n, err := syscall.Read(fd, tmp[:])
++	if n != 1 || err != nil {
++		// We return false instead of panicing for the same reason as before.
++		return false
++	}
++	// fips_enabled can be either '0' or '1'.
++	return tmp[0] == '1'
++}
+diff --git a/src/crypto/internal/backend/nobackend.go b/src/crypto/internal/backend/nobackend.go
+new file mode 100644
+index 00000000000000..eca1ceab2a04b9
+--- /dev/null
++++ b/src/crypto/internal/backend/nobackend.go
+@@ -0,0 +1,240 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++// Do not edit the build constraint by hand. It is generated by "backendgen.go".
++
++//go:build ignore
++
++package backend
++
++import (
++	"crypto"
++	"crypto/cipher"
++	"hash"
++)
++
++const Enabled = false
++
++type BigInt = []uint
++
++type randReader int
++
++func (randReader) Read(b []byte) (int, error) { panic("cryptobackend: not available") }
++
++const RandReader = randReader(0)
++
++func SupportsHash(h crypto.Hash) bool { panic("cryptobackend: not available") }
++
++func SupportsCurve(curve string) bool            { panic("cryptobackend: not available") }
++func SupportsRSAOAEPLabel(label []byte) bool     { panic("cryptobackend: not available") }
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool { panic("cryptobackend: not available") }
++
++func NewMD5() hash.Hash        { panic("cryptobackend: not available") }
++func NewSHA1() hash.Hash       { panic("cryptobackend: not available") }
++func NewSHA224() hash.Hash     { panic("cryptobackend: not available") }
++func NewSHA256() hash.Hash     { panic("cryptobackend: not available") }
++func NewSHA384() hash.Hash     { panic("cryptobackend: not available") }
++func NewSHA512() hash.Hash     { panic("cryptobackend: not available") }
++func NewSHA512_224() hash.Hash { panic("cryptobackend: not available") }
++func NewSHA512_256() hash.Hash { panic("cryptobackend: not available") }
++
++func MD5(p []byte) (sum [16]byte)        { panic("cryptobackend: not available") }
++func SHA1(p []byte) (sum [20]byte)       { panic("cryptobackend: not available") }
++func SHA224(p []byte) (sum [28]byte)     { panic("cryptobackend: not available") }
++func SHA256(p []byte) (sum [32]byte)     { panic("cryptobackend: not available") }
++func SHA384(p []byte) (sum [48]byte)     { panic("cryptobackend: not available") }
++func SHA512(p []byte) (sum [64]byte)     { panic("cryptobackend: not available") }
++func SHA512_224(p []byte) (sum [28]byte) { panic("cryptobackend: not available") }
++func SHA512_256(p []byte) (sum [32]byte) { panic("cryptobackend: not available") }
++
++func NewHMAC(h func() hash.Hash, key []byte) hash.Hash { panic("cryptobackend: not available") }
++
++func NewAESCipher(key []byte) (cipher.Block, error)   { panic("cryptobackend: not available") }
++func NewGCMTLS(c cipher.Block) (cipher.AEAD, error)   { panic("cryptobackend: not available") }
++func NewGCMTLS13(c cipher.Block) (cipher.AEAD, error) { panic("cryptobackend: not available") }
++
++type PublicKeyECDSA struct{ _ int }
++type PrivateKeyECDSA struct{ _ int }
++
++func GenerateKeyECDSA(curve string) (X, Y, D BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++func NewPrivateKeyECDSA(curve string, X, Y, D BigInt) (*PrivateKeyECDSA, error) {
++	panic("cryptobackend: not available")
++}
++func NewPublicKeyECDSA(curve string, X, Y BigInt) (*PublicKeyECDSA, error) {
++	panic("cryptobackend: not available")
++}
++func SignMarshalECDSA(priv *PrivateKeyECDSA, hash []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++func VerifyECDSA(pub *PublicKeyECDSA, hash []byte, sig []byte) bool {
++	panic("cryptobackend: not available")
++}
++
++func SupportsRSAKeyPrimes(primes int) bool           { panic("cryptobackend: not available") }
++func SupportsRSASaltLength(sign bool, salt int) bool { panic("cryptobackend: not available") }
++
++type PublicKeyRSA struct{ _ int }
++type PrivateKeyRSA struct{ _ int }
++
++func DecryptRSAOAEP(h, mgfHash hash.Hash, priv *PrivateKeyRSA, ciphertext, label []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++func DecryptRSAPKCS1(priv *PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++func DecryptRSANoPadding(priv *PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++func EncryptRSAOAEP(h, mgfHash hash.Hash, pub *PublicKeyRSA, msg, label []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++func EncryptRSAPKCS1(pub *PublicKeyRSA, msg []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++func EncryptRSANoPadding(pub *PublicKeyRSA, msg []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++func GenerateKeyRSA(bits int) (N, E, D, P, Q, Dp, Dq, Qinv BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++func NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv BigInt) (*PrivateKeyRSA, error) {
++	panic("cryptobackend: not available")
++}
++func NewPublicKeyRSA(N, E BigInt) (*PublicKeyRSA, error) {
++	panic("cryptobackend: not available")
++}
++func SignRSAPKCS1v15(priv *PrivateKeyRSA, h crypto.Hash, hashed []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++func SignRSAPSS(priv *PrivateKeyRSA, h crypto.Hash, hashed []byte, saltLen int) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++func VerifyRSAPKCS1v15(pub *PublicKeyRSA, h crypto.Hash, hashed, sig []byte) error {
++	panic("cryptobackend: not available")
++}
++func VerifyRSAPSS(pub *PublicKeyRSA, h crypto.Hash, hashed, sig []byte, saltLen int) error {
++	panic("cryptobackend: not available")
++}
++
++type PublicKeyECDH struct{}
++type PrivateKeyECDH struct{}
++
++func ECDH(*PrivateKeyECDH, *PublicKeyECDH) ([]byte, error)    { panic("cryptobackend: not available") }
++func GenerateKeyECDH(string) (*PrivateKeyECDH, []byte, error) { panic("cryptobackend: not available") }
++func NewPrivateKeyECDH(string, []byte) (*PrivateKeyECDH, error) {
++	panic("cryptobackend: not available")
++}
++func NewPublicKeyECDH(string, []byte) (*PublicKeyECDH, error) { panic("cryptobackend: not available") }
++func (*PublicKeyECDH) Bytes() []byte                          { panic("cryptobackend: not available") }
++func (*PrivateKeyECDH) PublicKey() (*PublicKeyECDH, error)    { panic("cryptobackend: not available") }
++
++func SupportsHKDF() bool { panic("cryptobackend: not available") }
++
++func ExpandHKDF(h func() hash.Hash, pseudorandomKey, info []byte, keyLength int) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func SupportsPBKDF2() bool { panic("cryptobackend: not available") }
++
++func PBKDF2(password, salt []byte, iter, keyLen int, fh func() hash.Hash) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func SupportsTLS1PRF() bool { panic("cryptobackend: not available") }
++
++func TLS1PRF(result, secret, label, seed []byte, h func() hash.Hash) error {
++	panic("cryptobackend: not available")
++}
++
++func SupportsDESCipher() bool { panic("cryptobackend: not available") }
++
++func SupportsTripleDESCipher() bool { panic("cryptobackend: not available") }
++
++func NewDESCipher(key []byte) (cipher.Block, error) { panic("cryptobackend: not available") }
++
++func NewTripleDESCipher(key []byte) (cipher.Block, error) { panic("cryptobackend: not available") }
++
++func SupportsRC4() bool { panic("cryptobackend: not available") }
++
++type RC4Cipher struct{}
++
++func (c *RC4Cipher) Reset()                       { panic("cryptobackend: not available") }
++func (c *RC4Cipher) XORKeyStream(dst, src []byte) { panic("cryptobackend: not available") }
++
++func NewRC4Cipher(key []byte) (*RC4Cipher, error) { panic("cryptobackend: not available") }
++
++func SupportsEd25519() bool { panic("cryptobackend: not available") }
++
++type PublicKeyEd25519 struct{}
++
++func (k PublicKeyEd25519) Bytes() ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++type PrivateKeyEd25519 struct{}
++
++func (k PrivateKeyEd25519) Bytes() ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
++	panic("cryptobackend: not available")
++}
++
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
++	panic("cryptobackend: not available")
++}
++
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
++	panic("cryptobackend: not available")
++}
++
++func SupportsDSA(l, n int) bool {
++	panic("cryptobackend: not available")
++}
++
++func GenerateParametersDSA(l, n int) (p, q, g BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++type PublicKeyDSA struct{ _ int }
++type PrivateKeyDSA struct{ _ int }
++
++func GenerateKeyDSA(p, q, g BigInt) (x, y BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPrivateKeyDSA(p, q, g, x, y BigInt) (*PrivateKeyDSA, error) {
++	panic("cryptobackend: not available")
++}
++
++func NewPublicKeyDSA(p, q, g, y BigInt) (*PublicKeyDSA, error) {
++	panic("cryptobackend: not available")
++}
++
++func SignDSA(priv *PrivateKeyDSA, hash []byte, parseSignature func([]byte) (BigInt, BigInt, error)) (r, s BigInt, err error) {
++	panic("cryptobackend: not available")
++}
++
++func VerifyDSA(pub *PublicKeyDSA, hashed []byte, r, s BigInt, encodeSignature func(r, s BigInt) ([]byte, error)) bool {
++	panic("cryptobackend: not available")
++}
+diff --git a/src/crypto/internal/backend/openssl_linux.go b/src/crypto/internal/backend/openssl_linux.go
+new file mode 100644
+index 00000000000000..57293ff2128dd6
+--- /dev/null
++++ b/src/crypto/internal/backend/openssl_linux.go
+@@ -0,0 +1,362 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build goexperiment.opensslcrypto && linux && cgo
++
++// Package openssl provides access to OpenSSLCrypto implementation functions.
++// Check the variable Enabled to find out whether OpenSSLCrypto is available.
++// If OpenSSLCrypto is not available, the functions in this package all panic.
++package backend
++
++import (
++	"crypto"
++	"crypto/cipher"
++	"crypto/internal/backend/fips140"
++	"crypto/internal/boring/sig"
++	"hash"
++	"syscall"
++
++	"github.com/golang-fips/openssl/v2"
++)
++
++// Enabled controls whether FIPS crypto is enabled.
++const Enabled = true
++
++type BigInt = openssl.BigInt
++
++// knownVersions is a list of supported and well-known libcrypto.so suffixes in decreasing version order.
++// FreeBSD library version numbering does not directly align to the version of OpenSSL.
++// Its preferred search order is 11 -> 111.
++// Some distributions use 1.0.0 and others (such as Debian) 1.0.2 to refer to the same OpenSSL 1.0.2 version.
++// Fedora derived distros use different naming for the version 1.0.x.
++var knownVersions = [...]string{"3", "1.1", "11", "111", "1.0.2", "1.0.0", "10"}
++
++const lcryptoPrefix = "libcrypto.so."
++
++func init() {
++	var lcrypto string
++	if version, _ := syscall.Getenv("GO_OPENSSL_VERSION_OVERRIDE"); version != "" {
++		lcrypto = lcryptoPrefix + version
++	} else {
++		// Try to find the highest available FIPS-enabled version of OpenSSL
++		// using the known library suffixes.
++		var lcryptoFallback string
++		for _, v := range knownVersions {
++			lcryptoCandidate := lcryptoPrefix + v
++			if exists, fips := openssl.CheckVersion(lcryptoCandidate); exists {
++				if fips {
++					lcrypto = lcryptoCandidate
++					break
++				}
++				if lcryptoFallback == "" {
++					lcryptoFallback = lcryptoCandidate
++				}
++			}
++		}
++		if lcrypto == "" && lcryptoFallback != "" {
++			// There is no FIPS-enabled version of OpenSSL,
++			// use the highest available version.
++			lcrypto = lcryptoFallback
++		}
++	}
++	if err := openssl.Init(lcrypto); err != nil {
++		panic("opensslcrypto: can't initialize OpenSSL " + lcrypto + ": " + err.Error())
++	}
++	if fips140.Enabled() {
++		if !openssl.FIPS() {
++			if err := openssl.SetFIPS(true); err != nil {
++				panic("opensslcrypto: can't enable FIPS mode for " + openssl.VersionText() + ": " + err.Error())
++			}
++		}
++	} else if fips140.Disabled() {
++		if openssl.FIPS() {
++			if err := openssl.SetFIPS(false); err != nil {
++				panic("opensslcrypto: can't disable FIPS mode for " + openssl.VersionText() + ": " + err.Error())
++			}
++		}
++	}
++	sig.BoringCrypto()
++}
++
++const RandReader = openssl.RandReader
++
++func SupportsHash(h crypto.Hash) bool {
++	return openssl.SupportsHash(h)
++}
++
++func SupportsCurve(curve string) bool            { return true }
++func SupportsRSAOAEPLabel(label []byte) bool     { return true }
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool { return true }
++
++func NewMD5() hash.Hash        { return openssl.NewMD5() }
++func NewSHA1() hash.Hash       { return openssl.NewSHA1() }
++func NewSHA224() hash.Hash     { return openssl.NewSHA224() }
++func NewSHA256() hash.Hash     { return openssl.NewSHA256() }
++func NewSHA384() hash.Hash     { return openssl.NewSHA384() }
++func NewSHA512() hash.Hash     { return openssl.NewSHA512() }
++func NewSHA512_224() hash.Hash { return openssl.NewSHA512_224() }
++func NewSHA512_256() hash.Hash { return openssl.NewSHA512_256() }
++
++func MD5(p []byte) (sum [16]byte)        { return openssl.MD5(p) }
++func SHA1(p []byte) (sum [20]byte)       { return openssl.SHA1(p) }
++func SHA224(p []byte) (sum [28]byte)     { return openssl.SHA224(p) }
++func SHA256(p []byte) (sum [32]byte)     { return openssl.SHA256(p) }
++func SHA384(p []byte) (sum [48]byte)     { return openssl.SHA384(p) }
++func SHA512(p []byte) (sum [64]byte)     { return openssl.SHA512(p) }
++func SHA512_224(p []byte) (sum [28]byte) { return openssl.SHA512_224(p) }
++func SHA512_256(p []byte) (sum [32]byte) { return openssl.SHA512_256(p) }
++
++func NewHMAC(h func() hash.Hash, key []byte) hash.Hash { return openssl.NewHMAC(h, key) }
++
++func NewAESCipher(key []byte) (cipher.Block, error)   { return openssl.NewAESCipher(key) }
++func NewGCMTLS(c cipher.Block) (cipher.AEAD, error)   { return openssl.NewGCMTLS(c) }
++func NewGCMTLS13(c cipher.Block) (cipher.AEAD, error) { return openssl.NewGCMTLS13(c) }
++
++type PublicKeyECDSA = openssl.PublicKeyECDSA
++type PrivateKeyECDSA = openssl.PrivateKeyECDSA
++
++func GenerateKeyECDSA(curve string) (X, Y, D openssl.BigInt, err error) {
++	return openssl.GenerateKeyECDSA(curve)
++}
++
++func NewPrivateKeyECDSA(curve string, X, Y, D openssl.BigInt) (*openssl.PrivateKeyECDSA, error) {
++	return openssl.NewPrivateKeyECDSA(curve, X, Y, D)
++}
++
++func NewPublicKeyECDSA(curve string, X, Y openssl.BigInt) (*openssl.PublicKeyECDSA, error) {
++	return openssl.NewPublicKeyECDSA(curve, X, Y)
++}
++
++func SignMarshalECDSA(priv *openssl.PrivateKeyECDSA, hash []byte) ([]byte, error) {
++	return openssl.SignMarshalECDSA(priv, hash)
++}
++
++func VerifyECDSA(pub *openssl.PublicKeyECDSA, hash []byte, sig []byte) bool {
++	return openssl.VerifyECDSA(pub, hash, sig)
++}
++
++func SupportsRSAKeyPrimes(primes int) bool {
++	// The built-in OpenSSL 3 providers and OpenSSL 1 do support n-prime RSA keys,
++	// but SCOSSL only supports 2-prime RSA keys.
++	// Only 2-prime RSA keys are FIPS compliant, other n having compatibility
++	// and security issues. Even crypto/rsa deprecated rsa.GenerateMultiPrimeKey as of Go 1.21.
++	// Given the above reasons, we only support what SCOSSL supports.
++	return primes == 2
++}
++
++func SupportsRSASaltLength(sign bool, salt int) bool {
++	return true
++}
++
++type PublicKeyRSA = openssl.PublicKeyRSA
++type PrivateKeyRSA = openssl.PrivateKeyRSA
++
++func DecryptRSAOAEP(h, mgfHash hash.Hash, priv *openssl.PrivateKeyRSA, ciphertext, label []byte) ([]byte, error) {
++	return openssl.DecryptRSAOAEP(h, mgfHash, priv, ciphertext, label)
++}
++
++func DecryptRSAPKCS1(priv *openssl.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return openssl.DecryptRSAPKCS1(priv, ciphertext)
++}
++
++func DecryptRSANoPadding(priv *openssl.PrivateKeyRSA, ciphertext []byte) ([]byte, error) {
++	return openssl.DecryptRSANoPadding(priv, ciphertext)
++}
++
++func EncryptRSAOAEP(h, mgfHash hash.Hash, pub *openssl.PublicKeyRSA, msg, label []byte) ([]byte, error) {
++	return openssl.EncryptRSAOAEP(h, mgfHash, pub, msg, label)
++}
++
++func EncryptRSAPKCS1(pub *openssl.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return openssl.EncryptRSAPKCS1(pub, msg)
++}
++
++func EncryptRSANoPadding(pub *openssl.PublicKeyRSA, msg []byte) ([]byte, error) {
++	return openssl.EncryptRSANoPadding(pub, msg)
++}
++
++func GenerateKeyRSA(bits int) (N, E, D, P, Q, Dp, Dq, Qinv openssl.BigInt, err error) {
++	return openssl.GenerateKeyRSA(bits)
++}
++
++func NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv openssl.BigInt) (*openssl.PrivateKeyRSA, error) {
++	return openssl.NewPrivateKeyRSA(N, E, D, P, Q, Dp, Dq, Qinv)
++}
++
++func NewPublicKeyRSA(N, E openssl.BigInt) (*openssl.PublicKeyRSA, error) {
++	return openssl.NewPublicKeyRSA(N, E)
++}
++
++func SignRSAPKCS1v15(priv *openssl.PrivateKeyRSA, h crypto.Hash, hashed []byte) ([]byte, error) {
++	return openssl.SignRSAPKCS1v15(priv, h, hashed)
++}
++
++func SignRSAPSS(priv *openssl.PrivateKeyRSA, h crypto.Hash, hashed []byte, saltLen int) ([]byte, error) {
++	return openssl.SignRSAPSS(priv, h, hashed, saltLen)
++}
++
++func VerifyRSAPKCS1v15(pub *openssl.PublicKeyRSA, h crypto.Hash, hashed, sig []byte) error {
++	return openssl.VerifyRSAPKCS1v15(pub, h, hashed, sig)
++}
++
++func VerifyRSAPSS(pub *openssl.PublicKeyRSA, h crypto.Hash, hashed, sig []byte, saltLen int) error {
++	return openssl.VerifyRSAPSS(pub, h, hashed, sig, saltLen)
++}
++
++type PublicKeyECDH = openssl.PublicKeyECDH
++type PrivateKeyECDH = openssl.PrivateKeyECDH
++
++func ECDH(priv *openssl.PrivateKeyECDH, pub *openssl.PublicKeyECDH) ([]byte, error) {
++	return openssl.ECDH(priv, pub)
++}
++
++func GenerateKeyECDH(curve string) (*openssl.PrivateKeyECDH, []byte, error) {
++	return openssl.GenerateKeyECDH(curve)
++}
++
++func NewPrivateKeyECDH(curve string, bytes []byte) (*openssl.PrivateKeyECDH, error) {
++	return openssl.NewPrivateKeyECDH(curve, bytes)
++}
++
++func NewPublicKeyECDH(curve string, bytes []byte) (*openssl.PublicKeyECDH, error) {
++	return openssl.NewPublicKeyECDH(curve, bytes)
++}
++
++func SupportsHKDF() bool {
++	return openssl.SupportsHKDF()
++}
++
++func ExpandHKDF(h func() hash.Hash, pseudorandomKey, info []byte, keyLength int) ([]byte, error) {
++	return openssl.ExpandHKDFOneShot(h, pseudorandomKey, info, keyLength)
++}
++
++func ExtractHKDF(h func() hash.Hash, secret, salt []byte) ([]byte, error) {
++	return openssl.ExtractHKDF(h, secret, salt)
++}
++
++func SupportsPBKDF2() bool {
++	return openssl.SupportsPBKDF2()
++}
++
++func PBKDF2(pass, salt []byte, iter, keyLen int, h func() hash.Hash) ([]byte, error) {
++	return openssl.PBKDF2(pass, salt, iter, keyLen, h)
++}
++
++func SupportsTLS1PRF() bool {
++	return openssl.SupportsTLS1PRF()
++}
++
++func TLS1PRF(result, secret, label, seed []byte, h func() hash.Hash) error {
++	return openssl.TLS1PRF(result, secret, label, seed, h)
++}
++
++func SupportsDESCipher() bool {
++	return openssl.SupportsDESCipher()
++}
++
++func SupportsTripleDESCipher() bool {
++	return openssl.SupportsTripleDESCipher()
++}
++
++func NewDESCipher(key []byte) (cipher.Block, error) {
++	return openssl.NewDESCipher(key)
++}
++
++func NewTripleDESCipher(key []byte) (cipher.Block, error) {
++	return openssl.NewTripleDESCipher(key)
++}
++
++func SupportsRC4() bool {
++	return openssl.SupportsRC4()
++}
++
++type RC4Cipher = openssl.RC4Cipher
++
++func NewRC4Cipher(key []byte) (*RC4Cipher, error) { return openssl.NewRC4Cipher(key) }
++
++func SupportsEd25519() bool { return openssl.SupportsEd25519() }
++
++type PublicKeyEd25519 = *openssl.PublicKeyEd25519
++type PrivateKeyEd25519 = *openssl.PrivateKeyEd25519
++
++func GenerateKeyEd25519() (PrivateKeyEd25519, error) {
++	return openssl.GenerateKeyEd25519()
++}
++
++// Deprecated: use NewPrivateKeyEd25519 instead.
++func NewPrivateKeyEd25119(priv []byte) (PrivateKeyEd25519, error) {
++	return openssl.NewPrivateKeyEd25519(priv)
++}
++
++// Deprecated: use NewPublicKeyEd25519 instead.
++func NewPublicKeyEd25119(pub []byte) (PublicKeyEd25519, error) {
++	return openssl.NewPublicKeyEd25519(pub)
++}
++
++func NewPrivateKeyEd25519(priv []byte) (PrivateKeyEd25519, error) {
++	return openssl.NewPrivateKeyEd25519(priv)
++}
++
++func NewPublicKeyEd25519(pub []byte) (PublicKeyEd25519, error) {
++	return openssl.NewPublicKeyEd25519(pub)
++}
++
++func NewPrivateKeyEd25519FromSeed(seed []byte) (PrivateKeyEd25519, error) {
++	return openssl.NewPrivateKeyEd25519FromSeed(seed)
++}
++
++func SignEd25519(priv PrivateKeyEd25519, message []byte) ([]byte, error) {
++	return openssl.SignEd25519(priv, message)
++}
++
++func VerifyEd25519(pub PublicKeyEd25519, message, sig []byte) error {
++	return openssl.VerifyEd25519(pub, message, sig)
++}
++
++type PublicKeyDSA = openssl.PublicKeyDSA
++type PrivateKeyDSA = openssl.PrivateKeyDSA
++
++func SupportsDSA(l, n int) bool {
++	return openssl.SupportsDSA()
++}
++
++func GenerateParametersDSA(l, n int) (p, q, g openssl.BigInt, err error) {
++	params, err := openssl.GenerateParametersDSA(l, n)
++	return params.P, params.Q, params.G, err
++}
++
++func GenerateKeyDSA(p, q, g openssl.BigInt) (x, y openssl.BigInt, err error) {
++	return openssl.GenerateKeyDSA(openssl.DSAParameters{P: p, Q: q, G: g})
++}
++
++func NewPrivateKeyDSA(p, q, g, x, y openssl.BigInt) (*openssl.PrivateKeyDSA, error) {
++	return openssl.NewPrivateKeyDSA(openssl.DSAParameters{P: p, Q: q, G: g}, x, y)
++}
++
++func NewPublicKeyDSA(p, q, g, y openssl.BigInt) (*openssl.PublicKeyDSA, error) {
++	return openssl.NewPublicKeyDSA(openssl.DSAParameters{P: p, Q: q, G: g}, y)
++}
++
++func SignDSA(priv *PrivateKeyDSA, hash []byte, parseSignature func([]byte) (openssl.BigInt, openssl.BigInt, error)) (r, s openssl.BigInt, err error) {
++	sig, err := openssl.SignDSA(priv, hash)
++	if err != nil {
++		return nil, nil, err
++	}
++
++	r, s, err = parseSignature(sig)
++	if err != nil {
++		return nil, nil, err
++	}
++
++	return openssl.BigInt(r), openssl.BigInt(s), nil
++}
++
++func VerifyDSA(pub *PublicKeyDSA, hashed []byte, r, s openssl.BigInt, encodeSignature func(r, s openssl.BigInt) ([]byte, error)) bool {
++	sig, err := encodeSignature(r, s)
++	if err != nil {
++		return false
++	}
++
++	return openssl.VerifyDSA(pub, hashed, sig)
++}
+diff --git a/src/crypto/internal/backend/stub.s b/src/crypto/internal/backend/stub.s
+new file mode 100644
+index 00000000000000..5e4b436554d44d
+--- /dev/null
++++ b/src/crypto/internal/backend/stub.s
+@@ -0,0 +1,10 @@
++// Copyright 2017 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++// runtime_arg0 is declared in common.go without a body.
++// It's provided by package runtime,
++// but the go command doesn't know that.
++// Having this assembly file keeps the go command
++// from complaining about the missing body
++// (because the implementation might be here).
+diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
+index e017efb1562379..ab5539f978a266 100644
+--- a/src/go/build/deps_test.go
++++ b/src/go/build/deps_test.go
+@@ -493,6 +493,8 @@ var depsRules = `
+ 	< crypto/internal/fips140/rsa
+ 	< FIPS;
+ 
++	syscall < crypto/internal/backend/fips140;
++
+ 	FIPS, internal/godebug < crypto/fips140;
+ 
+ 	crypto, hash !< FIPS;
+@@ -506,7 +508,8 @@ var depsRules = `
+ 	FIPS, internal/godebug, hash, embed, encoding/binary,
+ 	crypto/internal/boring/sig,
+ 	crypto/internal/boring/syso,
+-	crypto/internal/boring/bcache
++	crypto/internal/boring/bcache,
++	crypto/internal/backend/fips140
+ 	< crypto/internal/fips140only
+ 	< crypto
+ 	< crypto/subtle
+@@ -522,6 +525,7 @@ var depsRules = `
+ 	< github.com/microsoft/go-crypto-winnative/internal/bcrypt
+ 	< github.com/microsoft/go-crypto-winnative/cng
+ 	< crypto/internal/boring
++	< crypto/internal/backend
+ 	< crypto/boring
+ 	< crypto/aes,
+ 	  crypto/des,
+@@ -546,6 +550,7 @@ var depsRules = `
+ 	< github.com/microsoft/go-crypto-darwin/bbig
+ 	< github.com/microsoft/go-crypto-winnative/cng/bbig
+ 	< crypto/internal/boring/bbig
++	< crypto/internal/backend/bbig
+ 	< crypto/rand
+ 	< crypto/ed25519 # depends on crypto/rand.Reader
+ 	< encoding/asn1
+diff --git a/src/runtime/runtime_boring.go b/src/runtime/runtime_boring.go
+index 5a98b20253181c..9042f2c2795e19 100644
+--- a/src/runtime/runtime_boring.go
++++ b/src/runtime/runtime_boring.go
+@@ -17,3 +17,8 @@ func boring_runtime_arg0() string {
+ 
+ //go:linkname fipstls_runtime_arg0 crypto/internal/boring/fipstls.runtime_arg0
+ func fipstls_runtime_arg0() string { return boring_runtime_arg0() }
++
++//go:linkname crypto_backend_runtime_arg0 crypto/internal/backend.runtime_arg0
++func crypto_backend_runtime_arg0() string {
++	return boring_runtime_arg0()
++}
