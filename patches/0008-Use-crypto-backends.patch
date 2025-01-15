@@ -682,7 +682,7 @@ index cb308b41e9df86..5c841d2f021967 100644
  	randutil.MaybeReadByte(rand)
  
 -	if boring.Enabled && rand == boring.RandReader {
-+	if boring.Enabled && rand == boring.RandReader && boring.IsCurveSupported(c.Params().Name) {
++	if boring.Enabled && rand == boring.RandReader && boring.SupportsCurve(c.Params().Name) {
  		x, y, d, err := boring.GenerateKeyECDSA(c.Params().Name)
  		if err != nil {
  			return nil, err
@@ -691,7 +691,7 @@ index cb308b41e9df86..5c841d2f021967 100644
  	randutil.MaybeReadByte(rand)
  
 -	if boring.Enabled && rand == boring.RandReader {
-+	if boring.Enabled && rand == boring.RandReader && boring.IsCurveSupported(priv.Curve.Params().Name) {
++	if boring.Enabled && rand == boring.RandReader && boring.SupportsCurve(priv.Curve.Params().Name) {
  		b, err := boringPrivateKey(priv)
  		if err != nil {
  			return nil, err
@@ -700,7 +700,7 @@ index cb308b41e9df86..5c841d2f021967 100644
  // channels, or if an attacker has control of part of the inputs.
  func VerifyASN1(pub *PublicKey, hash, sig []byte) bool {
 -	if boring.Enabled {
-+	if boring.Enabled && boring.IsCurveSupported(pub.Curve.Params().Name) {
++	if boring.Enabled && boring.SupportsCurve(pub.Curve.Params().Name) {
  		key, err := boringPublicKey(pub)
  		if err != nil {
  			return false
@@ -1404,7 +1404,7 @@ index 8373c125ae3096..319fae6fb282db 100644
  	defer hash.Reset()
  
 -	if boring.Enabled && random == boring.RandReader {
-+	if boring.Enabled && random == boring.RandReader && boring.IsRSAOAEPLabelSupported(label) {
++	if boring.Enabled && random == boring.RandReader && boring.SupportsRSAOAEPLabel(label) {
  		hash.Reset()
  		k := pub.Size()
  		if len(msg) > k-2*hash.Size()-2 {
@@ -1413,7 +1413,7 @@ index 8373c125ae3096..319fae6fb282db 100644
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.SupportsRSAKeyPrimes(len(priv.Primes)) && boring.IsRSAOAEPLabelSupported(label) {
++	if boring.Enabled && boring.SupportsRSAKeyPrimes(len(priv.Primes)) && boring.SupportsRSAOAEPLabel(label) {
  		k := priv.Size()
  		if len(ciphertext) > k ||
  			k < hash.Size()*2+2 {
@@ -1422,7 +1422,7 @@ index 8373c125ae3096..319fae6fb282db 100644
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.SupportsRSAKeyPrimes(len(priv.Primes)) && boring.IsPKCS1v15HashSupported(hash) {
++	if boring.Enabled && boring.SupportsRSAKeyPrimes(len(priv.Primes)) && boring.SupportsPKCS1v15Hash(hash) {
  		bkey, err := boringPrivateKey(priv)
  		if err != nil {
  			return nil, err
@@ -1431,7 +1431,7 @@ index 8373c125ae3096..319fae6fb282db 100644
  	}
  
 -	if boring.Enabled {
-+	if boring.Enabled && boring.IsPKCS1v15HashSupported(hash) {
++	if boring.Enabled && boring.SupportsPKCS1v15Hash(hash) {
  		bkey, err := boringPublicKey(pub)
  		if err != nil {
  			return err

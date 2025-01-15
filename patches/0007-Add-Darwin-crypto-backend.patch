@@ -6,15 +6,14 @@ Subject: [PATCH] Add Darwin crypto backend
 ---
  .gitignore                                    |   2 +
  .../internal/backend/bbig/big_darwin.go       |  12 +
- src/crypto/internal/backend/common.go         |  32 ++
- src/crypto/internal/backend/darwin_darwin.go  | 337 ++++++++++++++++++
+ src/crypto/internal/backend/darwin_darwin.go  | 359 ++++++++++++++++++
  src/crypto/internal/backend/fips140/darwin.go |  11 +
  src/crypto/rsa/boring.go                      |   1 -
  src/crypto/rsa/darwin.go                      |  71 ++++
  src/go/build/vendor_test.go                   |   1 +
  src/net/lookup_test.go                        |   3 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 10 files changed, 475 insertions(+), 1 deletions(-)
+ 9 files changed, 465 insertions(+), 1 deletion(-)
  create mode 100644 src/crypto/internal/backend/bbig/big_darwin.go
  create mode 100644 src/crypto/internal/backend/darwin_darwin.go
  create mode 100644 src/crypto/internal/backend/fips140/darwin.go
@@ -51,61 +50,12 @@ index 00000000000000..77f3ca5d262769
 +
 +var Enc = bbig.Enc
 +var Dec = bbig.Dec
-diff --git a/src/crypto/internal/backend/common.go b/src/crypto/internal/backend/common.go
-index 84447174284ffd..f85f3b6c865764 100644
---- a/src/crypto/internal/backend/common.go
-+++ b/src/crypto/internal/backend/common.go
-@@ -5,8 +5,10 @@
- package backend
- 
- import (
-+	"crypto"
- 	"crypto/internal/backend/fips140"
- 	"crypto/internal/boring/sig"
-+	"internal/goexperiment"
- 	"runtime"
- )
- 
-@@ -56,3 +58,33 @@ func UnreachableExceptTests() {
- 		}
- 	}
- }
-+
-+func IsCurveSupported(curve string) bool {
-+	switch curve {
-+	case "P-256", "P-384", "P-521":
-+		return true
-+	case "P-224":
-+		return !goexperiment.DarwinCrypto
-+	}
-+	return false
-+}
-+
-+func IsRSAOAEPLabelSupported(label []byte) bool {
-+	if goexperiment.DarwinCrypto {
-+		// CommonCrypto doesn't support labels
-+		// https://github.com/microsoft/go-crypto-darwin/issues/22
-+		return len(label) == 0
-+	}
-+	return true
-+}
-+
-+func IsPKCS1v15HashSupported(hash crypto.Hash) bool {
-+	if goexperiment.DarwinCrypto {
-+		switch hash {
-+		case crypto.SHA1, crypto.SHA224, crypto.SHA256, crypto.SHA384, crypto.SHA512, 0:
-+			return true
-+		}
-+		return false
-+	}
-+	return true
-+}
 diff --git a/src/crypto/internal/backend/darwin_darwin.go b/src/crypto/internal/backend/darwin_darwin.go
 new file mode 100644
-index 00000000000000..938f72fafa9785
+index 00000000000000..2250852ada8cc8
 --- /dev/null
 +++ b/src/crypto/internal/backend/darwin_darwin.go
-@@ -0,0 +1,337 @@
+@@ -0,0 +1,359 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -142,6 +92,28 @@ index 00000000000000..938f72fafa9785
 +
 +func SupportsHash(h crypto.Hash) bool {
 +	return xcrypto.SupportsHash(h)
++}
++
++func SupportsCurve(curve string) bool {
++	switch curve {
++	case "P-256", "P-384", "P-521":
++		return true
++	}
++	return false
++}
++
++func SupportsRSAOAEPLabel(label []byte) bool {
++	// CommonCrypto doesn't support labels
++	// https://github.com/microsoft/go-crypto-darwin/issues/22
++	return len(label) == 0
++}
++
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool {
++	switch hash {
++	case crypto.SHA1, crypto.SHA224, crypto.SHA256, crypto.SHA384, crypto.SHA512, 0:
++		return true
++	}
++	return false
 +}
 +
 +func NewMD5() hash.Hash    { return xcrypto.NewMD5() }
@@ -461,10 +433,10 @@ index 00000000000000..ef5af5d956163e
 +	return false
 +}
 diff --git a/src/crypto/rsa/boring.go b/src/crypto/rsa/boring.go
-index ba66dd33a1f9f3..b276571ddf9fc8 100644
+index b9f9d3154f2589..28d16a89f6a1cf 100644
 --- a/src/crypto/rsa/boring.go
 +++ b/src/crypto/rsa/boring.go
-@@ -72,7 +72,6 @@ func boringPrivateKey(priv *PrivateKey) (*boring.PrivateKeyRSA, error) {
+@@ -66,7 +66,6 @@ func boringPrivateKey(priv *PrivateKey) (*boring.PrivateKeyRSA, error) {
  	if b != nil && privateKeyEqual(&b.orig, priv) {
  		return b.key, nil
  	}

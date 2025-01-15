@@ -11,11 +11,11 @@ Subject: [PATCH] Add crypto backend foundation
  .../internal/backend/fips140/isrequirefips.go |   9 +
  .../internal/backend/fips140/norequirefips.go |   9 +
  .../backend/fips140/nosystemcrypto.go         |  11 +
- src/crypto/internal/backend/nobackend.go      | 236 ++++++++++++++++++
+ src/crypto/internal/backend/nobackend.go      | 240 ++++++++++++++++++
  src/crypto/internal/backend/stub.s            |  10 +
  src/go/build/deps_test.go                     |   7 +-
  src/runtime/runtime_boring.go                 |   5 +
- 11 files changed, 446 insertions(+), 1 deletion(-)
+ 11 files changed, 450 insertions(+), 1 deletion(-)
  create mode 100644 src/crypto/internal/backend/backend_test.go
  create mode 100644 src/crypto/internal/backend/bbig/big.go
  create mode 100644 src/crypto/internal/backend/common.go
@@ -262,10 +262,10 @@ index 00000000000000..83691d7dd42d51
 +}
 diff --git a/src/crypto/internal/backend/nobackend.go b/src/crypto/internal/backend/nobackend.go
 new file mode 100644
-index 00000000000000..6172004c0b19e4
+index 00000000000000..eca1ceab2a04b9
 --- /dev/null
 +++ b/src/crypto/internal/backend/nobackend.go
-@@ -0,0 +1,236 @@
+@@ -0,0 +1,240 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -293,6 +293,10 @@ index 00000000000000..6172004c0b19e4
 +const RandReader = randReader(0)
 +
 +func SupportsHash(h crypto.Hash) bool { panic("cryptobackend: not available") }
++
++func SupportsCurve(curve string) bool            { panic("cryptobackend: not available") }
++func SupportsRSAOAEPLabel(label []byte) bool     { panic("cryptobackend: not available") }
++func SupportsPKCS1v15Hash(hash crypto.Hash) bool { panic("cryptobackend: not available") }
 +
 +func NewMD5() hash.Hash        { panic("cryptobackend: not available") }
 +func NewSHA1() hash.Hash       { panic("cryptobackend: not available") }
