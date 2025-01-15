@@ -8,12 +8,10 @@ Subject: [PATCH] Add Darwin crypto backend
  .../internal/backend/bbig/big_darwin.go       |  12 +
  src/crypto/internal/backend/darwin_darwin.go  | 359 ++++++++++++++++++
  src/crypto/internal/backend/fips140/darwin.go |  11 +
- src/crypto/rsa/boring.go                      |   1 -
  src/crypto/rsa/darwin.go                      |  71 ++++
- src/go/build/vendor_test.go                   |   1 +
  src/net/lookup_test.go                        |   3 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 9 files changed, 465 insertions(+), 1 deletion(-)
+ 7 files changed, 464 insertions(+)
  create mode 100644 src/crypto/internal/backend/bbig/big_darwin.go
  create mode 100644 src/crypto/internal/backend/darwin_darwin.go
  create mode 100644 src/crypto/internal/backend/fips140/darwin.go
@@ -432,18 +430,6 @@ index 00000000000000..ef5af5d956163e
 +func systemFIPSMode() bool {
 +	return false
 +}
-diff --git a/src/crypto/rsa/boring.go b/src/crypto/rsa/boring.go
-index b9f9d3154f2589..28d16a89f6a1cf 100644
---- a/src/crypto/rsa/boring.go
-+++ b/src/crypto/rsa/boring.go
-@@ -66,7 +66,6 @@ func boringPrivateKey(priv *PrivateKey) (*boring.PrivateKeyRSA, error) {
- 	if b != nil && privateKeyEqual(&b.orig, priv) {
- 		return b.key, nil
- 	}
--
- 	b = new(boringPriv)
- 	b.orig = copyPrivateKey(priv)
- 
 diff --git a/src/crypto/rsa/darwin.go b/src/crypto/rsa/darwin.go
 new file mode 100644
 index 00000000000000..1b9c63523ee90e
@@ -521,18 +507,6 @@ index 00000000000000..1b9c63523ee90e
 +	})
 +	return builder.Bytes()
 +}
-diff --git a/src/go/build/vendor_test.go b/src/go/build/vendor_test.go
-index 1d0b9b20e9b1d4..6092c93d4c5b26 100644
---- a/src/go/build/vendor_test.go
-+++ b/src/go/build/vendor_test.go
-@@ -24,6 +24,7 @@ var allowedPackagePrefixes = []string{
- 	"rsc.io/markdown",
- 	"github.com/golang-fips/openssl",
- 	"github.com/microsoft/go-crypto-winnative",
-+	"github.com/microsoft/go-crypto-darwin",
- }
- 
- // Verify that the vendor directories contain only packages matching the list above.
 diff --git a/src/net/lookup_test.go b/src/net/lookup_test.go
 index 514cbd098ae772..8ec689416dde1d 100644
 --- a/src/net/lookup_test.go

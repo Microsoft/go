@@ -10,7 +10,7 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  src/go.mod                                    |   6 +
  src/go.sum                                    |   6 +
  src/go/build/deps_test.go                     |  17 +-
- src/go/build/vendor_test.go                   |   2 +
+ src/go/build/vendor_test.go                   |   3 +
  .../golang-fips/openssl/v2/.gitignore         |   1 +
  .../golang-fips/openssl/v2/.gitleaks.toml     |   9 +
  .../github.com/golang-fips/openssl/v2/LICENSE |  20 +
@@ -101,7 +101,7 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  .../internal/subtle/aliasing.go               |  32 +
  .../internal/sysdll/sys_windows.go            |  55 ++
  src/vendor/modules.txt                        |  16 +
- 95 files changed, 13706 insertions(+), 3 deletions(-)
+ 95 files changed, 13707 insertions(+), 3 deletions(-)
  create mode 100644 src/crypto/internal/backend/deps_ignore.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitignore
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitleaks.toml
@@ -303,15 +303,16 @@ index e3e01077c18b17..e017efb1562379 100644
  	}
  	fset := token.NewFileSet()
 diff --git a/src/go/build/vendor_test.go b/src/go/build/vendor_test.go
-index 7f6237ffd59c11..1d0b9b20e9b1d4 100644
+index 7f6237ffd59c11..6092c93d4c5b26 100644
 --- a/src/go/build/vendor_test.go
 +++ b/src/go/build/vendor_test.go
-@@ -22,6 +22,8 @@ var allowedPackagePrefixes = []string{
+@@ -22,6 +22,9 @@ var allowedPackagePrefixes = []string{
  	"github.com/google/pprof",
  	"github.com/ianlancetaylor/demangle",
  	"rsc.io/markdown",
 +	"github.com/golang-fips/openssl",
 +	"github.com/microsoft/go-crypto-winnative",
++	"github.com/microsoft/go-crypto-darwin",
  }
  
  // Verify that the vendor directories contain only packages matching the list above.
