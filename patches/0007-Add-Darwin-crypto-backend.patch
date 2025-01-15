@@ -11,11 +11,10 @@ Subject: [PATCH] Add Darwin crypto backend
  src/crypto/internal/backend/fips140/darwin.go |  11 +
  src/crypto/rsa/boring.go                      |   1 -
  src/crypto/rsa/darwin.go                      |  71 ++++
- src/go/build/deps_test.go                     |   5 +-
  src/go/build/vendor_test.go                   |   1 +
  src/net/lookup_test.go                        |   3 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 11 files changed, 479 insertions(+), 2 deletions(-)
+ 10 files changed, 475 insertions(+), 1 deletions(-)
  create mode 100644 src/crypto/internal/backend/bbig/big_darwin.go
  create mode 100644 src/crypto/internal/backend/darwin_darwin.go
  create mode 100644 src/crypto/internal/backend/fips140/darwin.go
@@ -550,36 +549,6 @@ index 00000000000000..1b9c63523ee90e
 +	})
 +	return builder.Bytes()
 +}
-diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index c2846667df81de..46de13a781292c 100644
---- a/src/go/build/deps_test.go
-+++ b/src/go/build/deps_test.go
-@@ -520,6 +520,8 @@ var depsRules = `
- 	< github.com/microsoft/go-crypto-winnative/internal/sysdll
- 	< github.com/microsoft/go-crypto-winnative/internal/bcrypt
- 	< github.com/microsoft/go-crypto-winnative/cng
-+	< github.com/microsoft/go-crypto-darwin/internal/cryptokit
-+	< github.com/microsoft/go-crypto-darwin/xcrypto
- 	< github.com/golang-fips/openssl/v2/internal/subtle
- 	< github.com/golang-fips/openssl/v2
- 	< crypto/internal/boring
-@@ -547,6 +549,7 @@ var depsRules = `
- 	CRYPTO, FMT, math/big
- 	< github.com/microsoft/go-crypto-winnative/cng/bbig
- 	< github.com/golang-fips/openssl/v2/bbig
-+	< github.com/microsoft/go-crypto-darwin/bbig
- 	< crypto/internal/boring/bbig
- 	< crypto/internal/backend/bbig
- 	< crypto/rand
-@@ -861,7 +864,7 @@ func findImports(pkg string) ([]string, error) {
- 	}
- 	var imports []string
- 	var haveImport = map[string]bool{}
--	if pkg == "crypto/internal/boring" || pkg == "github.com/golang-fips/openssl/v2" {
-+	if pkg == "crypto/internal/boring" || pkg == "github.com/golang-fips/openssl/v2" || strings.HasPrefix(pkg, "github.com/microsoft/go-crypto-darwin") {
- 		haveImport["C"] = true // kludge: prevent C from appearing in crypto/internal/boring imports
- 	}
- 	fset := token.NewFileSet()
 diff --git a/src/go/build/vendor_test.go b/src/go/build/vendor_test.go
 index 1d0b9b20e9b1d4..6092c93d4c5b26 100644
 --- a/src/go/build/vendor_test.go

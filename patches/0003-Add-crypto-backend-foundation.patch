@@ -519,7 +519,7 @@ index 00000000000000..5e4b436554d44d
 +// from complaining about the missing body
 +// (because the implementation might be here).
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index e3e01077c18b17..a46d6c034ca1e0 100644
+index e017efb1562379..ab5539f978a266 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -493,6 +493,8 @@ var depsRules = `
@@ -532,7 +532,7 @@ index e3e01077c18b17..a46d6c034ca1e0 100644
  
  	crypto, hash !< FIPS;
 @@ -506,7 +508,8 @@ var depsRules = `
- 	FIPS, internal/godebug, hash, embed,
+ 	FIPS, internal/godebug, hash, embed, encoding/binary,
  	crypto/internal/boring/sig,
  	crypto/internal/boring/syso,
 -	crypto/internal/boring/bcache
@@ -541,17 +541,17 @@ index e3e01077c18b17..a46d6c034ca1e0 100644
  	< crypto/internal/fips140only
  	< crypto
  	< crypto/subtle
-@@ -514,6 +517,7 @@ var depsRules = `
- 	< crypto/internal/fips140hash
- 	< crypto/cipher
+@@ -522,6 +525,7 @@ var depsRules = `
+ 	< github.com/microsoft/go-crypto-winnative/internal/bcrypt
+ 	< github.com/microsoft/go-crypto-winnative/cng
  	< crypto/internal/boring
 +	< crypto/internal/backend
  	< crypto/boring
  	< crypto/aes,
  	  crypto/des,
-@@ -535,6 +539,7 @@ var depsRules = `
- 
- 	CRYPTO, FMT, math/big
+@@ -546,6 +550,7 @@ var depsRules = `
+ 	< github.com/microsoft/go-crypto-darwin/bbig
+ 	< github.com/microsoft/go-crypto-winnative/cng/bbig
  	< crypto/internal/boring/bbig
 +	< crypto/internal/backend/bbig
  	< crypto/rand

@@ -9,9 +9,8 @@ Subject: [PATCH] Add OpenSSL crypto backend
  .../internal/backend/bbig/big_openssl.go      |  12 +
  .../internal/backend/fips140/openssl.go       |  41 ++
  src/crypto/internal/backend/openssl_linux.go  | 358 ++++++++++++++++++
- src/go/build/deps_test.go                     |   9 +-
  src/os/exec/exec_test.go                      |   9 +
- 7 files changed, 428 insertions(+), 5 deletions(-)
+ 6 files changed, 422 insertions(+), 2 deletions(-)
  create mode 100644 src/crypto/internal/backend/bbig/big_openssl.go
  create mode 100644 src/crypto/internal/backend/fips140/openssl.go
  create mode 100644 src/crypto/internal/backend/openssl_linux.go
@@ -475,54 +474,6 @@ index 00000000000000..0f3aea733ac2a5
 +
 +	return openssl.VerifyDSA(pub, hashed, sig)
 +}
-diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index a46d6c034ca1e0..12086de2c2e766 100644
---- a/src/go/build/deps_test.go
-+++ b/src/go/build/deps_test.go
-@@ -505,7 +505,7 @@ var depsRules = `
- 	NONE < crypto/internal/boring/sig, crypto/internal/boring/syso;
- 	sync/atomic < crypto/internal/boring/bcache;
- 
--	FIPS, internal/godebug, hash, embed,
-+	FIPS, internal/godebug, hash, embed, encoding/binary,
- 	crypto/internal/boring/sig,
- 	crypto/internal/boring/syso,
- 	crypto/internal/boring/bcache,
-@@ -516,6 +516,8 @@ var depsRules = `
- 	< crypto/sha3
- 	< crypto/internal/fips140hash
- 	< crypto/cipher
-+	< github.com/golang-fips/openssl/v2/internal/subtle
-+	< github.com/golang-fips/openssl/v2
- 	< crypto/internal/boring
- 	< crypto/internal/backend
- 	< crypto/boring
-@@ -538,6 +540,7 @@ var depsRules = `
- 	# CRYPTO-MATH is crypto that exposes math/big APIs - no cgo, net; fmt now ok.
- 
- 	CRYPTO, FMT, math/big
-+	< github.com/golang-fips/openssl/v2/bbig
- 	< crypto/internal/boring/bbig
- 	< crypto/internal/backend/bbig
- 	< crypto/rand
-@@ -842,7 +845,7 @@ var buildIgnore = []byte("\n//go:build ignore")
- 
- func findImports(pkg string) ([]string, error) {
- 	vpkg := pkg
--	if strings.HasPrefix(pkg, "golang.org") {
-+	if strings.HasPrefix(pkg, "golang.org") || strings.HasPrefix(pkg, "github.com") {
- 		vpkg = "vendor/" + pkg
- 	}
- 	dir := filepath.Join(Default.GOROOT, "src", vpkg)
-@@ -852,7 +855,7 @@ func findImports(pkg string) ([]string, error) {
- 	}
- 	var imports []string
- 	var haveImport = map[string]bool{}
--	if pkg == "crypto/internal/boring" {
-+	if pkg == "crypto/internal/boring" || pkg == "github.com/golang-fips/openssl/v2" {
- 		haveImport["C"] = true // kludge: prevent C from appearing in crypto/internal/boring imports
- 	}
- 	fset := token.NewFileSet()
 diff --git a/src/os/exec/exec_test.go b/src/os/exec/exec_test.go
 index 8c623871932f7d..2fa55073f5c19c 100644
 --- a/src/os/exec/exec_test.go

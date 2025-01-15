@@ -5,10 +5,11 @@ Subject: [PATCH] Use crypto backends
 
 ---
  src/cmd/api/boring_test.go                    |   2 +-
- src/cmd/dist/test.go                          |   7 +-
+ src/cmd/dist/test.go                          |   5 +
  src/cmd/go/go_boring_test.go                  |  11 +-
  src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
  .../go/testdata/script/gopath_std_vendor.txt  |   9 +
+ src/cmd/link/internal/ld/config.go            |   7 +
  src/crypto/aes/aes.go                         |   2 +-
  src/crypto/boring/boring.go                   |   4 +-
  src/crypto/cipher/ctr_aes_test.go             |   2 +-
@@ -75,7 +76,7 @@ Subject: [PATCH] Use crypto backends
  src/hash/marshal_test.go                      |   9 +
  src/hash/notboring_test.go                    |   9 +
  src/net/smtp/smtp_test.go                     |  72 ++++---
- 71 files changed, 1045 insertions(+), 102 deletions(-)
+ 72 files changed, 1051 insertions(+), 107 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -100,18 +101,9 @@ index f0e3575637c62a..9eab3b4e66e60b 100644
  package main
  
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 0de6e80fd985a3..783632120eada8 100644
+index 0de6e80fd985a3..3316bb52a61ff1 100644
 --- a/src/cmd/dist/test.go
 +++ b/src/cmd/dist/test.go
-@@ -876,7 +876,7 @@ func (t *tester) registerTests() {
- 	}
- 
- 	if t.extLink() && !t.compileOnly {
--		if goos != "android" { // Android does not support non-PIE linking
-+		if goos != "android" && !(goos == "darwin" && (strings.Contains(goexperiment, "systemcrypto") || strings.Contains(goexperiment, "darwincrypto"))) { // Android does not support non-PIE linking
- 			t.registerTest("external linking, -buildmode=exe",
- 				&goTest{
- 					variant:   "exe_external",
 @@ -1161,6 +1161,11 @@ func (t *tester) internalLink() bool {
  	if goos == "windows" && goarch == "arm64" {
  		return false
@@ -183,6 +175,31 @@ index 4aaf46b5d0f0dc..ec58a217400caa 100644
  [!compiler:gc] skip
  
  go list -f '{{.Dir}}' vendor/golang.org/x/net/http2/hpack
+diff --git a/src/cmd/link/internal/ld/config.go b/src/cmd/link/internal/ld/config.go
+index b2d4ad7cb0e7f6..2649c2a4427f38 100644
+--- a/src/cmd/link/internal/ld/config.go
++++ b/src/cmd/link/internal/ld/config.go
+@@ -7,6 +7,7 @@ package ld
+ import (
+ 	"fmt"
+ 	"internal/buildcfg"
++	"internal/goexperiment"
+ 	"internal/platform"
+ )
+ 
+@@ -34,6 +35,12 @@ func (mode *BuildMode) Set(s string) error {
+ 		return fmt.Errorf("invalid buildmode: %q", s)
+ 	case "exe":
+ 		switch buildcfg.GOOS + "/" + buildcfg.GOARCH {
++		case "darwin/amd64":
++			if goexperiment.DarwinCrypto || goexperiment.SystemCrypto {
++				*mode = BuildModePIE
++			} else {
++				*mode = BuildModeExe
++			}
+ 		case "darwin/arm64", "windows/arm", "windows/arm64": // On these platforms, everything is PIE
+ 			*mode = BuildModePIE
+ 		default:
 diff --git a/src/crypto/aes/aes.go b/src/crypto/aes/aes.go
 index 5bc2d13d673e0a..b803c77be62a66 100644
 --- a/src/crypto/aes/aes.go
@@ -2425,7 +2442,7 @@ index e7369542a73270..ff52175e4ac636 100644
  	}
  }
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index 8d175079a8c793..48879720026837 100644
+index ab5539f978a266..484c95dfb65f60 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -495,7 +495,7 @@ var depsRules = `
@@ -2437,7 +2454,7 @@ index 8d175079a8c793..48879720026837 100644
  
  	crypto, hash !< FIPS;
  
-@@ -537,6 +537,7 @@ var depsRules = `
+@@ -539,6 +539,7 @@ var depsRules = `
  	  crypto/pbkdf2,
  	  crypto/ecdh,
  	  crypto/mlkem
