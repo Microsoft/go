@@ -27,7 +27,7 @@ In addition to that, the boringcrypto flag also provides a mechanism to restrict
 
 The Microsoft Go fork modifies the Go runtime to implement several crypto primitives using cgo to call into a platform-provided cryptographic library rather than use the standard Go crypto implementations. This allows Go programs to use a platform-provided FIPS 140-2 certified crypto library.
 
-On Linux, the fork uses [OpenSSL](https://www.openssl.org/) through the [golang-fips/openssl] module in Go 1.21+ and the [go-crypto-openssl] module in earlier versions. On Windows, [CNG](https://docs.microsoft.com/en-us/windows/win32/seccng/about-cng), using [go-crypto-winnative]. Similar to BoringSSL, certain OpenSSL and CNG versions are FIPS 140-2 certified.
+On Linux, the fork uses [OpenSSL](https://www.openssl.org/) through the [golang-fips/openssl] module in Go 1.21+ and the [go-crypto-openssl] module in earlier versions. On Windows, [CNG](https://docs.microsoft.com/en-us/windows/win32/seccng/about-cng), using [go-crypto-winnative]. On macOS, [CommonCrypto](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/Common%20Crypto.3cc.html) and [CryptoKit](https://developer.apple.com/documentation/cryptokit) using [go-crypto-darwin]. Similar to BoringSSL, certain OpenSSL, CNG and CommonCrypto/CryptoKit versions are FIPS 140-2 certified.
 
 It is important to note that an application built with Microsoft's Go toolchain and running in FIPS compatible mode is not FIPS compliant _per-se_. It is the responsibility of the application development team to use FIPS-compliant crypto primitives and workflows. The modified crypto runtime will fall back to Go standard library crypto if it cannot provide a FIPS-compliant implementation, e.g. when hashing a message using `crypto/md5` hashes or when using an AES-GCM cipher with a non-standard nonce size.
 
@@ -87,6 +87,7 @@ The `GOEXPERIMENT` environment variable is used at build time to select a crypto
   - Prior to Go 1.21, this alias is not available and the backend must be selected manually
 - `opensslcrypto` selects OpenSSL, for Linux
 - `cngcrypto` selects CNG, for Windows
+- `darwincrypto` selects CommonCrypto & CryptoKit for macOS
 - `boringcrypto` selects the upstream BoringCrypto backend, which is **not supported nor compliant**
 - If no option is selected, Go standard library cryptography is used.
 
@@ -98,7 +99,7 @@ The options are exclusive and must not be enabled at the same time as one anothe
 | --- | --- | --- |
 | Linux | `opensslcrypto` | OpenSSL |
 | Windows | `cngcrypto` | CNG |
-| macOS (not supported: [microsoft/go#1013](https://github.com/microsoft/go/issues/1013)) | N/A, build error | N/A  |
+| macOS | `darwincrypto` | CommonCrypto & CryptoKit |
 
 The crypto backend selection must match the target platform. In a cross-build scenario, such as using Linux to build an app that will run on Windows, `GOOS=windows GOEXPERIMENT=systemcrypto` will correctly select `cngcrypto`. Prior to Go 1.21, the selection must be made manually: `GOOS=windows GOEXPERIMENT=cngcrypto`.
 
@@ -147,7 +148,7 @@ Another approach that generally works for any build system is to modify the buil
 > [!NOTE]
 > Prior to Go 1.21, `systemcrypto` doesn't exist and `opensslcrypto` or `cngcrypto` must be used depending on the target platform.
 
-#### Linux shell (bash) - Set `GOEXPERIMENT` environment variable
+#### Linux/macOS shell (bash) - Set `GOEXPERIMENT` environment variable
 
 - Set the environment variable for all future commands:
   ```sh
@@ -156,7 +157,7 @@ Another approach that generally works for any build system is to modify the buil
   go build ./myapp2
   ```
 - Or set the environment variable for only one command:
-  ```
+  ```sh
   GOEXPERIMENT=systemcrypto go build ./myapp
   ```
 
@@ -180,7 +181,7 @@ Another approach that generally works for any build system is to modify the buil
 
 - Instead of assigning `GOEXPERIMENT` directly, you can assign `GOFLAGS` to pass `-tags` to `go build`. This is useful if you already use `GOFLAGS` for other purposes, or if it would be difficult to modify `GOEXPERIMENT` for some other reason.
 - This is generally not necessary, and using the simpler `GOEXPERIMENT` environment variable is recommended.
-- Linux shell:
+- Linux/macOS shell:
   ```
   export GOFLAGS='-tags=goexperiment.systemcrypto'
   go build ./myapp
@@ -196,7 +197,7 @@ Another approach that generally works for any build system is to modify the buil
 
 ## Usage: Runtime
 
-A program built with `systemcrypto` always uses the system-provided cryptography library for supported crypto APIs. This is the case for `opensslcrypto` (always using OpenSSL) and `cngcrypto` (always using CNG). If the platform's crypto library can't be found or loaded, the Go program panics during initialization.
+A program built with `systemcrypto` always uses the system-provided cryptography library for supported crypto APIs. This is the case for `opensslcrypto` (always using OpenSSL), `cngcrypto` (always using CNG) and `darwincrypto` (always using CommonCrypto/CryptoKit). If the platform's crypto library can't be found or loaded, the Go program panics during initialization.
 
 The following sections describe how to enable FIPS mode and the effect of the `GOFIPS` environment variable on each supported platform.
 
@@ -228,6 +229,10 @@ If the Go runtime detects `GOFIPS=1` and FIPS policy is not enabled, the program
 > This is because Windows FIPS mode is not a per-process setting, and changing it may require elevated permissions. We expect that adding a feature that attempts to change the Windows policy would have unintended consequences.
 
 For testing purposes, Windows FIPS policy can be enabled via the registry key `HKLM\SYSTEM\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy`, dword value `Enabled` set to `1`.
+
+### macOS FIPS mode (CommonCrypto/CryptoKit)
+
+CommonCrypo/CrytoKit is FIPS compliant by default. This means that regardless of which mode you set `GOFIPS` to, the cryptographic functions will always be FIPS-enabled.
 
 ## Usage: Extra configuration options
 
@@ -438,6 +443,7 @@ This list of major changes is intended for quick reference and for access to his
 [go-crypto-openssl]: https://github.com/microsoft/go-crypto-openssl
 [golang-fips/openssl]: https://github.com/golang-fips/openssl
 [go-crypto-winnative]: https://github.com/microsoft/go-crypto-winnative
+[go-crypto-darwin]: https://github.com/microsoft/go-crypto-darwin
 [dlopen]: https://man7.org/linux/man-pages/man3/dlopen.3.html
 [microsoft-go-download]: https://github.com/microsoft/go#binary-distribution
 [microsoft-go-images]: https://github.com/microsoft/go-images
