@@ -27,7 +27,7 @@ In addition to that, the boringcrypto flag also provides a mechanism to restrict
 
 The Microsoft Go fork modifies the Go runtime to implement several crypto primitives using cgo to call into a platform-provided cryptographic library rather than use the standard Go crypto implementations. This allows Go programs to use a platform-provided FIPS 140-2 certified crypto library.
 
-On Linux, the fork uses [OpenSSL](https://www.openssl.org/) through the [golang-fips/openssl] module in Go 1.21+ and the [go-crypto-openssl] module in earlier versions. On Windows, [CNG](https://docs.microsoft.com/en-us/windows/win32/seccng/about-cng), using [go-crypto-winnative]. On macOS, [CommonCrypto](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/Common%20Crypto.3cc.html) and [CryptoKit](https://developer.apple.com/documentation/cryptokit) using [go-crypto-darwin]. Similar to BoringSSL, certain OpenSSL, CNG and CommonCrypto/CryptoKit versions are FIPS 140-2 certified.
+On Linux, the fork uses [OpenSSL](https://www.openssl.org/) through the [golang-fips/openssl] module in Go 1.21+ and the [go-crypto-openssl] module in earlier versions. On Windows, [CNG](https://docs.microsoft.com/en-us/windows/win32/seccng/about-cng), using [go-crypto-winnative]. Since 1.24, on macOS, [CommonCrypto](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/Common%20Crypto.3cc.html) and [CryptoKit](https://developer.apple.com/documentation/cryptokit) using [go-crypto-darwin]. Similar to BoringSSL, certain OpenSSL, CNG and CommonCrypto/CryptoKit versions are FIPS 140-2 certified.
 
 It is important to note that an application built with Microsoft's Go toolchain and running in FIPS compatible mode is not FIPS compliant _per-se_. It is the responsibility of the application development team to use FIPS-compliant crypto primitives and workflows. The modified crypto runtime will fall back to Go standard library crypto if it cannot provide a FIPS-compliant implementation, e.g. when hashing a message using `crypto/md5` hashes or when using an AES-GCM cipher with a non-standard nonce size.
 
@@ -60,7 +60,7 @@ There are typically two goals that lead to this document. Creating a FIPS compli
 | --- | --- | --- | --- |
 | Default | Default | Not compliant | Crypto usage is not FIPS compliant. |
 | `GOEXPERIMENT=systemcrypto` | Default | Compliant | Can be used to create a compliant app. FIPS mode is determined by system-wide configuration. Make sure you are familiar with your platform's system-wide FIPS switch, described in [Usage: Runtime](#usage-runtime). |
-| `GOEXPERIMENT=systemcrypto` | `GOFIPS=1` | Compliant | Can be used to create a compliant app. Depending on platform, the app either enables FIPS mode or ensures it is already enabled. The app panics if there is a problem. See [Usage: Runtime](#usage-runtime). |
+| `GOEXPERIMENT=systemcrypto` | `GOFIPS=1` | Compliant | Can be used to create a compliant app. Depending on platform, the app enables FIPS mode, ensures it is already enabled, or doesn't do any additional checks. The app panics if there is a problem. See [Usage: Runtime](#usage-runtime). |
 | `GOEXPERIMENT=systemcrypto` | `GOFIPS=0` | Compliant | Crypto usage is unlikely to be FIPS compliant. The exact behavior of `GOFIPS=0` varies per platform. See [Usage: Runtime](#usage-runtime). |
 | `GOEXPERIMENT=systemcrypto` | `GO_OPENSSL_VERSION_OVERRIDE=1.1.1k-fips` | Compliant | Can be used to create a compliant app. If the app is built for Linux, `systemcrypto` chooses `opensslcrypto`, and the environment variable causes it to load `libcrypto.so.1.1.1k-fips` instead of using the automatic search behavior. This environment variable has no effect with `cngcrypto`. |
 | `GOEXPERIMENT=systemcrypto` and `-tags=requirefips` | Default | Compliant | Can be used to create a compliant app. The behavior is the same as `GOFIPS=1`, but no runtime configuration is necessary. See [the `requirefips` section](#build-option-to-require-fips-mode) for more information on when this "locked-in" approach may be useful rather than the flexible approach. |
@@ -87,7 +87,7 @@ The `GOEXPERIMENT` environment variable is used at build time to select a crypto
   - Prior to Go 1.21, this alias is not available and the backend must be selected manually
 - `opensslcrypto` selects OpenSSL, for Linux
 - `cngcrypto` selects CNG, for Windows
-- `darwincrypto` selects CommonCrypto & CryptoKit for macOS
+- Since 1.24, `darwincrypto` selects CommonCrypto & CryptoKit for macOS
 - `boringcrypto` selects the upstream BoringCrypto backend, which is **not supported nor compliant**
 - If no option is selected, Go standard library cryptography is used.
 
@@ -99,7 +99,8 @@ The options are exclusive and must not be enabled at the same time as one anothe
 | --- | --- | --- |
 | Linux | `opensslcrypto` | OpenSSL |
 | Windows | `cngcrypto` | CNG |
-| macOS | `darwincrypto` | CommonCrypto & CryptoKit |
+| macOS (since 1.24) | `darwincrypto` | CommonCrypto & CryptoKit |
+| macOS (prior to 1.24) | N/A, build error | N/A |
 
 The crypto backend selection must match the target platform. In a cross-build scenario, such as using Linux to build an app that will run on Windows, `GOOS=windows GOEXPERIMENT=systemcrypto` will correctly select `cngcrypto`. Prior to Go 1.21, the selection must be made manually: `GOOS=windows GOEXPERIMENT=cngcrypto`.
 
@@ -233,6 +234,8 @@ For testing purposes, Windows FIPS policy can be enabled via the registry key `H
 ### macOS FIPS mode (CommonCrypto/CryptoKit)
 
 CommonCrypo/CrytoKit is FIPS compliant by default. This means that regardless of which mode you set `GOFIPS` to, the cryptographic functions will always be FIPS-enabled.
+
+Prior to 1.24, CommonCrypto/CryptoKit is not used by Microsoft Go.
 
 ## Usage: Extra configuration options
 
@@ -401,6 +404,10 @@ A program running in FIPS mode can claim it is using a FIPS-certified cryptograp
 ## Changelog
 
 This list of major changes is intended for quick reference and for access to historical information about versions that are no longer supported. The behavior of all in-support versions are documented in the sections above with notes for version-specific differences where necessary.
+
+### Go 1.24 (Feb 2025)
+
+- Introduces macOS crypto backend `darwincrypto`.
 
 ### Go [1.22.9-2](https://github.com/microsoft/go/releases/tag/v1.22.9-2) and [1.23.3-2](https://github.com/microsoft/go/releases/tag/v1.23.3-2) (Dec 2024)
 
