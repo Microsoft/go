@@ -18,17 +18,17 @@ Subject: [PATCH] Implement crypto/internal/backend
  src/crypto/internal/backend/fips140/boring.go |  11 +
  src/crypto/internal/backend/fips140/cng.go    |  33 ++
  src/crypto/internal/backend/fips140/darwin.go |  11 +
- .../internal/backend/fips140/fips140.go       |  55 +++
+ .../internal/backend/fips140/fips140.go       |  63 +++
  .../internal/backend/fips140/isrequirefips.go |   9 +
  .../internal/backend/fips140/norequirefips.go |   9 +
  .../backend/fips140/nosystemcrypto.go         |  11 +
  .../internal/backend/fips140/openssl.go       |  41 ++
  src/crypto/internal/backend/nobackend.go      | 240 ++++++++++++
- src/crypto/internal/backend/openssl_linux.go  | 362 ++++++++++++++++++
+ src/crypto/internal/backend/openssl_linux.go  | 360 ++++++++++++++++++
  src/crypto/internal/backend/stub.s            |  10 +
  src/go/build/deps_test.go                     |   7 +-
  src/runtime/runtime_boring.go                 |   5 +
- 24 files changed, 1932 insertions(+), 1 deletion(-)
+ 24 files changed, 1938 insertions(+), 1 deletion(-)
  create mode 100644 src/crypto/internal/backend/backend_test.go
  create mode 100644 src/crypto/internal/backend/bbig/big.go
  create mode 100644 src/crypto/internal/backend/bbig/big_boring.go
@@ -1326,17 +1326,22 @@ index 00000000000000..ef5af5d956163e
 +}
 diff --git a/src/crypto/internal/backend/fips140/fips140.go b/src/crypto/internal/backend/fips140/fips140.go
 new file mode 100644
-index 00000000000000..f54d39970319af
+index 00000000000000..41db34084032a3
 --- /dev/null
 +++ b/src/crypto/internal/backend/fips140/fips140.go
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,63 @@
 +// Copyright 2024 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
 +
 +package fips140
 +
-+import "syscall"
++import (
++	"internal/godebug"
++	"syscall"
++)
++
++var fips140GODEBUG = godebug.New("#fips140")
 +
 +// Enabled reports whether FIPS 140 mode is enabled by using GOFIPS=1, GOLANG_FIPS=1,
 +// the 'requirefips' build tag, or any other platform-specific mechanism.
@@ -1359,9 +1364,12 @@ index 00000000000000..f54d39970319af
 +func init() {
 +	// TODO: Decide which environment variable to use.
 +	// See https://github.com/microsoft/go/issues/397.
-+	var value string
 +	var ok bool
-+	if value, ok = syscall.Getenv("GOFIPS"); ok {
++	value := fips140GODEBUG.Value()
++	if value == "on" || value == "only" || value == "debug" {
++		value = "1"
++		Message = "environment variable GODEBUG=fips140=" + value
++	} else if value, ok = syscall.Getenv("GOFIPS"); ok {
 +		Message = "environment variable GOFIPS"
 +	} else if value, ok = syscall.Getenv("GOLANG_FIPS"); ok {
 +		Message = "environment variable GOLANG_FIPS"
@@ -1385,7 +1393,6 @@ index 00000000000000..f54d39970319af
 +		return
 +	}
 +}
-\ No newline at end of file
 diff --git a/src/crypto/internal/backend/fips140/isrequirefips.go b/src/crypto/internal/backend/fips140/isrequirefips.go
 new file mode 100644
 index 00000000000000..b33d08c84e2dae
@@ -1730,10 +1737,10 @@ index 00000000000000..eca1ceab2a04b9
 +}
 diff --git a/src/crypto/internal/backend/openssl_linux.go b/src/crypto/internal/backend/openssl_linux.go
 new file mode 100644
-index 00000000000000..57293ff2128dd6
+index 00000000000000..5ddcf98ea682a5
 --- /dev/null
 +++ b/src/crypto/internal/backend/openssl_linux.go
-@@ -0,0 +1,362 @@
+@@ -0,0 +1,360 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -1800,16 +1807,14 @@ index 00000000000000..57293ff2128dd6
 +		panic("opensslcrypto: can't initialize OpenSSL " + lcrypto + ": " + err.Error())
 +	}
 +	if fips140.Enabled() {
-+		if !openssl.FIPS() {
-+			if err := openssl.SetFIPS(true); err != nil {
-+				panic("opensslcrypto: can't enable FIPS mode for " + openssl.VersionText() + ": " + err.Error())
-+			}
++		// Use openssl.FIPSCapable instead of openssl.FIPS because some providers, e.g. SCOSSL, are FIPS compliant
++		// even when FIPS mode is not enabled.
++		if !openssl.FIPSCapable() {
++			panic("opensslcrypto: FIPS mode requested (" + fips140.Message + ") but not available in " + openssl.VersionText())
 +		}
 +	} else if fips140.Disabled() {
 +		if openssl.FIPS() {
-+			if err := openssl.SetFIPS(false); err != nil {
-+				panic("opensslcrypto: can't disable FIPS mode for " + openssl.VersionText() + ": " + err.Error())
-+			}
++			panic("opensslcrypto: FIPS mode explicitly disabled (" + fips140.Message + ") but enabled in " + openssl.VersionText())
 +		}
 +	}
 +	sig.BoringCrypto()
