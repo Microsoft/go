@@ -6,7 +6,7 @@ Subject: [PATCH] Vendor crypto backends
 To reproduce changes in 'src/vendor', run 'go mod vendor' in 'src'.
 Use a 'go' that was recently built by the current branch to ensure stable results.
 ---
- src/crypto/internal/backend/deps_ignore.go    |  19 +
+ src/crypto/internal/backend/deps_ignore.go    |  22 +
  src/go.mod                                    |   6 +
  src/go.sum                                    |   6 +
  src/go/build/deps_test.go                     |  17 +-
@@ -35,7 +35,7 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  .../github.com/golang-fips/openssl/v2/init.go |  64 ++
  .../golang-fips/openssl/v2/init_unix.go       |  31 +
  .../golang-fips/openssl/v2/init_windows.go    |  36 +
- .../golang-fips/openssl/v2/openssl.go         | 469 ++++++++++++
+ .../golang-fips/openssl/v2/openssl.go         | 506 +++++++++++++
  .../golang-fips/openssl/v2/params.go          | 210 ++++++
  .../golang-fips/openssl/v2/pbkdf2.go          |  62 ++
  .../golang-fips/openssl/v2/port_dsa.c         |  85 +++
@@ -67,7 +67,7 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  .../go-crypto-darwin/xcrypto/ecdsa.go         | 181 +++++
  .../go-crypto-darwin/xcrypto/ed25519.go       | 100 +++
  .../microsoft/go-crypto-darwin/xcrypto/evp.go | 338 +++++++++
- .../go-crypto-darwin/xcrypto/hash.go          | 391 ++++++++++
+ .../go-crypto-darwin/xcrypto/hash.go          | 403 ++++++++++
  .../go-crypto-darwin/xcrypto/hkdf.go          |  66 ++
  .../go-crypto-darwin/xcrypto/hmac.go          | 113 +++
  .../go-crypto-darwin/xcrypto/pbkdf2.go        |  65 ++
@@ -85,7 +85,7 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  .../microsoft/go-crypto-winnative/cng/dsa.go  | 465 ++++++++++++
  .../microsoft/go-crypto-winnative/cng/ecdh.go | 255 +++++++
  .../go-crypto-winnative/cng/ecdsa.go          | 169 +++++
- .../microsoft/go-crypto-winnative/cng/hash.go | 312 ++++++++
+ .../microsoft/go-crypto-winnative/cng/hash.go | 325 ++++++++
  .../microsoft/go-crypto-winnative/cng/hkdf.go | 124 +++
  .../microsoft/go-crypto-winnative/cng/hmac.go |  35 +
  .../microsoft/go-crypto-winnative/cng/keys.go | 220 ++++++
@@ -93,7 +93,7 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  .../microsoft/go-crypto-winnative/cng/rand.go |  28 +
  .../microsoft/go-crypto-winnative/cng/rc4.go  |  65 ++
  .../microsoft/go-crypto-winnative/cng/rsa.go  | 396 ++++++++++
- .../microsoft/go-crypto-winnative/cng/sha3.go | 284 +++++++
+ .../microsoft/go-crypto-winnative/cng/sha3.go | 311 ++++++++
  .../go-crypto-winnative/cng/tls1prf.go        |  88 +++
  .../internal/bcrypt/bcrypt_windows.go         | 368 +++++++++
  .../internal/bcrypt/ntstatus_windows.go       |  45 ++
@@ -101,7 +101,7 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  .../internal/subtle/aliasing.go               |  32 +
  .../internal/sysdll/sys_windows.go            |  55 ++
  src/vendor/modules.txt                        |  16 +
- 95 files changed, 13707 insertions(+), 3 deletions(-)
+ 95 files changed, 13799 insertions(+), 3 deletions(-)
  create mode 100644 src/crypto/internal/backend/deps_ignore.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitignore
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitleaks.toml
@@ -195,10 +195,10 @@ Use a 'go' that was recently built by the current branch to ensure stable result
 
 diff --git a/src/crypto/internal/backend/deps_ignore.go b/src/crypto/internal/backend/deps_ignore.go
 new file mode 100644
-index 00000000000000..ba6d196a54f69d
+index 00000000000000..ae4055d2d71303
 --- /dev/null
 +++ b/src/crypto/internal/backend/deps_ignore.go
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,22 @@
 +// Copyright 2025 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -211,6 +211,9 @@ index 00000000000000..ba6d196a54f69d
 +	_ "github.com/golang-fips/openssl/v2"
 +	_ "github.com/golang-fips/openssl/v2/bbig"
 +
++	_ "github.com/microsoft/go-crypto-darwin/bbig"
++	_ "github.com/microsoft/go-crypto-darwin/xcrypto"
++
 +	_ "github.com/microsoft/go-crypto-winnative/cng"
 +	_ "github.com/microsoft/go-crypto-winnative/cng/bbig"
 +)
@@ -219,7 +222,7 @@ index 00000000000000..ba6d196a54f69d
 +// that are used by the backend package. This allows to track
 +// their versions in a single patch file.
 diff --git a/src/go.mod b/src/go.mod
-index 7a1318dcac32ba..45152e6f54937b 100644
+index 7a1318dcac32ba..a59c5f120e7dfb 100644
 --- a/src/go.mod
 +++ b/src/go.mod
 @@ -11,3 +11,9 @@ require (
@@ -228,21 +231,21 @@ index 7a1318dcac32ba..45152e6f54937b 100644
  )
 +
 +require (
-+	github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337
-+	github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146
-+	github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37
++	github.com/golang-fips/openssl/v2 v2.0.4-0.20250115103809-bf655f6d08d6
++	github.com/microsoft/go-crypto-darwin v0.0.2-0.20250116101429-467bd63a2d67
++	github.com/microsoft/go-crypto-winnative v0.0.0-20250110072644-50d2dfac4b70
 +)
 diff --git a/src/go.sum b/src/go.sum
-index 9e661352f16e0b..5683f4da5e4f04 100644
+index 9e661352f16e0b..b4273d691cbe36 100644
 --- a/src/go.sum
 +++ b/src/go.sum
 @@ -1,3 +1,9 @@
-+github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337 h1:OhuURhDVbg+f/BvlG+qT5sQVkutwhI0Kmsy7koQ4l9A=
-+github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
-+github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146 h1:xg58D1m8jeq0lkMf7TmcLZXCAK/PRlT0aG02PYlA6C0=
-+github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146/go.mod h1:LyP4oZ0QcysEJdqUTOk9ngNFArRFK94YRImkoJ8julQ=
-+github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37 h1:KB8xmJcFSPlZFMg2mxz5b6DCE8k1qpHy2HFevAJLELI=
-+github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37/go.mod h1:JkxQeL8dGcyCuKjn1Etz4NmQrOMImMy4BA9hptEfVFA=
++github.com/golang-fips/openssl/v2 v2.0.4-0.20250115103809-bf655f6d08d6 h1:FFp7Q2AwYX+IQhhQt3ljQDdWtG5ZbRu0u3ohWQdFow8=
++github.com/golang-fips/openssl/v2 v2.0.4-0.20250115103809-bf655f6d08d6/go.mod h1:OYUBsoxLpFu8OFyhZHxfpN8lgcsw8JhTC3BQK7+XUc0=
++github.com/microsoft/go-crypto-darwin v0.0.2-0.20250116101429-467bd63a2d67 h1:SI0IFiHducwfamZR7pv6jb92oc5o/z5tn66wynS6ADE=
++github.com/microsoft/go-crypto-darwin v0.0.2-0.20250116101429-467bd63a2d67/go.mod h1:LyP4oZ0QcysEJdqUTOk9ngNFArRFK94YRImkoJ8julQ=
++github.com/microsoft/go-crypto-winnative v0.0.0-20250110072644-50d2dfac4b70 h1:97wOagHu7OExwU929NjuPIlUEUaFIQtffQMaVj0mR5E=
++github.com/microsoft/go-crypto-winnative v0.0.0-20250110072644-50d2dfac4b70/go.mod h1:JkxQeL8dGcyCuKjn1Etz4NmQrOMImMy4BA9hptEfVFA=
  golang.org/x/crypto v0.30.0 h1:RwoQn3GkWiMkzlX562cLB7OxWvjH1L8xutO2WoJcRoY=
  golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
  golang.org/x/net v0.32.1-0.20241206180132-552d8ac903a1 h1:+Yk1FZ5E+/ewA0nOO/HRYs9E4yeqpGOShuSAdzCNNoQ=
@@ -5116,10 +5119,10 @@ index 00000000000000..3778e21227abb9
 +}
 diff --git a/src/vendor/github.com/golang-fips/openssl/v2/openssl.go b/src/vendor/github.com/golang-fips/openssl/v2/openssl.go
 new file mode 100644
-index 00000000000000..145b082f1b771c
+index 00000000000000..ec39bf1533cae0
 --- /dev/null
 +++ b/src/vendor/github.com/golang-fips/openssl/v2/openssl.go
-@@ -0,0 +1,469 @@
+@@ -0,0 +1,506 @@
 +//go:build !cmd_go_bootstrap
 +
 +// Package openssl provides access to OpenSSL cryptographic functions.
@@ -5256,6 +5259,37 @@ index 00000000000000..145b082f1b771c
 +	}
 +}
 +
++// FIPSCapable returns true if the provider used by default matches the `fips=yes` query.
++// It is useful for checking whether OpenSSL is capable of running in FIPS mode regardless
++// of whether FIPS mode is explicitly enabled. For example, Azure Linux 3 doesn't set the
++// `fips=yes` query in the default properties, but sets the default provider to be SCOSSL,
++// which is FIPS-capable.
++//
++// Considerations:
++//   - Multiple calls to FIPSCapable can return different values if [SetFIPS] is called in between.
++//   - Can return true even if [FIPS] returns false, because [FIPS] also checks whether
++//     the default properties contain `fips=yes`.
++//   - When using OpenSSL 3, will always return true if [FIPS] returns true.
++//   - When using OpenSSL 1, Will always return the same value as [FIPS].
++//   - OpenSSL 3 doesn't provide a way to know if a provider is FIPS-capable. This function uses
++//     some heuristics that should be treated as an implementation detail that may change in the future.
++func FIPSCapable() bool {
++	if FIPS() {
++		return true
++	}
++	if vMajor == 3 {
++		// Load the provider with and without the `fips=yes` query.
++		// If the providers are the same, then the default provider is FIPS-capable.
++		provFIPS := sha256Provider(propFIPS)
++		if provFIPS == nil {
++			return false
++		}
++		provDefault := sha256Provider(nil)
++		return provFIPS == provDefault
++	}
++	return false
++}
++
 +// isProviderAvailable checks if the provider with the given name is available.
 +// This function is used in export_test.go, but must be defined here as test files can't access C functions.
 +func isProviderAvailable(name string) bool {
@@ -5315,16 +5349,22 @@ index 00000000000000..145b082f1b771c
 +	}
 +}
 +
-+// proveSHA256 checks if the SHA-256 algorithm is available
++// sha256Provider returns the provider for the SHA-256 algorithm
 +// using the given properties.
-+func proveSHA256(props *C.char) bool {
++func sha256Provider(props *C.char) C.GO_OSSL_PROVIDER_PTR {
 +	md := C.go_openssl_EVP_MD_fetch(nil, algorithmSHA256, props)
 +	if md == nil {
 +		C.go_openssl_ERR_clear_error()
-+		return false
++		return nil
 +	}
-+	C.go_openssl_EVP_MD_free(md)
-+	return true
++	defer C.go_openssl_EVP_MD_free(md)
++	return C.go_openssl_EVP_MD_get0_provider(md)
++}
++
++// proveSHA256 checks if the SHA-256 algorithm is available
++// using the given properties.
++func proveSHA256(props *C.char) bool {
++	return sha256Provider(props) != nil
 +}
 +
 +// noescape hides a pointer from escape analysis. noescape is
@@ -9676,10 +9716,10 @@ index 00000000000000..fcdce4c49b6723
 +}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hash.go b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hash.go
 new file mode 100644
-index 00000000000000..2618e53134e915
+index 00000000000000..94442fde5def16
 --- /dev/null
 +++ b/src/vendor/github.com/microsoft/go-crypto-darwin/xcrypto/hash.go
-@@ -0,0 +1,391 @@
+@@ -0,0 +1,403 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT License.
 +
@@ -9894,6 +9934,18 @@ index 00000000000000..2618e53134e915
 +	C.memcpy(h.ctx2, h.ctx, C.size_t(h.ctxSize))
 +	h.final(h.ctx2, digest)
 +	return append(b, digest...)
++}
++
++func (h *evpHash) MarshalBinary() ([]byte, error) {
++	return nil, errors.New("xcrypto: hash state is not marshallable")
++}
++
++func (h *evpHash) AppendBinary(b []byte) ([]byte, error) {
++	return nil, errors.New("xcrypto: hash state is not marshallable")
++}
++
++func (h *evpHash) UnmarshalBinary(data []byte) error {
++	return errors.New("xcrypto: hash state is not marshallable")
 +}
 +
 +// Clone returns a new evpHash object that is a deep clone of itself.
@@ -12434,10 +12486,10 @@ index 00000000000000..586e9ae2ebb0c9
 +}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/cng/hash.go b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/hash.go
 new file mode 100644
-index 00000000000000..a674496f18a3af
+index 00000000000000..b97e638e4a98ed
 --- /dev/null
 +++ b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/hash.go
-@@ -0,0 +1,312 @@
+@@ -0,0 +1,325 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT License.
 +
@@ -12449,6 +12501,7 @@ index 00000000000000..a674496f18a3af
 +import (
 +	"bytes"
 +	"crypto"
++	"errors"
 +	"hash"
 +	"runtime"
 +	"unsafe"
@@ -12688,6 +12741,18 @@ index 00000000000000..a674496f18a3af
 +
 +func (h *hashX) BlockSize() int {
 +	return int(h.alg.blockSize)
++}
++
++func (hx *hashX) MarshalBinary() ([]byte, error) {
++	return nil, errors.New("cng: hash state is not marshallable")
++}
++
++func (hx *hashX) AppendBinary(b []byte) ([]byte, error) {
++	return nil, errors.New("cng: hash state is not marshallable")
++}
++
++func (hx *hashX) UnmarshalBinary(data []byte) error {
++	return errors.New("cng: hash state is not marshallable")
 +}
 +
 +// hashData writes p to ctx. It panics on error.
@@ -13732,10 +13797,10 @@ index 00000000000000..0269f9cf86539e
 +}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/cng/sha3.go b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/sha3.go
 new file mode 100644
-index 00000000000000..d7aa193e00e653
+index 00000000000000..15c1345475a3b1
 --- /dev/null
 +++ b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/sha3.go
-@@ -0,0 +1,284 @@
+@@ -0,0 +1,311 @@
 +// Copyright (c) Microsoft Corporation.
 +// Licensed under the MIT License.
 +
@@ -13745,6 +13810,7 @@ index 00000000000000..d7aa193e00e653
 +package cng
 +
 +import (
++	"errors"
 +	"hash"
 +	"runtime"
 +	"unsafe"
@@ -13796,17 +13862,19 @@ index 00000000000000..d7aa193e00e653
 +	return out
 +}
 +
-+// SupportsSHAKE128 returns true if the SHAKE128 extendable output function is
-+// supported.
-+func SupportsSHAKE128() bool {
-+	_, err := loadHash(bcrypt.CSHAKE128_ALGORITHM, bcrypt.ALG_NONE_FLAG)
-+	return err == nil
-+}
-+
-+// SupportsSHAKE256 returns true if the SHAKE256 extendable output function is
-+// supported.
-+func SupportsSHAKE256() bool {
-+	_, err := loadHash(bcrypt.CSHAKE256_ALGORITHM, bcrypt.ALG_NONE_FLAG)
++// SupportsSHAKE returns true if the SHAKE and CSHAKE extendable output functions
++// with the given securityBits are supported.
++func SupportsSHAKE(securityBits int) bool {
++	var id string
++	switch securityBits {
++	case 128:
++		id = bcrypt.CSHAKE128_ALGORITHM
++	case 256:
++		id = bcrypt.CSHAKE256_ALGORITHM
++	default:
++		return false
++	}
++	_, err := loadHash(id, bcrypt.ALG_NONE_FLAG)
 +	return err == nil
 +}
 +
@@ -13898,6 +13966,18 @@ index 00000000000000..d7aa193e00e653
 +
 +func (h *DigestSHA3) BlockSize() int {
 +	return int(h.alg.blockSize)
++}
++
++func (ds *DigestSHA3) MarshalBinary() ([]byte, error) {
++	return nil, errors.New("cng: hash state is not marshallable")
++}
++
++func (ds *DigestSHA3) AppendBinary(b []byte) ([]byte, error) {
++	return nil, errors.New("cng: hash state is not marshallable")
++}
++
++func (ds *DigestSHA3) UnmarshalBinary(data []byte) error {
++	return errors.New("cng: hash state is not marshallable")
 +}
 +
 +// NewSHA3_256 returns a new SHA256 hash.
@@ -14019,6 +14099,18 @@ index 00000000000000..d7aa193e00e653
 +// BlockSize returns the rate of the XOF.
 +func (s *SHAKE) BlockSize() int {
 +	return int(s.blockSize)
++}
++
++func (s *SHAKE) MarshalBinary() ([]byte, error) {
++	return nil, errors.New("cng: hash state is not marshallable")
++}
++
++func (s *SHAKE) AppendBinary(b []byte) ([]byte, error) {
++	return nil, errors.New("cng: hash state is not marshallable")
++}
++
++func (s *SHAKE) UnmarshalBinary(data []byte) error {
++	return errors.New("cng: hash state is not marshallable")
 +}
 diff --git a/src/vendor/github.com/microsoft/go-crypto-winnative/cng/tls1prf.go b/src/vendor/github.com/microsoft/go-crypto-winnative/cng/tls1prf.go
 new file mode 100644
@@ -15057,20 +15149,20 @@ index 00000000000000..1722410e5af193
 +	return getSystemDirectory() + "\\" + dll
 +}
 diff --git a/src/vendor/modules.txt b/src/vendor/modules.txt
-index 1c8de570cc2f1f..aac6c2a60b6b80 100644
+index 1c8de570cc2f1f..a249bbfa93dac3 100644
 --- a/src/vendor/modules.txt
 +++ b/src/vendor/modules.txt
 @@ -1,3 +1,19 @@
-+# github.com/golang-fips/openssl/v2 v2.0.4-0.20250107115006-eb155dada337
++# github.com/golang-fips/openssl/v2 v2.0.4-0.20250115103809-bf655f6d08d6
 +## explicit; go 1.22
 +github.com/golang-fips/openssl/v2
 +github.com/golang-fips/openssl/v2/bbig
-+# github.com/microsoft/go-crypto-darwin v0.0.2-0.20250109125424-5d0e67f47146
++# github.com/microsoft/go-crypto-darwin v0.0.2-0.20250116101429-467bd63a2d67
 +## explicit; go 1.22
 +github.com/microsoft/go-crypto-darwin/bbig
 +github.com/microsoft/go-crypto-darwin/internal/cryptokit
 +github.com/microsoft/go-crypto-darwin/xcrypto
-+# github.com/microsoft/go-crypto-winnative v0.0.0-20250108090702-b49854c00e37
++# github.com/microsoft/go-crypto-winnative v0.0.0-20250110072644-50d2dfac4b70
 +## explicit; go 1.22
 +github.com/microsoft/go-crypto-winnative/cng
 +github.com/microsoft/go-crypto-winnative/cng/bbig
