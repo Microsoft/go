@@ -24,11 +24,11 @@ Subject: [PATCH] Implement crypto/internal/backend
  .../backend/fips140/nosystemcrypto.go         |  11 +
  .../internal/backend/fips140/openssl.go       |  41 ++
  src/crypto/internal/backend/nobackend.go      | 240 ++++++++++++
- src/crypto/internal/backend/openssl_linux.go  | 362 ++++++++++++++++++
+ src/crypto/internal/backend/openssl_linux.go  | 360 ++++++++++++++++++
  src/crypto/internal/backend/stub.s            |  10 +
  src/go/build/deps_test.go                     |   7 +-
  src/runtime/runtime_boring.go                 |   5 +
- 24 files changed, 1932 insertions(+), 1 deletion(-)
+ 24 files changed, 1930 insertions(+), 1 deletion(-)
  create mode 100644 src/crypto/internal/backend/backend_test.go
  create mode 100644 src/crypto/internal/backend/bbig/big.go
  create mode 100644 src/crypto/internal/backend/bbig/big_boring.go
@@ -1730,10 +1730,10 @@ index 00000000000000..eca1ceab2a04b9
 +}
 diff --git a/src/crypto/internal/backend/openssl_linux.go b/src/crypto/internal/backend/openssl_linux.go
 new file mode 100644
-index 00000000000000..57293ff2128dd6
+index 00000000000000..5ddcf98ea682a5
 --- /dev/null
 +++ b/src/crypto/internal/backend/openssl_linux.go
-@@ -0,0 +1,362 @@
+@@ -0,0 +1,360 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -1800,16 +1800,14 @@ index 00000000000000..57293ff2128dd6
 +		panic("opensslcrypto: can't initialize OpenSSL " + lcrypto + ": " + err.Error())
 +	}
 +	if fips140.Enabled() {
-+		if !openssl.FIPS() {
-+			if err := openssl.SetFIPS(true); err != nil {
-+				panic("opensslcrypto: can't enable FIPS mode for " + openssl.VersionText() + ": " + err.Error())
-+			}
++		// Use openssl.FIPSCapable instead of openssl.FIPS because some providers, e.g. SCOSSL, are FIPS compliant
++		// even when FIPS mode is not enabled.
++		if !openssl.FIPSCapable() {
++			panic("opensslcrypto: FIPS mode requested (" + fips140.Message + ") but not available in " + openssl.VersionText())
 +		}
 +	} else if fips140.Disabled() {
 +		if openssl.FIPS() {
-+			if err := openssl.SetFIPS(false); err != nil {
-+				panic("opensslcrypto: can't disable FIPS mode for " + openssl.VersionText() + ": " + err.Error())
-+			}
++			panic("opensslcrypto: FIPS mode explicitly disabled (" + fips140.Message + ") but enabled in " + openssl.VersionText())
 +		}
 +	}
 +	sig.BoringCrypto()
