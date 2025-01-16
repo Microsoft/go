@@ -351,7 +351,6 @@ Below are the supported [`tls.SignatureSchemes`](https://pkg.go.dev/crypto/tls#S
 | PKCS1WithSHA256        | ✔️      | ✔️    | ✔️    |
 | PKCS1WithSHA384        | ✔️      | ✔️    | ✔️    |
 | PKCS1WithSHA512        | ✔️      | ✔️    | ✔️    |
-| PSSWithSHA1            | ❌      | ❌    | ✔️    |
 | PSSWithSHA256          | ✔️      | ✔️    | ✔️    |
 | PSSWithSHA384          | ✔️      | ✔️    | ✔️    |
 | PSSWithSHA512          | ✔️      | ✔️    | ✔️    |
