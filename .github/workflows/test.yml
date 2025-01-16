@@ -17,12 +17,17 @@ on:
   pull_request:
     branches: [ microsoft/* ]
 
+# Cancel existing runs if user makes another push.
+concurrency:
+  group: "${{ github.ref }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   check_patches:
     name: Patches Apply Cleanly
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - run: pwsh eng/run.ps1 submodule-refresh -shallow
