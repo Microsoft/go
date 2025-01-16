@@ -25,12 +25,14 @@ jobs:
           git config --global user.email "joe@blogs.com"
           git config --global user.name "Joe Blogs"
 
-      - run: |
+      - name: Build patches
+        run: |
           for file in $(ls -v patches/*.patch); do
+            echo "::group::Building $file"
             cd go
             git am --whitespace=nowarn ../$file
-            echo "Building $file"
             cd src
             bash make.bash
             cd ../../
+            echo "::endgroup::"
           done
