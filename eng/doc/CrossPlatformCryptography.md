@@ -29,7 +29,8 @@ SCOSSL is expected to be used with the default built-in provider enabled as a fa
 ## macOS
 
 On macOS, Microsoft Go uses [CommonCrypto](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/Common%20Crypto.3cc.html) and [CryptoKit](https://developer.apple.com/documentation/cryptokit) for cryptographic operations.
-CommonCrypto and CryptoKit is shipped with macOS and it doesn't require any additional installation nor configuration. Currently macOS 13 and above is supported.
+CommonCrypto and CryptoKit are shipped with macOS and don't require any additional installation nor configuration.
+Currently macOS 13 and above is supported.
 
 ## Table legend
 
@@ -132,7 +133,7 @@ This section includes the following subsections:
 ### RSA
 
 > [!WARNING]  
-> System Libraries might not fully implement all RSA features. Please see the subsections below for more information.
+> System libraries might not fully implement all RSA features. Please see the subsections below for more information.
 
 This section includes the following packages:
 
