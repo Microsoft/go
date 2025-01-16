@@ -147,7 +147,7 @@ func main() {
 		}
 
 		if *fipsMode {
-			env("GOFIPS", "1")
+			envAppend("GODEBUG", "fips140=on")
 			// Enable system-wide FIPS if supported by the host platform.
 			restore, err := enableSystemWideFIPS()
 			if err != nil {
@@ -210,6 +210,15 @@ func main() {
 // env sets an env var and logs it. Panics if it doesn't succeed.
 func env(key, value string) {
 	fmt.Printf("Setting env '%s' to '%s'\n", key, value)
+	if err := os.Setenv(key, value); err != nil {
+		panic(err)
+	}
+}
+
+func envAppend(key, value string) {
+	if v, ok := os.LookupEnv(key); ok {
+		value = v + "," + value
+	}
 	if err := os.Setenv(key, value); err != nil {
 		panic(err)
 	}

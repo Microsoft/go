@@ -1326,7 +1326,7 @@ index 00000000000000..ef5af5d956163e
 +}
 diff --git a/src/crypto/internal/backend/fips140/fips140.go b/src/crypto/internal/backend/fips140/fips140.go
 new file mode 100644
-index 00000000000000..41db34084032a3
+index 00000000000000..bd09f9081b5859
 --- /dev/null
 +++ b/src/crypto/internal/backend/fips140/fips140.go
 @@ -0,0 +1,63 @@
@@ -1343,7 +1343,7 @@ index 00000000000000..41db34084032a3
 +
 +var fips140GODEBUG = godebug.New("#fips140")
 +
-+// Enabled reports whether FIPS 140 mode is enabled by using GOFIPS=1, GOLANG_FIPS=1,
++// Enabled reports whether FIPS 140 mode is enabled by using GODEBUG, GOFIPS, GOLANG_FIPS,
 +// the 'requirefips' build tag, or any other platform-specific mechanism.
 +func Enabled() bool {
 +	return enabled
@@ -1351,7 +1351,7 @@ index 00000000000000..41db34084032a3
 +
 +var enabled bool
 +
-+// Disabled reports whether FIPS 140 mode is disabled by using GOFIPS=0 or GOLANG_FIPS=0.
++// Disabled reports whether FIPS 140 mode is disabled by using GOFIPS or GOLANG_FIPS.
 +func Disabled() bool {
 +	return disabled
 +}
@@ -1444,7 +1444,7 @@ index 00000000000000..83691d7dd42d51
 +}
 diff --git a/src/crypto/internal/backend/fips140/openssl.go b/src/crypto/internal/backend/fips140/openssl.go
 new file mode 100644
-index 00000000000000..118efa3a492a7d
+index 00000000000000..3169cbe40f23af
 --- /dev/null
 +++ b/src/crypto/internal/backend/fips140/openssl.go
 @@ -0,0 +1,41 @@
@@ -1475,7 +1475,7 @@ index 00000000000000..118efa3a492a7d
 +			// If there is an error reading we could either panic or assume FIPS is not enabled.
 +			// Panicking would be too disruptive for apps that don't require FIPS.
 +			// If an app wants to be 100% sure that is running in FIPS mode
-+			// it should use boring.Enabled() or GOFIPS=1.
++			// it should use fips140.Enabled() or GODEBUG=fips140=on.
 +			return false
 +		}
 +	}
