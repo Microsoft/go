@@ -5,7 +5,7 @@ Subject: [PATCH] Use crypto backends
 
 ---
  src/cmd/api/boring_test.go                    |   2 +-
- src/cmd/dist/test.go                          |   8 +-
+ src/cmd/dist/test.go                          |  16 +-
  src/cmd/go/go_boring_test.go                  |  11 +-
  src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
  .../go/testdata/script/gopath_std_vendor.txt  |   9 +
@@ -82,7 +82,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 78 files changed, 1099 insertions(+), 110 deletions(-)
+ 78 files changed, 1107 insertions(+), 110 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -108,7 +108,7 @@ index f0e3575637c62a..9eab3b4e66e60b 100644
  package main
  
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 0c992118f4287b..3316bb52a61ff1 100644
+index 0c992118f4287b..8b9b59dc192ba8 100644
 --- a/src/cmd/dist/test.go
 +++ b/src/cmd/dist/test.go
 @@ -1161,6 +1161,11 @@ func (t *tester) internalLink() bool {
@@ -137,6 +137,21 @@ index 0c992118f4287b..3316bb52a61ff1 100644
  			// Static linking tests
  			if goos != "android" && p != "netbsd/arm" && !t.msan && !t.asan {
  				// TODO(#56629): Why does this fail on netbsd-arm?
+@@ -1804,6 +1808,14 @@ func (t *tester) fipsSupported() bool {
+ 		return false
+ 	}
+ 
++	// FIPS is only supported if systemcrypto is enabled.
++	if !strings.Contains(goexperiment, "systemcrypto") &&
++		!strings.Contains(goexperiment, "opensslcrypto") &&
++		!strings.Contains(goexperiment, "cngcrypto") &&
++		!strings.Contains(goexperiment, "darwincrypto") {
++		return false
++	}
++
+ 	// If this goos/goarch does not support FIPS at all, return no versions.
+ 	// The logic here matches crypto/internal/fips140/check.Supported for now.
+ 	// In the future, if some snapshots add support for these, we will have
 diff --git a/src/cmd/go/go_boring_test.go b/src/cmd/go/go_boring_test.go
 index ed0fbf3d53d75b..8111b143a1295b 100644
 --- a/src/cmd/go/go_boring_test.go
