@@ -2154,7 +2154,7 @@ index 00000000000000..d469f2dddfd41e
 +		// even when FIPS mode is not enabled.
 +		if !openssl.FIPSCapable() {
 +			// TODO: remove
-+			println("executable:" runtime_arg0())
++			println("executable:", runtime_arg0())
 +			panic("opensslcrypto: FIPS mode requested (" + fips140.Message + ") but not available in " + openssl.VersionText())
 +		}
 +	} else if fips140.Disabled() {
