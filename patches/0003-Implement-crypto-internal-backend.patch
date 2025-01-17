@@ -26,7 +26,7 @@ Subject: [PATCH] Implement crypto/internal/backend
  .../backend/fips140/nosystemcrypto.go         |  11 +
  .../internal/backend/fips140/openssl.go       |  41 ++
  src/crypto/internal/backend/nobackend.go      | 240 ++++++++++++
- src/crypto/internal/backend/openssl_linux.go  | 360 ++++++++++++++++++
+ src/crypto/internal/backend/openssl_linux.go  | 362 ++++++++++++++++++
  src/crypto/internal/backend/stub.s            |  10 +
  src/go/build/deps_test.go                     |   7 +-
  .../exp_allowcryptofallback_off.go            |   9 +
@@ -45,7 +45,7 @@ Subject: [PATCH] Implement crypto/internal/backend
  ...ckenderr_gen_requirefips_nosystemcrypto.go |  17 +
  .../backenderr_gen_systemcrypto_nobackend.go  |  16 +
  src/runtime/runtime_boring.go                 |   5 +
- 41 files changed, 2492 insertions(+), 1 deletion(-)
+ 41 files changed, 2494 insertions(+), 1 deletion(-)
  create mode 100644 src/crypto/internal/backend/backend_test.go
  create mode 100644 src/crypto/internal/backend/backendgen.go
  create mode 100644 src/crypto/internal/backend/backendgen_test.go
@@ -2080,10 +2080,10 @@ index 00000000000000..7c3a95c2c64a2d
 +}
 diff --git a/src/crypto/internal/backend/openssl_linux.go b/src/crypto/internal/backend/openssl_linux.go
 new file mode 100644
-index 00000000000000..5ddcf98ea682a5
+index 00000000000000..d469f2dddfd41e
 --- /dev/null
 +++ b/src/crypto/internal/backend/openssl_linux.go
-@@ -0,0 +1,360 @@
+@@ -0,0 +1,362 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -2153,6 +2153,8 @@ index 00000000000000..5ddcf98ea682a5
 +		// Use openssl.FIPSCapable instead of openssl.FIPS because some providers, e.g. SCOSSL, are FIPS compliant
 +		// even when FIPS mode is not enabled.
 +		if !openssl.FIPSCapable() {
++			// TODO: remove
++			println("executable:" runtime_arg0())
 +			panic("opensslcrypto: FIPS mode requested (" + fips140.Message + ") but not available in " + openssl.VersionText())
 +		}
 +	} else if fips140.Disabled() {
