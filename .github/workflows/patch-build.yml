@@ -1,0 +1,38 @@
+# Copyright (c) Microsoft Corporation.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+# This job tests that each patch file is buildable (in numerical order)
+
+name: "Patch Build"
+
+on:
+  pull_request:
+    branches: [ microsoft/* ]
+
+jobs:
+  build_patches:
+    name: Patches Build in Order
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          submodules: true
+
+      - name: Set mock git config name/email
+        run: |
+          git config --global user.email "joe@blogs.com"
+          git config --global user.name "Joe Blogs"
+
+      - name: Build patches
+        run: |
+          for file in $(ls -v patches/*.patch); do
+            echo "::group::Building $file"
+            cd go
+            git am --whitespace=nowarn ../$file
+            cd src
+            bash make.bash
+            cd ../../
+            echo "::endgroup::"
+          done
