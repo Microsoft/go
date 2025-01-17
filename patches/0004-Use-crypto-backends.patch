@@ -37,6 +37,7 @@ Subject: [PATCH] Use crypto backends
  src/crypto/hmac/hmac_test.go                  |   2 +-
  src/crypto/internal/cryptotest/allocations.go |   2 +-
  .../internal/cryptotest/implementations.go    |   2 +-
+ src/crypto/internal/fips140test/check_test.go |   3 +-
  src/crypto/md5/md5.go                         |  10 +
  src/crypto/md5/md5_test.go                    |  16 ++
  src/crypto/pbkdf2/pbkdf2.go                   |   4 +
@@ -81,7 +82,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 77 files changed, 1097 insertions(+), 109 deletions(-)
+ 78 files changed, 1099 insertions(+), 110 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -1130,6 +1131,27 @@ index 3fa730459050f6..1f28f12a6e7b4f 100644
  	"crypto/internal/impl"
  	"internal/goos"
  	"internal/testenv"
+diff --git a/src/crypto/internal/fips140test/check_test.go b/src/crypto/internal/fips140test/check_test.go
+index 6b0cd3f39e1695..237cf289dd45cf 100644
+--- a/src/crypto/internal/fips140test/check_test.go
++++ b/src/crypto/internal/fips140test/check_test.go
+@@ -5,6 +5,7 @@
+ package fipstest
+ 
+ import (
++	boring "crypto/internal/backend"
+ 	"crypto/internal/fips140"
+ 	. "crypto/internal/fips140/check"
+ 	"crypto/internal/fips140/check/checktest"
+@@ -18,7 +19,7 @@ import (
+ 	"unsafe"
+ )
+ 
+-const enableFIPSTest = true
++const enableFIPSTest = boring.Enabled
+ 
+ func TestFIPSCheckVerify(t *testing.T) {
+ 	if Verified {
 diff --git a/src/crypto/md5/md5.go b/src/crypto/md5/md5.go
 index a0384e175f31bd..f7aa6da36f02de 100644
 --- a/src/crypto/md5/md5.go
