@@ -21,13 +21,11 @@ func enableSystemWideFIPS() (restore func(), err error) {
 	log.Println("Enabled Mariner and Azure Linux 3 FIPS mode.")
 
 	return func() {
-		if ok {
-			err := os.Unsetenv("OPENSSL_FORCE_FIPS_MODE")
-			if err != nil {
-				log.Printf("Unable to unset OPENSSL_FORCE_FIPS_MODE: %v\n", err)
-				return
-			}
-			log.Println("Successfully unset OPENSSL_FORCE_FIPS_MODE.")
+		err := os.Unsetenv("OPENSSL_FORCE_FIPS_MODE")
+		if err != nil {
+			log.Printf("Unable to unset OPENSSL_FORCE_FIPS_MODE: %v\n", err)
+			return
 		}
+		log.Println("Successfully unset OPENSSL_FORCE_FIPS_MODE.")
 	}, nil
 }
