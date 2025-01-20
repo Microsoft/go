@@ -7,13 +7,13 @@ Subject: [PATCH] Implement crypto/internal/backend
  .gitignore                                    |   2 +
  src/crypto/internal/backend/backend_test.go   |  30 ++
  src/crypto/internal/backend/backendgen.go     |  20 +
- .../internal/backend/backendgen_test.go       | 284 ++++++++++++++
+ .../internal/backend/backendgen_test.go       | 284 +++++++++++++
  src/crypto/internal/backend/bbig/big.go       |  17 +
  .../internal/backend/bbig/big_boring.go       |  12 +
  src/crypto/internal/backend/bbig/big_cng.go   |  12 +
  .../internal/backend/bbig/big_darwin.go       |  12 +
  .../internal/backend/bbig/big_openssl.go      |  12 +
- src/crypto/internal/backend/boring_linux.go   | 279 ++++++++++++++
+ src/crypto/internal/backend/boring_linux.go   | 279 +++++++++++++
  src/crypto/internal/backend/cng_windows.go    | 336 ++++++++++++++++
  src/crypto/internal/backend/common.go         |  59 +++
  src/crypto/internal/backend/darwin_darwin.go  | 359 +++++++++++++++++
@@ -25,8 +25,8 @@ Subject: [PATCH] Implement crypto/internal/backend
  .../internal/backend/fips140/norequirefips.go |   9 +
  .../backend/fips140/nosystemcrypto.go         |  11 +
  .../internal/backend/fips140/openssl.go       |  41 ++
- src/crypto/internal/backend/nobackend.go      | 240 ++++++++++++
- src/crypto/internal/backend/openssl_linux.go  | 360 ++++++++++++++++++
+ src/crypto/internal/backend/nobackend.go      | 240 +++++++++++
+ src/crypto/internal/backend/openssl_linux.go  | 377 ++++++++++++++++++
  src/crypto/internal/backend/stub.s            |  10 +
  src/go/build/deps_test.go                     |   7 +-
  .../exp_allowcryptofallback_off.go            |   9 +
@@ -45,7 +45,7 @@ Subject: [PATCH] Implement crypto/internal/backend
  ...ckenderr_gen_requirefips_nosystemcrypto.go |  17 +
  .../backenderr_gen_systemcrypto_nobackend.go  |  16 +
  src/runtime/runtime_boring.go                 |   5 +
- 41 files changed, 2500 insertions(+), 1 deletion(-)
+ 41 files changed, 2517 insertions(+), 1 deletion(-)
  create mode 100644 src/crypto/internal/backend/backend_test.go
  create mode 100644 src/crypto/internal/backend/backendgen.go
  create mode 100644 src/crypto/internal/backend/backendgen_test.go
@@ -2087,10 +2087,10 @@ index 00000000000000..7c3a95c2c64a2d
 +}
 diff --git a/src/crypto/internal/backend/openssl_linux.go b/src/crypto/internal/backend/openssl_linux.go
 new file mode 100644
-index 00000000000000..5ddcf98ea682a5
+index 00000000000000..0c4e0c9da6e1ce
 --- /dev/null
 +++ b/src/crypto/internal/backend/openssl_linux.go
-@@ -0,0 +1,360 @@
+@@ -0,0 +1,377 @@
 +// Copyright 2017 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -2157,12 +2157,29 @@ index 00000000000000..5ddcf98ea682a5
 +		panic("opensslcrypto: can't initialize OpenSSL " + lcrypto + ": " + err.Error())
 +	}
 +	if fips140.Enabled() {
-+		// Use openssl.FIPSCapable instead of openssl.FIPS because some providers, e.g. SCOSSL, are FIPS compliant
-+		// even when FIPS mode is not enabled.
++		// Some distributions, e.g. Azure Linux 3, don't set the `fips=yes` property when running in FIPS mode,
++		// but they configure OpenSSL to use a FIPS-compliant provider (in the case of Azure Linux 3, the SCOSSL provider).
++		// In this cases, openssl.FIPS would return `false` and openssl.FIPSCapable would return `true`.
++		// We don't care about the `fips=yes` property as long as the provider is FIPS-compliant, so use
++		// openssl.FIPSCapable to determine whether FIPS mode is enabled.
 +		if !openssl.FIPSCapable() {
-+			panic("opensslcrypto: FIPS mode requested (" + fips140.Message + ") but not available in " + openssl.VersionText())
++			// This path can be reached for the following reasons:
++			// - In OpenSSL 1, the active engine doesn't support FIPS mode.
++			// - In OpenSSL 1, the active engine supports FIPS mode, but it is not enabled.
++			// - In OpenSSL 3, the provider used by default doesn't match the `fips=yes` query.
++			//
++			// A best-effort attempt is made to enable FIPS mode. It will only succeed if the following conditions are met:
++			// - In OpenSSL 1, the active engine supports FIPS mode and FIPS mode can be enabled.
++			// - In OpenSSL 3, there is an available provider that supports the `fips=yes` query.
++			//
++			// Note that this best effort is mainly to support test environments. FIPS-compliant production environments
++			// like Mariner 2 and Azure Linux 3 (when executed in kernel FIPS mode) will already be properly configured.
++			if err := openssl.SetFIPS(true); err != nil {
++				panic("opensslcrypto: FIPS mode requested (" + fips140.Message + ") but not available in " + openssl.VersionText() + ": " + err.Error())
++			}
 +		}
 +	} else if fips140.Disabled() {
++		// TODO: Remove this block when GOFIPS=0 is no longer supported.
 +		if openssl.FIPS() {
 +			panic("opensslcrypto: FIPS mode explicitly disabled (" + fips140.Message + ") but enabled in " + openssl.VersionText())
 +		}
