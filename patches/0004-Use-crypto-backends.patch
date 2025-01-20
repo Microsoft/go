@@ -6,7 +6,7 @@ Subject: [PATCH] Use crypto backends
 ---
  src/cmd/api/boring_test.go                    |   2 +-
  src/cmd/dist/build.go                         |  13 ++
- src/cmd/dist/test.go                          |   16 +-
+ src/cmd/dist/test.go                          |  16 +-
  src/cmd/go/go_boring_test.go                  |  11 +-
  src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
  .../go/testdata/script/gopath_std_vendor.txt  |   9 +
@@ -38,7 +38,7 @@ Subject: [PATCH] Use crypto backends
  src/crypto/hmac/hmac_test.go                  |   2 +-
  src/crypto/internal/cryptotest/allocations.go |   2 +-
  .../internal/cryptotest/implementations.go    |   2 +-
- src/crypto/internal/fips140test/check_test.go |   3 +-
+ src/crypto/internal/fips140test/check_test.go |   8 +-
  src/crypto/md5/md5.go                         |  10 +
  src/crypto/md5/md5_test.go                    |  16 ++
  src/crypto/pbkdf2/pbkdf2.go                   |   4 +
@@ -83,7 +83,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 79 files changed, 1120 insertions(+), 110 deletions(-)
+ 79 files changed, 1125 insertions(+), 110 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -1172,18 +1172,19 @@ index 3fa730459050f6..1f28f12a6e7b4f 100644
  	"internal/goos"
  	"internal/testenv"
 diff --git a/src/crypto/internal/fips140test/check_test.go b/src/crypto/internal/fips140test/check_test.go
-index 6b0cd3f39e1695..237cf289dd45cf 100644
+index 6b0cd3f39e1695..aa586ed30454a2 100644
 --- a/src/crypto/internal/fips140test/check_test.go
 +++ b/src/crypto/internal/fips140test/check_test.go
-@@ -5,6 +5,7 @@
+@@ -5,6 +5,8 @@
  package fipstest
  
  import (
 +	boring "crypto/internal/backend"
++	bfips140 "crypto/internal/backend/fips140"
  	"crypto/internal/fips140"
  	. "crypto/internal/fips140/check"
  	"crypto/internal/fips140/check/checktest"
-@@ -18,7 +19,7 @@ import (
+@@ -18,7 +20,7 @@ import (
  	"unsafe"
  )
  
@@ -1192,6 +1193,17 @@ index 6b0cd3f39e1695..237cf289dd45cf 100644
  
  func TestFIPSCheckVerify(t *testing.T) {
  	if Verified {
+@@ -38,6 +40,10 @@ func TestFIPSCheckVerify(t *testing.T) {
+ 		t.Skipf("skipping: %v", err)
+ 	}
+ 
++	if !bfips140.Enabled() {
++		t.Skipf("skipping: FIPS is not enabled")
++	}
++
+ 	cmd := testenv.Command(t, os.Args[0], "-test.v", "-test.run=TestFIPSCheck")
+ 	cmd.Env = append(cmd.Environ(), "GODEBUG=fips140=on")
+ 	out, err := cmd.CombinedOutput()
 diff --git a/src/crypto/md5/md5.go b/src/crypto/md5/md5.go
 index a0384e175f31bd..f7aa6da36f02de 100644
 --- a/src/crypto/md5/md5.go
