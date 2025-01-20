@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-//go:build !windows
-// +build !windows
+//go:build !windows && !linux
 
 package main
 
