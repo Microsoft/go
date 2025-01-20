@@ -6,7 +6,7 @@ Subject: [PATCH] Use crypto backends
 ---
  src/cmd/api/boring_test.go                    |   2 +-
  src/cmd/dist/build.go                         |  13 ++
- src/cmd/dist/test.go                          |  16 +-
+ src/cmd/dist/test.go                          |  10 +-
  src/cmd/go/go_boring_test.go                  |  11 +-
  src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
  .../go/testdata/script/gopath_std_vendor.txt  |   9 +
@@ -83,7 +83,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 79 files changed, 1125 insertions(+), 110 deletions(-)
+ 79 files changed, 1118 insertions(+), 111 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -133,9 +133,18 @@ index 1f467647f56143..4d770d7fc239e2 100644
  	// No need to enable PGO for toolchain2.
  	goInstall(toolenv(), goBootstrap, append([]string{"-pgo=off"}, toolchain...)...)
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 0c992118f4287b..8b9b59dc192ba8 100644
+index 0c992118f4287b..d224514552fd63 100644
 --- a/src/cmd/dist/test.go
 +++ b/src/cmd/dist/test.go
+@@ -714,7 +714,7 @@ func (t *tester) registerTests() {
+ 	})
+ 
+ 	// Check that all crypto packages compile (and test correctly, in longmode) with fips.
+-	if t.fipsSupported() {
++	if false { // Disable these tests, they don't work if CNG/OpenSSL FIPS mode is not enabled. We already have dedicated builders for this.
+ 		// Test standard crypto packages with fips140=on.
+ 		t.registerTest("GODEBUG=fips140=on go test crypto/...", &goTest{
+ 			variant: "gofips140",
 @@ -1161,6 +1161,11 @@ func (t *tester) internalLink() bool {
  	if goos == "windows" && goarch == "arm64" {
  		return false
@@ -162,21 +171,6 @@ index 0c992118f4287b..8b9b59dc192ba8 100644
  			// Static linking tests
  			if goos != "android" && p != "netbsd/arm" && !t.msan && !t.asan {
  				// TODO(#56629): Why does this fail on netbsd-arm?
-@@ -1804,6 +1808,14 @@ func (t *tester) fipsSupported() bool {
- 		return false
- 	}
- 
-+	// FIPS is only supported if systemcrypto is enabled.
-+	if !strings.Contains(goexperiment, "systemcrypto") &&
-+		!strings.Contains(goexperiment, "opensslcrypto") &&
-+		!strings.Contains(goexperiment, "cngcrypto") &&
-+		!strings.Contains(goexperiment, "darwincrypto") {
-+		return false
-+	}
-+
- 	// If this goos/goarch does not support FIPS at all, return no versions.
- 	// The logic here matches crypto/internal/fips140/check.Supported for now.
- 	// In the future, if some snapshots add support for these, we will have
 diff --git a/src/cmd/go/go_boring_test.go b/src/cmd/go/go_boring_test.go
 index ed0fbf3d53d75b..8111b143a1295b 100644
 --- a/src/cmd/go/go_boring_test.go
