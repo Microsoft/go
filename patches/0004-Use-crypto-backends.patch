@@ -5,7 +5,8 @@ Subject: [PATCH] Use crypto backends
 
 ---
  src/cmd/api/boring_test.go                    |   2 +-
- src/cmd/dist/test.go                          |  16 +-
+ src/cmd/dist/build.go                         |  13 ++
+ src/cmd/dist/test.go                          |   16 +-
  src/cmd/go/go_boring_test.go                  |  11 +-
  src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
  .../go/testdata/script/gopath_std_vendor.txt  |   9 +
@@ -82,7 +83,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 78 files changed, 1107 insertions(+), 110 deletions(-)
+ 79 files changed, 1120 insertions(+), 110 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -107,6 +108,30 @@ index f0e3575637c62a..9eab3b4e66e60b 100644
  
  package main
  
+diff --git a/src/cmd/dist/build.go b/src/cmd/dist/build.go
+index 1f467647f56143..4d770d7fc239e2 100644
+--- a/src/cmd/dist/build.go
++++ b/src/cmd/dist/build.go
+@@ -1543,6 +1543,19 @@ func cmdbootstrap() {
+ 	xprintf("Building Go toolchain2 using go_bootstrap and Go toolchain1.\n")
+ 	os.Setenv("CC", compilerEnvLookup("CC", defaultcc, goos, goarch))
+ 	// Now that cmd/go is in charge of the build process, enable GOEXPERIMENT.
++	//
++	// Build the Go toolchain with "GOEXPERIMENT=allowcryptofallback". This
++	// allows toolchains not built with "GOEXPERIMENT=systemcrypto" to be used
++	// when GOFIPS=1 is set. For example, when running "GOFIPS=1 go test ./..."
++	// or "GOFIPS=1 go run .".
++	// Shadow goexperiment so that the global variable is not modified.
++	goexperiment := goexperiment
++	if !strings.Contains(goexperiment, "allowcryptofallback") {
++		if goexperiment != "" {
++			goexperiment += ","
++		}
++		goexperiment += "allowcryptofallback"
++	}
+ 	os.Setenv("GOEXPERIMENT", goexperiment)
+ 	// No need to enable PGO for toolchain2.
+ 	goInstall(toolenv(), goBootstrap, append([]string{"-pgo=off"}, toolchain...)...)
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
 index 0c992118f4287b..8b9b59dc192ba8 100644
 --- a/src/cmd/dist/test.go

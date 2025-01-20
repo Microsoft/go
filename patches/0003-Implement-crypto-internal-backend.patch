@@ -15,7 +15,7 @@ Subject: [PATCH] Implement crypto/internal/backend
  .../internal/backend/bbig/big_openssl.go      |  12 +
  src/crypto/internal/backend/boring_linux.go   | 279 ++++++++++++++
  src/crypto/internal/backend/cng_windows.go    | 336 ++++++++++++++++
- src/crypto/internal/backend/common.go         |  58 +++
+ src/crypto/internal/backend/common.go         |  59 +++
  src/crypto/internal/backend/darwin_darwin.go  | 359 +++++++++++++++++
  src/crypto/internal/backend/fips140/boring.go |  11 +
  src/crypto/internal/backend/fips140/cng.go    |  33 ++
@@ -45,7 +45,7 @@ Subject: [PATCH] Implement crypto/internal/backend
  ...ckenderr_gen_requirefips_nosystemcrypto.go |  17 +
  .../backenderr_gen_systemcrypto_nobackend.go  |  16 +
  src/runtime/runtime_boring.go                 |   5 +
- 41 files changed, 2499 insertions(+), 1 deletion(-)
+ 41 files changed, 2500 insertions(+), 1 deletion(-)
  create mode 100644 src/crypto/internal/backend/backend_test.go
  create mode 100644 src/crypto/internal/backend/backendgen.go
  create mode 100644 src/crypto/internal/backend/backendgen_test.go
@@ -1173,10 +1173,10 @@ index 00000000000000..31dfc9b19ee63e
 +}
 diff --git a/src/crypto/internal/backend/common.go b/src/crypto/internal/backend/common.go
 new file mode 100644
-index 00000000000000..84447174284ffd
+index 00000000000000..9436b00381aaf8
 --- /dev/null
 +++ b/src/crypto/internal/backend/common.go
-@@ -0,0 +1,58 @@
+@@ -0,0 +1,59 @@
 +// Copyright 2022 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
@@ -1186,11 +1186,12 @@ index 00000000000000..84447174284ffd
 +import (
 +	"crypto/internal/backend/fips140"
 +	"crypto/internal/boring/sig"
++	"internal/goexperiment"
 +	"runtime"
 +)
 +
 +func init() {
-+	if fips140.Enabled() {
++	if !goexperiment.AllowCryptoFallback && fips140.Enabled() {
 +		if !Enabled {
 +			if runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
 +				panic("FIPS mode requested (" + fips140.Message + ") but no crypto backend is supported on " + runtime.GOOS)
