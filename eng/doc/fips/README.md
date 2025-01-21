@@ -220,7 +220,7 @@ If FIPS mode is required, it configures OpenSSL during program initialization. I
 
 If no preference is detected, the Go runtime doesn't set the OpenSSL FIPS mode, and the standard OpenSSL configuration is left unchanged. For more information about the standard OpenSSL FIPS behavior, see https://www.openssl.org/docs/fips.html.
 
-> [!NOTE]
+> [!WARNING]
 > Previous to Go 1.24, setting `GOFIPS=0` would make the Go runtime to try to disable FIPS mode. This is no longer supported.
 
 ### Windows FIPS mode (CNG)
@@ -230,7 +230,7 @@ To enable FIPS mode on Windows, [enable the Windows FIPS policy](https://docs.mi
 If the Go runtime detects `GODEBUG=fips140=on` and FIPS policy is not enabled, the program will panic during program initialization. This may be useful to detect and refuse to run on incorrectly configured Windows systems. Otherwise, `GODEBUG=fips140` has no effect.
 
 > [!NOTE]
-> Unlike `opensslcrypto`, a Windows program built with `cngcrypto` doesn't include the ability to enable/disable FIPS mode. The change must be made by configuring the OS, not the Go program.
+> Unlike `opensslcrypto`, a Windows program built with `cngcrypto` doesn't include the ability to enable FIPS mode. The change must be made by configuring the OS, not the Go program.
 >
 > This is because Windows FIPS mode is not a per-process setting, and changing it may require elevated permissions. We expect that adding a feature that attempts to change the Windows policy would have unintended consequences.
 
