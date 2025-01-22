@@ -100,19 +100,19 @@ This section includes the following packages:
 
 <sup>1</sup>When using OpenSSL 3, requires the legacy provider to be enabled.
 
-<sup>2</sup> AES-GCM supports specific keys, nonces, and tags:
+<sup>2</sup>AES-GCM supports specific keys, nonces, and tags:
 
-  * Key Sizes
+* Key Sizes
 
-    AES-GCM works with 128, 192, and 256-bit keys.
+  AES-GCM works with 128, 192, and 256-bit keys.
 
-  * Nonce Sizes
+* Nonce Sizes
 
-    AES-GCM works with 12-byte nonces.
+  AES-GCM works with 12-byte nonces.
 
-  * Tag Sizes
-    
-    AES-GCM works with 16-byte tags.
+* Tag Sizes
+
+  AES-GCM works with 16-byte tags.
 
 ## Asymmetric encryption
 
