@@ -5,7 +5,8 @@ Subject: [PATCH] Use crypto backends
 
 ---
  src/cmd/api/boring_test.go                    |   2 +-
- src/cmd/dist/test.go                          |   8 +-
+ src/cmd/dist/build.go                         |  13 ++
+ src/cmd/dist/test.go                          |  10 +-
  src/cmd/go/go_boring_test.go                  |  11 +-
  src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
  .../go/testdata/script/gopath_std_vendor.txt  |   9 +
@@ -37,6 +38,7 @@ Subject: [PATCH] Use crypto backends
  src/crypto/hmac/hmac_test.go                  |   2 +-
  src/crypto/internal/cryptotest/allocations.go |   2 +-
  .../internal/cryptotest/implementations.go    |   2 +-
+ src/crypto/internal/fips140test/check_test.go |   8 +-
  src/crypto/md5/md5.go                         |  10 +
  src/crypto/md5/md5_test.go                    |  16 ++
  src/crypto/pbkdf2/pbkdf2.go                   |   4 +
@@ -81,7 +83,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 77 files changed, 1097 insertions(+), 109 deletions(-)
+ 79 files changed, 1118 insertions(+), 111 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -106,10 +108,43 @@ index f0e3575637c62a..9eab3b4e66e60b 100644
  
  package main
  
+diff --git a/src/cmd/dist/build.go b/src/cmd/dist/build.go
+index 1f467647f56143..4d770d7fc239e2 100644
+--- a/src/cmd/dist/build.go
++++ b/src/cmd/dist/build.go
+@@ -1543,6 +1543,19 @@ func cmdbootstrap() {
+ 	xprintf("Building Go toolchain2 using go_bootstrap and Go toolchain1.\n")
+ 	os.Setenv("CC", compilerEnvLookup("CC", defaultcc, goos, goarch))
+ 	// Now that cmd/go is in charge of the build process, enable GOEXPERIMENT.
++	//
++	// Build the Go toolchain with "GOEXPERIMENT=allowcryptofallback". This
++	// allows toolchains not built with "GOEXPERIMENT=systemcrypto" to be used
++	// when GOFIPS=1 is set. For example, when running "GOFIPS=1 go test ./..."
++	// or "GOFIPS=1 go run .".
++	// Shadow goexperiment so that the global variable is not modified.
++	goexperiment := goexperiment
++	if !strings.Contains(goexperiment, "allowcryptofallback") {
++		if goexperiment != "" {
++			goexperiment += ","
++		}
++		goexperiment += "allowcryptofallback"
++	}
+ 	os.Setenv("GOEXPERIMENT", goexperiment)
+ 	// No need to enable PGO for toolchain2.
+ 	goInstall(toolenv(), goBootstrap, append([]string{"-pgo=off"}, toolchain...)...)
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 0c992118f4287b..3316bb52a61ff1 100644
+index 0c992118f4287b..d224514552fd63 100644
 --- a/src/cmd/dist/test.go
 +++ b/src/cmd/dist/test.go
+@@ -714,7 +714,7 @@ func (t *tester) registerTests() {
+ 	})
+ 
+ 	// Check that all crypto packages compile (and test correctly, in longmode) with fips.
+-	if t.fipsSupported() {
++	if false { // Disable these tests, they don't work if CNG/OpenSSL FIPS mode is not enabled. We already have dedicated builders for this.
+ 		// Test standard crypto packages with fips140=on.
+ 		t.registerTest("GODEBUG=fips140=on go test crypto/...", &goTest{
+ 			variant: "gofips140",
 @@ -1161,6 +1161,11 @@ func (t *tester) internalLink() bool {
  	if goos == "windows" && goarch == "arm64" {
  		return false
@@ -1130,6 +1165,39 @@ index 3fa730459050f6..1f28f12a6e7b4f 100644
  	"crypto/internal/impl"
  	"internal/goos"
  	"internal/testenv"
+diff --git a/src/crypto/internal/fips140test/check_test.go b/src/crypto/internal/fips140test/check_test.go
+index 6b0cd3f39e1695..aa586ed30454a2 100644
+--- a/src/crypto/internal/fips140test/check_test.go
++++ b/src/crypto/internal/fips140test/check_test.go
+@@ -5,6 +5,8 @@
+ package fipstest
+ 
+ import (
++	boring "crypto/internal/backend"
++	bfips140 "crypto/internal/backend/fips140"
+ 	"crypto/internal/fips140"
+ 	. "crypto/internal/fips140/check"
+ 	"crypto/internal/fips140/check/checktest"
+@@ -18,7 +20,7 @@ import (
+ 	"unsafe"
+ )
+ 
+-const enableFIPSTest = true
++const enableFIPSTest = boring.Enabled
+ 
+ func TestFIPSCheckVerify(t *testing.T) {
+ 	if Verified {
+@@ -38,6 +40,10 @@ func TestFIPSCheckVerify(t *testing.T) {
+ 		t.Skipf("skipping: %v", err)
+ 	}
+ 
++	if !bfips140.Enabled() {
++		t.Skipf("skipping: FIPS is not enabled")
++	}
++
+ 	cmd := testenv.Command(t, os.Args[0], "-test.v", "-test.run=TestFIPSCheck")
+ 	cmd.Env = append(cmd.Environ(), "GODEBUG=fips140=on")
+ 	out, err := cmd.CombinedOutput()
 diff --git a/src/crypto/md5/md5.go b/src/crypto/md5/md5.go
 index a0384e175f31bd..f7aa6da36f02de 100644
 --- a/src/crypto/md5/md5.go
