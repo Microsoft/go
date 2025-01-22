@@ -270,7 +270,7 @@ This section includes the following packages:
 
 ### TLS Versions
 
-The TLS stack is implemented using native Go code but the crypto primatives are provided by the system cryptographic libraries.
+The TLS stack is implemented using native Go code but the crypto primitives are provided by the system cryptographic libraries.
 
 | Version | Windows | Linux | macOS |
 | ------- | ------- | ----- | ----- |
