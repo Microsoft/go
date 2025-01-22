@@ -97,7 +97,7 @@ This section includes the following packages:
 | AES-CTR       | ❌      | ✔️             | ❌    |
 | AES-CFB       | ❌      | ❌             | ❌    |
 | AES-OFB       | ❌      | ❌             | ❌    |
-| AES-GCM       | ✔️      | ✔️             | ✔️    |
+| AES-GCM<sup>2</sup>       | ✔️      | ✔️             | ✔️    |
 | DES-CBC       | ✔️      | ⚠️<sup>1</sup> | ✔️    |
 | DES-ECB       | ✔️      | ⚠️<sup>1</sup> | ✔️    |
 | 3DES-ECB      | ✔️      | ✔️             | ✔️    |
@@ -106,7 +106,7 @@ This section includes the following packages:
 
 <sup>1</sup>When using OpenSSL 3, requires the legacy provider to be enabled.
 
-### AES-GCM keys, nonces, and tags
+<sup>2</sup>AES-GCM supports specific keys, nonces, and tags:
 
 - Key Sizes
 
@@ -136,15 +136,25 @@ This section includes the following packages:
 
 - [crypto/rsa](https://pkg.go.dev/crypto/rsa)
 
+[rsa.GenerateKey](https://pkg.go.dev/crypto/rsa#GenerateKey) only supports the following key sizes (in bits): 2048, 3072, 4096.
+
+Multi-prime RSA keys are not supported.
+
+The RSA key size is subject to the limitations of the underlying cryptographic library.
+For example, on some Windows and SCOSSL configurations, the key size should be multiple of 8.
+Please refer to the documentation of the underlying cryptographic library for the specific limitations.
+
+Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
+
 | Padding Mode                           | Windows        | Linux          | macOS          |
 | -------------------------------------- | -------------- | -------------- | -------------- |
-| OAEP (MD5)                             | ✔️             | ✔️             | ✔️<sup>3</sup> |
-| OAEP (SHA-1)                           | ✔️             | ✔️             | ✔️<sup>3</sup> |
-| OAEP (SHA-2)<sup>1</sup>               | ✔️             | ✔️             | ✔️<sup>3</sup> |
+| OAEP (MD5)                             | ✔️             | ✔️             | ✔️<sup>5</sup> |
+| OAEP (SHA-1)                           | ✔️             | ✔️             | ✔️<sup>5</sup> |
+| OAEP (SHA-2)<sup>1</sup>               | ✔️             | ✔️             | ✔️<sup>5</sup> |
 | OAEP (SHA-3)                           | ❌             | ❌             | ❌             |
-| PSS (MD5)                              | ✔️             | ✔️             | ❌             |
-| PSS (SHA-1)                            | ✔️             | ✔️             | ✔️             |
-| PSS (SHA-2)<sup>1</sup>                | ✔️             | ✔️             | ✔️             |
+| PSS (MD5)                              | ✔️<sup>3</sup>             | ✔️             | ❌             |
+| PSS (SHA-1)                            | ✔️<sup>3</sup>             | ✔️             | ✔️<sup>4</sup>             |
+| PSS (SHA-2)<sup>1</sup>                | ✔️<sup>3</sup>             | ✔️             | ✔️<sup>4</sup>             |
 | PSS (SHA-3)                            | ❌             | ❌             | ❌             |
 | PKCS1v15 Signature (Unhashed)          | ✔️             | ✔️             | ✔️             |
 | PKCS1v15 Signature (RIPMED160)         | ❌             | ✔️<sup>2</sup> | ❌             |
@@ -159,27 +169,11 @@ This section includes the following packages:
 
 <sup>2</sup>Available starting in Microsoft Go 1.24.
 
-<sup>3</sup>macOS doesn't support passing a custom label to OAEP functions.
+<sup>3</sup>On Windows, when verifying a PSS signature, [rsa.PSSSaltLengthAuto](https://pkg.go.dev/crypto/rsa#pkg-constants) is not supported.
 
-#### RSA key sizes
+<sup>4</sup>On macOS, custom salt lengths are not supported. PSS always uses the [`rsa.PSSSaltLengthEqualsHash`](https://pkg.go.dev/crypto/rsa#pkg-constants).
 
-[`rsa.GenerateKey`](https://pkg.go.dev/crypto/rsa#GenerateKey) only supports the following key sizes (in bits): 2048, 3072, 4096.
-
-Multi-prime RSA keys are not supported.
-
-The RSA key size is subject to the limitations of the underlying cryptographic library.
-For example, on some Windows and SCOSSL configurations, the key size should be multiple of 8.
-Please refer to the documentation of the underlying cryptographic library for the specific limitations.
-
-#### PSS salt length
-
-On Windows, when verifying a PSS signature, [`rsa.PSSSaltLengthAuto`](https://pkg.go.dev/crypto/rsa#pkg-constants) is not supported.
-
-On macOS, custom salt lengths are not supported, it always uses the [`rsa.PSSSaltLengthEqualsHash`](https://pkg.go.dev/crypto/rsa#pkg-constants).
-
-#### Random number generation
-
-Operations that require random numbers (rand io.Reader) only support [`rand.Reader`](https://pkg.go.dev/crypto/rand#Reader).
+<sup>5</sup>macOS doesn't support passing a custom label to OAEP functions.
 
 ### ECDSA
 
@@ -188,6 +182,8 @@ This section includes the following packages:
 - [crypto/ecdsa](https://pkg.go.dev/crypto/ecdsa)
 - [crypto/elliptic](https://pkg.go.dev/crypto/elliptic)
 
+Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
+
 | Elliptic Curve         | Windows | Linux | macOS |
 | ---------------------- | ------- | ----- | ----- |
 | NIST P-224 (secp224r1) | ✔️      | ✔️    | ❌    |
@@ -195,15 +191,13 @@ This section includes the following packages:
 | NIST P-384 (secp384r1) | ✔️      | ✔️    | ✔️    |
 | NIST P-521 (secp521r1) | ✔️      | ✔️    | ✔️    |
 
-#### Random number generation
-
-Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
-
 ### ECDH
 
 This section includes the following packages:
 
 - [crypto/ecdh](https://pkg.go.dev/crypto/ecdsa)
+
+Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
 
 | Elliptic Curve         | Windows | Linux | macOS |
 | ---------------------- | ------- | ----- | ----- |
@@ -213,25 +207,19 @@ This section includes the following packages:
 | NIST P-521 (secp521r1) | ✔️      | ✔️    | ✔️    |
 | X25519 (curve25519)    | ❌      | ❌    | ❌    |
 
-#### Random number generation
-
-Operations that require random numbers (rand io.Reader) only support [`rand.Reader`](https://pkg.go.dev/crypto/rand#Reader).
-
 ### Ed25519
 
 This section includes the following packages:
 
 - [crypto/ed25519](https://pkg.go.dev/crypto/ed25519)
 
+Operations that require random numbers (rand io.Reader) only support [rand.Reader](https://pkg.go.dev/crypto/rand#Reader).
+
 | Schemes    | Windows | Linux | macOS |
 | ---------- | ------- | ----- | ----- |
 | Ed25519    | ❌      | ✔️    | ✔️    |
 | Ed25519ctx | ❌      | ❌    | ❌    |
 | Ed25519ph  | ❌      | ❌    | ❌    |
-
-#### Random number generation
-
-Operations that require random numbers (rand io.Reader) only support [`rand.Reader`](https://pkg.go.dev/crypto/rand#Reader).
 
 ### DSA
 
