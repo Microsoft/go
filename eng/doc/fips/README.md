@@ -55,6 +55,7 @@ There are typically two goals that lead to this document. Creating a FIPS compli
 > This section assumes the use of Microsoft Go 1.24 or later.
 >
 > 1.24 introduces `GODEBUG=fips140` as a preferred way to enable FIPS mode. See also [the Go 1.24 changelog](#go-124-feb-2025).
+>
 > 1.21 introduces `systemcrypto`, `requirefips`, and a build-time compatibility check for the selected crypto backend. The Usage sections go into more detail about the differences between 1.19/1.20 and 1.21 in context. See also [the Go 1.21 changelog](#go-121-aug-2023).
 
 | Build-time config | Runtime config | Internal Microsoft crypto policy | FIPS behavior |
