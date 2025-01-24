@@ -292,7 +292,7 @@ stages:
                   displayName: Test (🔁 ${{ attempt }})
                 name: test_${{ attempt }}
                 env:
-                  ${{ if eq(parameters.builder.os, 'linux'), eq(parameters.builder.fips, true)) }}:
+                  ${{ if and(eq(parameters.builder.os, 'linux'), eq(parameters.builder.fips, true)) }}:
                     # FIPS mode may require sudo to enable system-wide FIPS mode.
                     SUDO_CMD: 'sudo'
                 # Run unless a previous retry was successful or something catastrophic happens.
