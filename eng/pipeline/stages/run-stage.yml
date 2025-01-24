@@ -256,15 +256,11 @@ stages:
             # Build. This includes retry logic internally if necessary for this builder.
             - pwsh: |
                 eng/run.ps1 cmdscan -envprefix GO_CMDSCAN_RULE_ `
-                  $env:SUDO_CMD pwsh eng/run.ps1 run-builder -build `
+                  pwsh eng/run.ps1 run-builder -build `
                     -builder '${{ parameters.builder.os }}-${{ parameters.builder.arch }}-${{ parameters.builder.config }}' `
                     $(if ('${{ parameters.builder.experiment }}') { '-experiment'; '${{ parameters.builder.experiment }}' }) `
                     $(if ('${{ parameters.builder.fips }}') { '-fipsmode' })
               displayName: Build
-              env:
-                ${{ if and(eq(parameters.builder.os, 'linux'), eq(parameters.builder.fips, true)) }}:
-                  # FIPS mode may require sudo to enable system-wide FIPS mode.
-                  SUDO_CMD: 'sudo'
 
             # Run each test retry attempt in its own step. Benefits over a single step:
             #
@@ -286,7 +282,7 @@ stages:
                   }
 
                   eng/run.ps1 cmdscan -envprefix GO_CMDSCAN_RULE_ -successvar TEST_BUILDER_SUCCESSFUL -- `
-                    pwsh eng/run.ps1 run-builder -test `
+                    $env:SUDO_CMD pwsh eng/run.ps1 run-builder -test `
                       -builder '${{ parameters.builder.os }}-${{ parameters.builder.arch }}-${{ parameters.builder.config }}' `
                       $(if ('${{ parameters.builder.experiment }}') { '-experiment'; '${{ parameters.builder.experiment }}' }) `
                       $(if ('${{ parameters.builder.fips }}') { '-fipsmode' })
@@ -295,6 +291,10 @@ stages:
                 ${{ else }}:
                   displayName: Test (🔁 ${{ attempt }})
                 name: test_${{ attempt }}
+                env:
+                  ${{ if eq(parameters.builder.os, 'linux'), eq(parameters.builder.fips, true)) }}:
+                    # FIPS mode may require sudo to enable system-wide FIPS mode.
+                    SUDO_CMD: 'sudo'
                 # Run unless a previous retry was successful or something catastrophic happens.
                 # Note: test failure returns success, so it doesn't count as catastrophic.
                 condition: and(ne(variables['TEST_BUILDER_SUCCESSFUL'], 'true'), succeeded())
