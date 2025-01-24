@@ -2167,7 +2167,7 @@ index 00000000000000..a66c66ca386847
 +			// - In OpenSSL 1, the active engine doesn't support FIPS mode.
 +			// - In OpenSSL 1, the active engine supports FIPS mode, but it is not enabled.
 +			// - In OpenSSL 3, the provider used by default doesn't match the `fips=yes` query.
-+			panic("opensslcrypto: FIPS mode requested (" + fips140.Message + ") but not available in " + openssl.VersionText() + ": " + err.Error())
++			panic("opensslcrypto: FIPS mode requested (" + fips140.Message + ") but not available in " + openssl.VersionText())
 +		}
 +	} else if fips140.Disabled() {
 +		// TODO: Remove this block when GOFIPS=0 is no longer supported.
