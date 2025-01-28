@@ -8,17 +8,18 @@ import (
 	"os"
 )
 
-// enableSystemWideFIPS enables Mariner and Azure Linux 3 process-wide FIPS mode.
+// enableSystemWideFIPS enables Mariner and Azure Linux 3 process-wide FIPS mode
+// for any process that inherits the current process' environment variables.
 func enableSystemWideFIPS() (restore func(), err error) {
 	// FIPS mode is enabled if OPENSSL_FORCE_FIPS_MODE is set, regardless of the value.
 	_, ok := os.LookupEnv("OPENSSL_FORCE_FIPS_MODE")
 	if ok {
-		log.Println("FIPS mode already enabled.")
+		log.Println("Mariner and Azure Linux 3 forced FIPS mode (OPENSSL_FORCE_FIPS_MODE) already enabled.")
 		return nil, nil
 	}
 
 	env("OPENSSL_FORCE_FIPS_MODE", "1")
-	log.Println("Enabled Mariner and Azure Linux 3 FIPS mode.")
+	log.Println("Enabled Mariner and Azure Linux 3 FIPS mode (OPENSSL_FORCE_FIPS_MODE).")
 
 	return func() {
 		err := os.Unsetenv("OPENSSL_FORCE_FIPS_MODE")
