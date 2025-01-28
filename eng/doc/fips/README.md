@@ -39,9 +39,11 @@ The Microsoft Go fork provides several ways to configure the crypto backend and 
   - [`GOEXPERIMENT=<backend>crypto` environment variable](#usage-build)
   - [`goexperiment.<backend>crypto` build tag](#usage-build)
   - [`requirefips` build tag](#build-option-to-require-fips-mode)
+  - [`GOFIPS140=latest` environment variable](#build-option-to-require-fips-mode)
   - [`GOEXPERIMENT` `allowcryptofallback`](#build-option-to-use-go-crypto-if-the-backend-compatibility-check-fails)
   - [`import _ "crypto/tls/fipsonly"` source change](#tls-with-fips-compliant-settings)
 - Runtime configuration:
+  - [`GOFIPS` environment variable](#usage-runtime)
   - [`GODEBUG=fips140` setting](#usage-runtime)
   - (OpenSSL backend) [`GO_OPENSSL_VERSION_OVERRIDE` environment variable](#runtime-openssl-version-override)
   - (OpenSSL backend) [`/proc/sys/crypto/fips_enabled` file containing `1`](#linux-fips-mode-openssl)
@@ -217,23 +219,18 @@ To set FIPS mode on Linux, use one of the following options. The first match in 
 - Implicitly enable it by booting the Linux Kernel in FIPS mode.
   - The Linux Kernel's FIPS mode sets the content of `/proc/sys/crypto/fips_enabled` to `1`. The Go runtime reads this file.
 
-If FIPS mode is required, it configures OpenSSL during program initialization. If configuration fails, program initialization panics.
+If the Go runtime detects `GODEBUG=fips140=on` and OpenSSL is not using a FIPS-compliant engine or provider, the program will panic during program initialization. This may be useful to detect and refuse to run with incorrectly configured OpenSSL installations. Otherwise, `GODEBUG=fips140` has no effect.
 
-If no preference is detected, the Go runtime doesn't set the OpenSSL FIPS mode, and the standard OpenSSL configuration is left unchanged. For more information about the standard OpenSSL FIPS behavior, see https://www.openssl.org/docs/fips.html.
+For more information about the standard OpenSSL FIPS behavior, see https://www.openssl.org/docs/fips.html.
 
 > [!WARNING]
-> Previous to Go 1.24, setting `GOFIPS=0` would make the Go runtime to try to disable FIPS mode. This is no longer supported.
+> Previous to Go 1.24, setting `GOFIPS` would make the Go runtime to try to modify the configured FIPS mode. This is no longer supported.
 
 ### Windows FIPS mode (CNG)
 
 To enable FIPS mode on Windows, [enable the Windows FIPS policy](https://docs.microsoft.com/en-us/windows/security/threat-protection/fips-140-validation#step-3-enable-the-fips-security-policy).
 
 If the Go runtime detects `GODEBUG=fips140=on` and FIPS policy is not enabled, the program will panic during program initialization. This may be useful to detect and refuse to run on incorrectly configured Windows systems. Otherwise, `GODEBUG=fips140` has no effect.
-
-> [!NOTE]
-> Unlike `opensslcrypto`, a Windows program built with `cngcrypto` doesn't include the ability to enable FIPS mode. The change must be made by configuring the OS, not the Go program.
->
-> This is because Windows FIPS mode is not a per-process setting, and changing it may require elevated permissions. We expect that adding a feature that attempts to change the Windows policy would have unintended consequences.
 
 For testing purposes, Windows FIPS policy can be enabled via the registry key `HKLM\SYSTEM\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy`, dword value `Enabled` set to `1`.
 
@@ -419,6 +416,7 @@ This list of major changes is intended for quick reference and for access to his
 
 - Introduces macOS crypto backend `darwincrypto`.
 - Support `GODEBUG=fips140=on` as an alias for `GOFIPS=1`.
+- `GOFIPS=1` no longer tries to enable FIPS mode on Linux. It will now panic if FIPS mode is not enabled.
 - `GOFIPS=0` no longer tries to disable FIPS mode on Linux. It will now panic if FIPS mode is enabled.
 - Support for the `GOFIPS` environment variable will be removed in Go 1.25.
 
