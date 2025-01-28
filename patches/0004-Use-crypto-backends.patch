@@ -8,6 +8,7 @@ Subject: [PATCH] Use crypto backends
  src/cmd/dist/build.go                         |  13 ++
  src/cmd/dist/test.go                          |  10 +-
  src/cmd/go/go_boring_test.go                  |  11 +-
+ src/cmd/go/script_test.go                     |   2 +
  src/cmd/go/testdata/script/darwin_no_cgo.txt  |   2 +
  .../go/testdata/script/gopath_std_vendor.txt  |   9 +
  src/cmd/link/internal/ld/config.go            |   8 +
@@ -83,7 +84,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 79 files changed, 1118 insertions(+), 111 deletions(-)
+ 80 files changed, 1120 insertions(+), 111 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -198,6 +199,19 @@ index ed0fbf3d53d75b..8111b143a1295b 100644
  	tg := testgo(t)
  	defer tg.cleanup()
  	tg.parallel()
+diff --git a/src/cmd/go/script_test.go b/src/cmd/go/script_test.go
+index 390a36723787f4..0576ea8add72af 100644
+--- a/src/cmd/go/script_test.go
++++ b/src/cmd/go/script_test.go
+@@ -297,6 +297,8 @@ var extraEnvKeys = []string{
+ 	"GO_TESTING_GOTOOLS", // for gccgo testing
+ 	"GCCGO",              // for gccgo testing
+ 	"GCCGOTOOLDIR",       // for gccgo testing
++
++	"OPENSSL_FORCE_FIPS_MODE", // useful for testing on Mariner 2.
+ }
+ 
+ // updateSum runs 'go mod tidy', 'go list -mod=mod -m all', or
 diff --git a/src/cmd/go/testdata/script/darwin_no_cgo.txt b/src/cmd/go/testdata/script/darwin_no_cgo.txt
 index fa445925b7c374..e36ac86fcaa58d 100644
 --- a/src/cmd/go/testdata/script/darwin_no_cgo.txt
