@@ -253,23 +253,18 @@ Prior to 1.24, CommonCrypto/CryptoKit is not used by Microsoft Go.
 
 ### Build option to require FIPS mode
 
-The `requirefips` feature is available since Go 1.21.
+The `requirefips` build tag is available since Go 1.21. See [the "GOFLAGS" example in the build section](#modify-the-build-command).
+The `GOFIPS140=latest` environment variable is available since Go 1.24.
 
-FIPS mode is normally determined at runtime, but the `requirefips` build tag can be used to make a program always require FIPS mode and panic if FIPS mode can't be enabled for any reason.
+FIPS mode preference is normally determined at runtime, but both options can be used to make a program always require FIPS mode and panic if FIPS mode is not enabled.
 
-> [!NOTE]
-> Since Go 1.24, one can achieve the same effect by setting `GOFIPS140=latest` when building the program.
-> This is the recommended way to build a program that always requires FIPS mode, as it uses the the same mechanism as upstream Go.
-
-Most programs aren't expected to use this tag. Determining FIPS mode at runtime is normal for FIPS compliant applications. This allows the same binary to be deployed to run in both FIPS compliant contexts and non-FIPS contexts, and allows it to be bundled with other binaries that can also run in both contexts. However, in some situations, compile-time `requirefips` is desirable:
+Most programs aren't expected to use this tag. Determining FIPS mode at runtime is normal for FIPS compliant applications. This allows the same binary to be deployed to run in both FIPS compliant contexts and non-FIPS contexts, and allows it to be bundled with other binaries that can also run in both contexts. However, it is useful in some cases:
 
 - Dependence on environment variables like `GODEBUG` and `GOFIPS` in any way may be undesirable.
 - The program's documentation can state it will always run in FIPS mode without any nuance about environment variables.
 - If the program is used by someone unfamiliar with the system they're configuring, the panic will help catch mistakes before they become a problem.
 
-We chose to make a `requirefips` Go program panic if `GOFIPS=0` rather than silently ignoring the setting. This helps avoid a surprise if a user of a `requirefips` program sets `GOFIPS=0` and expects it to turn off FIPS mode. It may not be obvious which programs are built using `requirefips`, and the panic is intended to help avoid confusion.
-
-Modifying the `go build` command to include `-tags=requirefips` enables this feature. However, if it is difficult to change the build command but possible to change the environment (e.g. by modifying a Dockerfile's `FROM` image), the `GOFLAGS` environment variable can be used to pass `-tags=requirefips` to every `go build` command that runs. See [the "GOFLAGS" example in the build section](#modify-the-build-command).
+We chose to make a FIPS-only Go program panic if `GOFIPS=0` rather than silently ignoring the setting. This helps avoid a surprise if a user of such program sets `GOFIPS=0` and expects it to turn off FIPS mode.
 
 ### Build option to use Go crypto if the backend compatibility check fails
 
