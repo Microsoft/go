@@ -239,7 +239,7 @@ For more information about the standard OpenSSL FIPS behavior, see https://www.o
 
 To enable FIPS mode on Windows, [enable the Windows FIPS policy](https://docs.microsoft.com/en-us/windows/security/threat-protection/fips-140-validation#step-3-enable-the-fips-security-policy).
 
-If the Go runtime detects `GODEBUG=fips140=on` and FIPS policy is not enabled, the program will panic during program initialization. This may be useful to detect and refuse to run on incorrectly configured Windows systems. Otherwise, `GODEBUG=fips140` has no effect.
+If the Go runtime detects `GOFIPS=1` or `GODEBUG=fips140=on` and FIPS policy is not enabled, the program will panic during program initialization. This may be useful to detect and refuse to run on incorrectly configured Windows systems. Otherwise, `GODEBUG=fips140` has no effect.
 
 For testing purposes, Windows FIPS policy can be enabled via the registry key `HKLM\SYSTEM\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy`, dword value `Enabled` set to `1`.
 
