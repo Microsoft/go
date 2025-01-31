@@ -2642,7 +2642,7 @@ index 00000000000000..5e4b436554d44d
 +// from complaining about the missing body
 +// (because the implementation might be here).
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index c9a1d3ef3410b7..0bf7dc41fe2a24 100644
+index 72e56b5da8e582..45ceb3e2b4ce11 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -511,6 +511,11 @@ var depsRules = `
@@ -2673,14 +2673,14 @@ index c9a1d3ef3410b7..0bf7dc41fe2a24 100644
 +	crypto/internal/boring
 +	< crypto/internal/backend;
 +
- 	FIPS, internal/godebug, hash, embed, encoding/binary,
+ 	FIPS, internal/godebug, hash, embed,
  	crypto/internal/boring/sig,
  	crypto/internal/boring/syso,
  	crypto/internal/boring/bcache,
+ 	crypto/internal/fips140only,
  	crypto,
- 	crypto/cipher,
--	crypto/internal/fips140only
-+	crypto/internal/fips140only,
+-	crypto/cipher
++	crypto/cipher,
 +	crypto/internal/backend
  	< crypto/sha3
  	< crypto/internal/fips140hash

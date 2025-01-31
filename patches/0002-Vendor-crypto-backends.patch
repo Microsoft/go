@@ -9,7 +9,7 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  src/crypto/internal/backend/deps_ignore.go    |  22 +
  src/go.mod                                    |   6 +
  src/go.sum                                    |   6 +
- src/go/build/deps_test.go                     |  37 +-
+ src/go/build/deps_test.go                     |  35 +-
  src/go/build/vendor_test.go                   |   3 +
  .../golang-fips/openssl/v2/.gitignore         |   1 +
  .../golang-fips/openssl/v2/.gitleaks.toml     |   9 +
@@ -101,7 +101,7 @@ Use a 'go' that was recently built by the current branch to ensure stable result
  .../internal/subtle/aliasing.go               |  32 +
  .../internal/sysdll/sys_windows.go            |  55 ++
  src/vendor/modules.txt                        |  16 +
- 95 files changed, 13814 insertions(+), 8 deletions(-)
+ 95 files changed, 13813 insertions(+), 7 deletions(-)
  create mode 100644 src/crypto/internal/backend/deps_ignore.go
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitignore
  create mode 100644 src/vendor/github.com/golang-fips/openssl/v2/.gitleaks.toml
@@ -250,7 +250,7 @@ index 4d6a33e34a4e63..6a09a77031befa 100644
  golang.org/x/crypto v0.30.0/go.mod h1:kDsLvtWBEx7MV9tJOj9bnXsPbxwJQ6csT/x4KIN4Ssk=
  golang.org/x/net v0.32.1-0.20250121202134-9a960c88dd98 h1:36bTiCRO7f/J3t+LumnLTJDXqxsp1x6Q7754SsRD9u4=
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index e3e01077c18b17..c9a1d3ef3410b7 100644
+index e3e01077c18b17..72e56b5da8e582 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -493,6 +493,24 @@ var depsRules = `
@@ -278,12 +278,8 @@ index e3e01077c18b17..c9a1d3ef3410b7 100644
  	FIPS, internal/godebug < crypto/fips140;
  
  	crypto, hash !< FIPS;
-@@ -503,16 +521,15 @@ var depsRules = `
- 	NONE < crypto/internal/boring/sig, crypto/internal/boring/syso;
- 	sync/atomic < crypto/internal/boring/bcache;
- 
--	FIPS, internal/godebug, hash, embed,
-+	FIPS, internal/godebug, hash, embed, encoding/binary,
+@@ -506,13 +524,12 @@ var depsRules = `
+ 	FIPS, internal/godebug, hash, embed,
  	crypto/internal/boring/sig,
  	crypto/internal/boring/syso,
 -	crypto/internal/boring/bcache
@@ -291,9 +287,9 @@ index e3e01077c18b17..c9a1d3ef3410b7 100644
 -	< crypto
 -	< crypto/subtle
 +	crypto/internal/boring/bcache,
++	crypto/internal/fips140only,
 +	crypto,
-+	crypto/cipher,
-+	crypto/internal/fips140only
++	crypto/cipher
  	< crypto/sha3
  	< crypto/internal/fips140hash
 -	< crypto/cipher
