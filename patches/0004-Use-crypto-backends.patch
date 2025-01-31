@@ -2557,19 +2557,19 @@ index e7369542a73270..ff52175e4ac636 100644
  	}
  }
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index ab5539f978a266..484c95dfb65f60 100644
+index e4e07843c8ce55..87e92a5d6d1ee9 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -495,7 +495,7 @@ var depsRules = `
- 
- 	syscall < crypto/internal/backend/fips140;
+@@ -510,7 +510,7 @@ var depsRules = `
+ 	< crypto/internal/backend/internal/opensslsetup
+ 	< crypto/internal/backend/fips140;
  
 -	FIPS, internal/godebug < crypto/fips140;
 +	FIPS, internal/godebug, crypto/internal/backend/fips140 < crypto/fips140;
  
  	crypto, hash !< FIPS;
  
-@@ -539,6 +539,7 @@ var depsRules = `
+@@ -551,6 +551,7 @@ var depsRules = `
  	  crypto/pbkdf2,
  	  crypto/ecdh,
  	  crypto/mlkem
@@ -2577,7 +2577,7 @@ index ab5539f978a266..484c95dfb65f60 100644
  	< CRYPTO;
  
  	CGO, fmt, net !< CRYPTO;
-@@ -564,7 +565,7 @@ var depsRules = `
+@@ -576,7 +577,7 @@ var depsRules = `
  
  	# TLS, Prince of Dependencies.
  
