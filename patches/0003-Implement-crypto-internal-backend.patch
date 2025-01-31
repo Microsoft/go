@@ -25,7 +25,7 @@ Subject: [PATCH] Implement crypto/internal/backend
  .../internal/backend/fips140/norequirefips.go |   9 +
  .../backend/fips140/nosystemcrypto.go         |  11 +
  .../internal/backend/fips140/openssl.go       |  57 +++
- .../internal/opensslsetup/bootstrap.go        |  12 +
+ .../backend/internal/opensslsetup/nocgo.go    |   9 +
  .../internal/opensslsetup/opensslsetup.go     |  70 ++++
  .../opensslsetup/opensslsetup_test.go         |  92 +++++
  src/crypto/internal/backend/nobackend.go      | 240 ++++++++++++
@@ -48,7 +48,7 @@ Subject: [PATCH] Implement crypto/internal/backend
  ...ckenderr_gen_requirefips_nosystemcrypto.go |  17 +
  .../backenderr_gen_systemcrypto_nobackend.go  |  16 +
  src/runtime/runtime_boring.go                 |   5 +
- 44 files changed, 2688 insertions(+), 3 deletions(-)
+ 44 files changed, 2685 insertions(+), 3 deletions(-)
  create mode 100644 src/crypto/internal/backend/backend_test.go
  create mode 100644 src/crypto/internal/backend/backendgen.go
  create mode 100644 src/crypto/internal/backend/backendgen_test.go
@@ -69,7 +69,7 @@ Subject: [PATCH] Implement crypto/internal/backend
  create mode 100644 src/crypto/internal/backend/fips140/norequirefips.go
  create mode 100644 src/crypto/internal/backend/fips140/nosystemcrypto.go
  create mode 100644 src/crypto/internal/backend/fips140/openssl.go
- create mode 100644 src/crypto/internal/backend/internal/opensslsetup/bootstrap.go
+ create mode 100644 src/crypto/internal/backend/internal/opensslsetup/nocgo.go
  create mode 100644 src/crypto/internal/backend/internal/opensslsetup/opensslsetup.go
  create mode 100644 src/crypto/internal/backend/internal/opensslsetup/opensslsetup_test.go
  create mode 100644 src/crypto/internal/backend/nobackend.go
@@ -1783,7 +1783,7 @@ index 00000000000000..6f01b9a3524dee
 \ No newline at end of file
 diff --git a/src/crypto/internal/backend/fips140/nosystemcrypto.go b/src/crypto/internal/backend/fips140/nosystemcrypto.go
 new file mode 100644
-index 00000000000000..83691d7dd42d51
+index 00000000000000..445e1bf0ef764e
 --- /dev/null
 +++ b/src/crypto/internal/backend/fips140/nosystemcrypto.go
 @@ -0,0 +1,11 @@
@@ -1791,7 +1791,7 @@ index 00000000000000..83691d7dd42d51
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
 +
-+//go:build !goexperiment.systemcrypto
++//go:build !goexperiment.systemcrypto || (goexperiment.opensslcrypto && !cgo)
 +
 +package fips140
 +
@@ -1800,7 +1800,7 @@ index 00000000000000..83691d7dd42d51
 +}
 diff --git a/src/crypto/internal/backend/fips140/openssl.go b/src/crypto/internal/backend/fips140/openssl.go
 new file mode 100644
-index 00000000000000..1af7a36c0ffd59
+index 00000000000000..d9ea4e513db72d
 --- /dev/null
 +++ b/src/crypto/internal/backend/fips140/openssl.go
 @@ -0,0 +1,57 @@
@@ -1808,7 +1808,7 @@ index 00000000000000..1af7a36c0ffd59
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
 +
-+//go:build goexperiment.opensslcrypto
++//go:build goexperiment.opensslcrypto && cgo
 +
 +package fips140
 +
@@ -1861,27 +1861,24 @@ index 00000000000000..1af7a36c0ffd59
 +	// fips_enabled can be either '0' or '1'.
 +	return tmp[0] == '1'
 +}
-diff --git a/src/crypto/internal/backend/internal/opensslsetup/bootstrap.go b/src/crypto/internal/backend/internal/opensslsetup/bootstrap.go
+diff --git a/src/crypto/internal/backend/internal/opensslsetup/nocgo.go b/src/crypto/internal/backend/internal/opensslsetup/nocgo.go
 new file mode 100644
-index 00000000000000..63d0fe27e3878f
+index 00000000000000..bf677850caf0cb
 --- /dev/null
-+++ b/src/crypto/internal/backend/internal/opensslsetup/bootstrap.go
-@@ -0,0 +1,12 @@
++++ b/src/crypto/internal/backend/internal/opensslsetup/nocgo.go
+@@ -0,0 +1,9 @@
 +// Copyright 2025 The Go Authors. All rights reserved.
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
 +
-+//go:build cmd_go_bootstrap
++//go:build !cgo
 +
-+// This file is a workaround for the fact that the Go bootstrap
-+// process imports this package, but the OpenSSL module does not
-+// define the functions that this package uses when the
-+// cmd_go_bootstrap tag is set.
++// Do nothing if cgo is not enabled.
 +
 +package opensslsetup
 diff --git a/src/crypto/internal/backend/internal/opensslsetup/opensslsetup.go b/src/crypto/internal/backend/internal/opensslsetup/opensslsetup.go
 new file mode 100644
-index 00000000000000..9bcc253610eb02
+index 00000000000000..c6c1f53e7452ab
 --- /dev/null
 +++ b/src/crypto/internal/backend/internal/opensslsetup/opensslsetup.go
 @@ -0,0 +1,70 @@
@@ -1889,7 +1886,7 @@ index 00000000000000..9bcc253610eb02
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
 +
-+//go:build goexperiment.opensslcrypto && !cmd_go_bootstrap
++//go:build goexperiment.opensslcrypto && cgo
 +
 +// opensslsetup is a package that initializes the OpenSSL library.
 +// It doesn't export any symbol, but blank importing it has the
@@ -1957,7 +1954,7 @@ index 00000000000000..9bcc253610eb02
 +}
 diff --git a/src/crypto/internal/backend/internal/opensslsetup/opensslsetup_test.go b/src/crypto/internal/backend/internal/opensslsetup/opensslsetup_test.go
 new file mode 100644
-index 00000000000000..6a0be37a8fc28d
+index 00000000000000..e9f67449710d65
 --- /dev/null
 +++ b/src/crypto/internal/backend/internal/opensslsetup/opensslsetup_test.go
 @@ -0,0 +1,92 @@
@@ -1965,7 +1962,7 @@ index 00000000000000..6a0be37a8fc28d
 +// Use of this source code is governed by a BSD-style
 +// license that can be found in the LICENSE file.
 +
-+//go:build goexperiment.opensslcrypto
++//go:build goexperiment.opensslcrypto && cgo
 +
 +package opensslsetup
 +
