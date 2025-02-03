@@ -245,7 +245,11 @@ For testing purposes, Windows FIPS policy can be enabled via the registry key `H
 
 ### macOS FIPS mode (CommonCrypto/CryptoKit)
 
-CommonCrypto/CryptoKit is FIPS compliant by default. This means that regardless of which mode you set `GODEBUG=fips140` or `GOFIPS` to, the cryptographic functions will always be FIPS-enabled.
+macOS cryptographic primitives are FIPS compliant by default, there is no need for system-wide nor process-wide configuration.
+Refer to the [About Apple security certifications](https://support.apple.com/guide/certifications/about-apple-security-certifications-apc30d0ed034/1/web/1.0) page for more information.
+
+This means that setting `GOFIPS=1` or `GODEBUG=fips140=on` will never cause a panic on macOS.
+They are still necessary to instruct Go to run in FIPS mode, as there is no system-provided parameter to do so.
 
 Prior to 1.24, CommonCrypto/CryptoKit is not used by Microsoft Go.
 
