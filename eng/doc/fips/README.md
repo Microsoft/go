@@ -257,10 +257,10 @@ Prior to 1.24, CommonCrypto/CryptoKit is not used by Microsoft Go.
 
 ### Build option to require FIPS mode
 
-The `requirefips` build tag is available since Go 1.21. See [the "GOFLAGS" example in the build section](#modify-the-build-command).
-The `GOFIPS140=latest` environment variable is available since Go 1.24.
+FIPS mode preference is normally determined at runtime, but the `GOFIPS140=latest` and `requirefips` options can be used to make a program always require FIPS mode and panic if FIPS mode is not enabled:
 
-FIPS mode preference is normally determined at runtime, but both options can be used to make a program always require FIPS mode and panic if FIPS mode is not enabled.
+- The `requirefips` build tag is available since Go 1.21. See [the "GOFLAGS" example in the build section](#modify-the-build-command).
+- The `GOFIPS140=latest` environment variable is available since Go 1.24.
 
 Most programs aren't expected to use these options. Determining FIPS mode at runtime is normal for FIPS compliant applications. This allows the same binary to be deployed to run in both FIPS compliant contexts and non-FIPS contexts, and allows it to be bundled with other binaries that can also run in both contexts. However, it is useful in some cases:
 
