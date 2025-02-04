@@ -43,6 +43,10 @@ stages:
                 # "Access Denied" during EXE copying and general flakiness during tests.
                 ${{ if eq(builder.os, 'windows') }}:
                   retryAttempts: [1, 2, 3, 4, "FINAL"]
+                # Attempt to retry the build on macOS to mitigate flakiness:
+                # "read: connection reset by peer" in cmd/go tests
+                ${{ if eq(builder.os, 'darwin') }}:
+                  retryAttempts: [1, 2, "FINAL"]
 
     - ${{ if eq(parameters.sign, true) }}:
       - template: pool.yml
