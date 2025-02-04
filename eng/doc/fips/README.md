@@ -245,7 +245,7 @@ For testing purposes, Windows FIPS policy can be enabled via the registry key `H
 
 ### macOS FIPS mode (CommonCrypto/CryptoKit)
 
-macOS cryptographic primitives are FIPS compliant by default, there is no need for system-wide nor process-wide configuration.
+macOS cryptographic primitives are FIPS compliant by default, so there is no need for system-wide nor process-wide configuration.
 Refer to the [About Apple security certifications](https://support.apple.com/guide/certifications/about-apple-security-certifications-apc30d0ed034/1/web/1.0) page for more information.
 
 This means that setting `GOFIPS=1` or `GODEBUG=fips140=on` will never cause a panic on macOS.
@@ -262,7 +262,7 @@ The `GOFIPS140=latest` environment variable is available since Go 1.24.
 
 FIPS mode preference is normally determined at runtime, but both options can be used to make a program always require FIPS mode and panic if FIPS mode is not enabled.
 
-Most programs aren't expected to use this tag. Determining FIPS mode at runtime is normal for FIPS compliant applications. This allows the same binary to be deployed to run in both FIPS compliant contexts and non-FIPS contexts, and allows it to be bundled with other binaries that can also run in both contexts. However, it is useful in some cases:
+Most programs aren't expected to use these options. Determining FIPS mode at runtime is normal for FIPS compliant applications. This allows the same binary to be deployed to run in both FIPS compliant contexts and non-FIPS contexts, and allows it to be bundled with other binaries that can also run in both contexts. However, it is useful in some cases:
 
 - Dependence on environment variables like `GODEBUG` and `GOFIPS` in any way may be undesirable.
 - The program's documentation can state it will always run in FIPS mode without any nuance about environment variables.
