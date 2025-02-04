@@ -1,0 +1,14 @@
+# Schema taken from https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/product-catalog/branch-classification/branch-classification#optional-update-branch-classification-at-the-repo.
+name: branch_classification
+description: Branch classification configuration for repository
+resource: repository
+disabled: false
+where:
+configuration:
+  branchClassificationSettings:
+    defaultClassification: nonproduction
+    ruleset:
+      - name: prod-branches
+        branchNames:
+          - microsoft/release-branch.go*
+        classification: production
