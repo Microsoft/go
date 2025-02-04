@@ -10,5 +10,6 @@ configuration:
     ruleset:
       - name: prod-branches
         branchNames:
+          - microsoft/main
           - microsoft/release-branch.go*
         classification: production
