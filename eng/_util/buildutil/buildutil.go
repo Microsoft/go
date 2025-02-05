@@ -6,8 +6,10 @@ package buildutil
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -119,4 +121,30 @@ func UnassignGOROOT() error {
 		}
 	}
 	return nil
+}
+
+// RunAndSaveStdOut runs a command and outputs the stdout to [os.Stdout] and,
+// if outPath is not empty, to a file at outPath.
+func RunAndSaveStdOut(cmdline []string, outPath string) error {
+	var stdout io.Writer = os.Stdout
+	if outPath != "" {
+		f, err := os.Create(outPath)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			closeErr := f.Close()
+			if err == nil {
+				err = closeErr
+			}
+		}()
+		stdout = io.MultiWriter(stdout, f)
+	}
+
+	c := exec.Command(cmdline[0], cmdline[1:]...)
+	c.Stdout = stdout
+	c.Stderr = os.Stderr
+
+	fmt.Printf("---- Running command: %v\n", c.Args)
+	return c.Run()
 }

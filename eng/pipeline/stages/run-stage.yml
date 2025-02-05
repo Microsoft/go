@@ -216,8 +216,7 @@ stages:
                   pwsh eng/run.ps1 build
               displayName: Build
 
-          # Use run-builder for any configuration that includes tests. run-builder uses the "gotestsum"
-          # module to convert test results to a JUnit file that Azure DevOps can understand.
+          # Use run-builder for any configuration that includes tests.
           - ${{ else }}:
             - ${{ if eq(parameters.builder.os, 'windows') }}:
               - pwsh: |
@@ -281,6 +280,8 @@ stages:
                     ) -join ';'
                   }
 
+                  # Test publishing currently used in our CI because this process seems to cut off some test output:
+                  # https://github.com/microsoft/go/issues/1114.
                   eng/run.ps1 cmdscan -envprefix GO_CMDSCAN_RULE_ -successvar TEST_BUILDER_SUCCESSFUL -- `
                     pwsh eng/run.ps1 run-builder -test `
                       -builder '${{ parameters.builder.os }}-${{ parameters.builder.arch }}-${{ parameters.builder.config }}' `
