@@ -274,7 +274,9 @@ stages:
                     pwsh eng/run.ps1 run-builder -test `
                       -builder '${{ parameters.builder.os }}-${{ parameters.builder.arch }}-${{ parameters.builder.config }}' `
                       $(if ('${{ parameters.builder.experiment }}') { '-experiment'; '${{ parameters.builder.experiment }}' }) `
-                      $(if ('${{ parameters.builder.fips }}') { '-fipsmode' })
+                      $(if ('${{ parameters.builder.fips }}') { '-fipsmode' }) `
+                      -json `
+                      -testout '$(Build.SourcesDirectory)/eng/artifacts/TestResults.json'
                 ${{ if eq(length(parameters.retryAttempts), 1) }}:
                   displayName: Test
                 ${{ else }}:
@@ -288,6 +290,26 @@ stages:
                 ${{ elseif eq(parameters.builder.broken, true) }}:
                   # Don't fail the job if we are at the last retry and the builder is marked as broken.
                   continueOnError: true
+
+            - pwsh: |
+                go run github.com/jstemmer/go-junit-report/v2 `
+                  -parser gojson `
+                  -in '$(Build.SourcesDirectory)/eng/artifacts/TestResults.json' `
+                  -out '$(Build.SourcesDirectory)/eng/artifacts/TestResults.xml'
+              workingDirectory: '$(Build.SourcesDirectory)/eng/_util' # This is the module where the go-junit-reporter version is defined.
+              displayName: Convert JSON to JUnit
+              condition: succeededOrFailed()
+
+            - task: PublishTestResults@2
+              displayName: Publish test results
+              condition: succeededOrFailed()
+              inputs:
+                testResultsFormat: JUnit
+                testResultsFiles: $(Build.SourcesDirectory)/eng/artifacts/TestResults.xml
+                testRunTitle: $(System.JobDisplayName)
+                buildPlatform: ${{ parameters.builder.arch }}
+                buildConfiguration: ${{ parameters.builder.config }}
+                publishRunAttachments: true
 
           # - ${{ if eq(parameters.builder.config, 'buildandpack' ) }}:
           #   - ${{ if ne(parameters.releaseVersion, 'nil') }}:

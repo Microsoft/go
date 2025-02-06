@@ -207,7 +207,16 @@ func main() {
 		if *dryRun {
 			fmt.Printf("---- Dry run. Would have run test command: %v\n", cmdline)
 		} else {
-			err := buildutil.RunAndSaveStdOut(cmdline, *testOutFile)
+			f, err := os.Create(*testOutFile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer func() {
+				if err := f.Close(); err != nil {
+					log.Fatal(err)
+				}
+			}()
+			err = buildutil.RunCmdMultiWriter(cmdline, f, buildutil.NewStripTestJSONWriter(os.Stdout))
 			// If we got an ExitError, the error message was already printed by the command. We just
 			// need to exit with the same exit code.
 			if exitErr, ok := err.(*exec.ExitError); ok {

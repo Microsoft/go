@@ -224,8 +224,15 @@ func build(o *options) error {
 		if o.JSON {
 			testCommandLine = append(testCommandLine, "-json")
 		}
-
-		if err := buildutil.RunAndSaveStdOut(testCommandLine, o.TestOutFile); err != nil {
+		f, err := os.Create(o.TestOutFile)
+		if err != nil {
+			return err
+		}
+		if err := buildutil.RunCmdMultiWriter(testCommandLine, f, buildutil.NewStripTestJSONWriter(os.Stdout)); err != nil {
+			f.Close()
+			return err
+		}
+		if err := f.Close(); err != nil {
 			return err
 		}
 	}

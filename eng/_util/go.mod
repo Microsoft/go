@@ -7,6 +7,7 @@ module github.com/microsoft/go/_util
 go 1.22.0
 
 require (
+	github.com/jstemmer/go-junit-report/v2 v2.1.0
 	github.com/microsoft/go-infra v0.0.6
 	github.com/microsoft/go-infra/goinstallscript v0.0.0-20250210150554-f31015b54477
 	golang.org/x/sys v0.30.0
