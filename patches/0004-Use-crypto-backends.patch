@@ -13,6 +13,7 @@ Subject: [PATCH] Use crypto backends
  .../go/testdata/script/gopath_std_vendor.txt  |   9 +
  src/cmd/link/internal/ld/config.go            |   8 +
  src/cmd/link/internal/ld/lib.go               |   1 +
+ src/cmd/link/internal/ld/main.go              |  12 +-
  src/crypto/aes/aes.go                         |   2 +-
  src/crypto/boring/boring.go                   |   4 +-
  src/crypto/cipher/ctr_aes_test.go             |   2 +-
@@ -84,7 +85,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 80 files changed, 1120 insertions(+), 111 deletions(-)
+ 81 files changed, 1131 insertions(+), 112 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -282,6 +283,36 @@ index 2d8f964f3594c6..a587e1abde57c9 100644
  	"crypto/internal/boring",
  	"crypto/internal/boring/syso",
  	"crypto/x509",
+diff --git a/src/cmd/link/internal/ld/main.go b/src/cmd/link/internal/ld/main.go
+index 7614b6d194facf..f0f53ab2bab047 100644
+--- a/src/cmd/link/internal/ld/main.go
++++ b/src/cmd/link/internal/ld/main.go
+@@ -44,6 +44,7 @@ import (
+ 	"os"
+ 	"runtime"
+ 	"runtime/pprof"
++	"slices"
+ 	"strconv"
+ 	"strings"
+ )
+@@ -185,7 +186,16 @@ func Main(arch *sys.Arch, theArch Arch) {
+ 
+ 	buildVersion := buildcfg.Version
+ 	if goexperiment := buildcfg.Experiment.String(); goexperiment != "" {
+-		buildVersion += " X:" + goexperiment
++		// buildVersion is intended to contain non-default experiment flags.
++		// The Microsoft Go toolchain default behavior is to set the
++		// allowcryptofallback experiment, so we don't include it in the
++		// buildVersion string.
++		goexperiment = strings.Join(slices.DeleteFunc(strings.Split(goexperiment, ","), func(s string) bool {
++			return s == "allowcryptofallback"
++		}), ",")
++		if goexperiment != "" {
++			buildVersion += " X:" + goexperiment
++		}
+ 	}
+ 	addstrdata1(ctxt, "runtime.buildVersion="+buildVersion)
+ 
 diff --git a/src/crypto/aes/aes.go b/src/crypto/aes/aes.go
 index 5bc2d13d673e0a..b803c77be62a66 100644
 --- a/src/crypto/aes/aes.go
