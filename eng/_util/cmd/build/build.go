@@ -53,6 +53,7 @@ func main() {
 			"For more refresh options, use the top level 'submodule-refresh' command instead of 'build'.")
 
 	flag.StringVar(&o.Experiment, "experiment", "", "Include this string in GOEXPERIMENT.")
+	flag.StringVar(&o.TestOutFile, "testout", "", "Write the tets output to this path if this builder runs tests.")
 
 	o.MaxMakeAttempts = buildutil.MaxMakeRetryAttemptsOrExit()
 
@@ -70,22 +71,22 @@ func main() {
 
 	// If build returns an error, handle it here with panic. Having build return an error makes it
 	// easier to adapt build in the future to somewhere else in the module to use it as an API. (For
-	// example, "build" could be changed to "Build" and run-builder could use it. The reason this
-	// hasn't been done yet is that gotestsum can only run a command line, not a Go function.)
+	// example, "build" could be changed to "Build" and run-builder could use it.)
 	if err := build(o); err != nil {
 		panic(err)
 	}
 }
 
 type options struct {
-	SkipBuild  bool
-	Test       bool
-	JSON       bool
-	PackBuild  bool
-	PackSource bool
-	CreatePDB  bool
-	Refresh    bool
-	Experiment string
+	SkipBuild   bool
+	Test        bool
+	JSON        bool
+	PackBuild   bool
+	PackSource  bool
+	CreatePDB   bool
+	Refresh     bool
+	Experiment  string
+	TestOutFile string
 
 	MaxMakeAttempts int
 }
@@ -224,25 +225,7 @@ func build(o *options) error {
 			testCommandLine = append(testCommandLine, "-json")
 		}
 
-		testCmd := exec.Command(testCommandLine[0], testCommandLine[1:]...)
-		testCmd.Stdout = os.Stdout
-		// Redirect stderr to stdout. We expect some lines of stderr to always show up during the
-		// test run, but "build"'s caller might not understand that.
-		//
-		// For example, if we're running in CI, gotestsum may be capturing our output to report in a
-		// JUnit file. If gotestsum detects output in stderr, it prints it in an error message. This
-		// error message stands out, and could mislead someone trying to diagnose a failed test run.
-		// Redirecting all stderr output avoids this scenario. (See /eng/_util/README.md for more
-		// info on why we may be wrapped by gotestsum.)
-		//
-		// An example of benign stderr output is when the tests check for machine capabilities. A
-		// Cgo static linking test emits "/usr/bin/ld: cannot find -lc" when it checks the
-		// capabilities of "ld" on the current system.
-		//
-		// The stderr output isn't used to determine whether the tests succeeded or not. (The
-		// redirect doesn't cause an issue where tests succeed that should have failed.)
-		testCmd.Stderr = os.Stdout
-		if err := runCmd(testCmd); err != nil {
+		if err := buildutil.RunAndSaveStdOut(testCommandLine, o.TestOutFile); err != nil {
 			return err
 		}
 	}

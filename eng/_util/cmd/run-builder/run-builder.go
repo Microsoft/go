@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/microsoft/go/_util/buildutil"
-	gotestsumcmd "gotest.tools/gotestsum/cmd"
 )
 
 const description = `
@@ -40,7 +39,8 @@ func main() {
 	var builder = flag.String("builder", "", "[Required] Specify a builder to run. Note, this may be destructive!")
 	var experiment = flag.String("experiment", "", "Include this string in GOEXPERIMENT.")
 	var fipsMode = flag.Bool("fipsmode", false, "Run the Go tests in FIPS mode.")
-	var jUnitFile = flag.String("junitfile", "", "Write a JUnit XML file to this path if this builder runs tests.")
+	var json = flag.Bool("json", false, "Runs tests with -json flag to emit verbose results in JSON format. For use in CI.")
+	var testOutFile = flag.String("testout", "", "Write the tets output to this path if this builder runs tests.")
 	var build = flag.Bool("build", false, "Run the build.")
 	var test = flag.Bool("test", false, "Run the tests.")
 
@@ -134,7 +134,13 @@ func main() {
 		// validate the run.ps1 script with "build" tool works to build and test Go. It runs a
 		// subset of the "test" builder's tests, but it uses the dev workflow.
 		testCmdline := append(buildCmdline, "-skipbuild", "-test")
-		if err := runTest(testCmdline, *jUnitFile); err != nil {
+		if *json {
+			testCmdline = append(testCmdline, "-json")
+		}
+		if *testOutFile != "" {
+			testCmdline = append(testCmdline, "-testout", *testOutFile)
+		}
+		if err := run(testCmdline...); err != nil {
 			log.Fatal(err)
 		}
 
@@ -194,15 +200,23 @@ func main() {
 			)
 		}
 
-		err := runTest(cmdline, *jUnitFile)
-		// If we got an ExitError, the error message was already printed by the command. We just
-		// need to exit with the same exit code.
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			os.Exit(exitErr.ExitCode())
+		if *json {
+			cmdline = append(cmdline, "-json")
 		}
-		if err != nil {
-			// Something else happened: alert the user.
-			log.Fatal(err)
+
+		if *dryRun {
+			fmt.Printf("---- Dry run. Would have run test command: %v\n", cmdline)
+		} else {
+			err := buildutil.RunAndSaveStdOut(cmdline, *testOutFile)
+			// If we got an ExitError, the error message was already printed by the command. We just
+			// need to exit with the same exit code.
+			if exitErr, ok := err.(*exec.ExitError); ok {
+				os.Exit(exitErr.ExitCode())
+			}
+			if err != nil {
+				// Something else happened: alert the user.
+				log.Fatal(err)
+			}
 		}
 	}
 }
@@ -243,68 +257,4 @@ func runOrPanic(cmdline ...string) {
 	if err := run(cmdline...); err != nil {
 		panic(err)
 	}
-}
-
-// runTest runs a testing command. If given a JUnit XML file path, runs the test command inside a
-// gotestsum command that converts the JSON output into JUnit XML and writes it to a file at this
-// path.
-func runTest(cmdline []string, jUnitFile string) error {
-	if jUnitFile != "" {
-		// Emit verbose JSON results in stdout for conversion.
-		cmdline = append(cmdline, "-json")
-	}
-
-	if *dryRun {
-		fmt.Printf("---- Dry run. Would have run test command: %v\n", cmdline)
-		return nil
-	}
-
-	if jUnitFile != "" {
-		// Set up gotestsum args. We rely on gotestsum to run the command, capture its output, and
-		// convert it to JUnit test result XML.
-		gotestsumArgs := append(
-			[]string{
-				"--junitfile", jUnitFile,
-				"--hide-summary", "skipped,output",
-				"--format", "standard-quiet",
-				// When a builder runs tests, some JSON lines are mixed in with standard output
-				// lines. Normally gotestsum treats this as an error, but we need to allow it.
-				"--ignore-non-json-output-lines",
-				// We don't use 'go test', we pass our own raw command. ("cmdline" args.)
-				"--raw-command",
-			},
-			cmdline...,
-		)
-
-		// gotestsum embeds the current version of Go into the JUnit file. This causes some
-		// problems, so use GOVERSION to override the behavior and use a simple placeholder.
-		//
-		// To find the Go version, gotestsum first looks up GOVERSION in env. If it doesn't exist,
-		// then it looks for "go" in PATH and uses the output of "go version". If Go doesn't exist
-		// in PATH, then gotestsum emits a warning.
-		//
-		// There are two problems. First, in CI, we don't have Go in PATH, so the warning shows up.
-		// It's shown as the last line of output in CI, so it seems more important than it really
-		// is. Second, even if gotestsum does find Go in PATH, it's the wrong version. We're running
-		// tests using the Go we just built, which is never in PATH. Both of these problems could
-		// end up being red herrings in the future, but we prevent them by setting GOVERSION.
-		//
-		// We could run "go version", parse the output, and use that as GOVERSION. However, this
-		// doesn't seem useful, because we know that we ran tests using the Go we just built.
-		env("GOVERSION", "gotestsum_go_version_placeholder")
-
-		fmt.Printf("---- Running gotestsum command: %v\n", gotestsumArgs)
-
-		// Use "ARG_0_PLACEHOLDER" as an arbitrary placeholder name. This is because here, we're
-		// essentially directly calling gotestsum's main method. The 0th arg to a main method is
-		// usually the program's path. This is used in the program's help text to give example
-		// commands that the user can copy-paste no matter where the executable lives or if it's
-		// been renamed. However, run-builder uses gotestsum as a library, so it's compiled into our
-		// binary and there is no actual 'gotestsum' program. We could pass run-builder's path, but
-		// that would be misleading if it ever shows up in gotestsum's output unexpectedly. Instead,
-		// pass an obvious placeholder.
-		return gotestsumcmd.Run("ARG_0_PLACEHOLDER", gotestsumArgs)
-	}
-	// If we don't have a jUnitFile target, run the command normally.
-	return run(cmdline...)
 }
