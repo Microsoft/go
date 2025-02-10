@@ -17,8 +17,8 @@ To list all possible tools:
 
 Builds 'eng/_util/cmd/<tool>/<tool>.go' and runs it using the list of arguments.
 
-This command automatically installs a known version of Microsoft Go that will be
-used to build the tools. The known version of Go will also be used to build the
+This command automatically installs a known version of the Microsoft build Go that
+will be used to build the tools. The known version of Go will also be used to build the
 Go source code, if it's built. Set environment variable "MS_USE_PATH_GO" to 1 to
 your own Go from PATH instead.
 

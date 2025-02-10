@@ -108,17 +108,17 @@ The first step is to clone this repository using Git and check out the desired
 tag or commit. The `zip` file that GitHub offers for download is incomplete: it
 doesn't include the `go` submodule.
 
-If you want to contribute to the Microsoft Go project, read the [Developer
+If you want to contribute to the Microsoft for Go developers project, read the [Developer
 Guide](eng/doc/DeveloperGuide.md). It lists the steps we recommend to set up a
-Microsoft Go development environment, execute your first Microsoft Go build, run
+Microsoft build of Go development environment, execute your first build, run
 the standard library test suite, and contribute a PR.
 
-If you just want to build Microsoft Go on your own machine, you may find it more
+If you just want to build on your own machine, you may find it more
 convenient to use the tools provided by the `eng/run.ps1` script. We use this
 script for CI builds. See [eng/README.md](eng/README.md) for more details about
 `eng/run.ps1` and other repository infrastructure.
 
-Once built, the Microsoft Go binary is found at `go/bin/go`.
+Once built, the Microsoft build of Go binary is found at `go/bin/go`.
 
 ## Contributing
 

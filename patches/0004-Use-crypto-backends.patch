@@ -301,7 +301,7 @@ index 7614b6d194facf..f0f53ab2bab047 100644
  	if goexperiment := buildcfg.Experiment.String(); goexperiment != "" {
 -		buildVersion += " X:" + goexperiment
 +		// buildVersion is intended to contain non-default experiment flags.
-+		// The Microsoft Go toolchain default behavior is to set the
++		// The Microsoft build of Go default behavior is to set the
 +		// allowcryptofallback experiment, so we don't include it in the
 +		// buildVersion string.
 +		goexperiment = strings.Join(slices.DeleteFunc(strings.Split(goexperiment, ","), func(s string) bool {
@@ -744,7 +744,7 @@ index 00000000000000..1dc05d09b2062d
 +
 +import _ "unsafe"
 +
-+// The symbols below are pulled by some crypto backend in the Microsoft Go compiler.
++// The symbols below are pulled by some crypto backend in the Microsoft build of Go compiler.
 +// We provide a push linkname here, to keep them accessible with pull linknames.
 +
 +//go:linkname encodeSignature
@@ -2304,7 +2304,7 @@ index 00000000000000..1adf3098356307
 +// license that can be found in the LICENSE file.
 +
 +/*
-+Microsoft Go only package.
++Microsoft build of Go only package.
 +
 +TLS 1.3 Key Schedule is normally not part of the FIPS boundary, but upstream Go
 +decided to include it in the FIPS boundary to facilitate the FIPS 140-3 certification

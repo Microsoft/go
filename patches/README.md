@@ -1,6 +1,6 @@
-# Microsoft Go patches
+# Microsoft build of Go patches
 
-The patches in this directory are applied to the `/go` submodule before building Microsoft Go.
+The patches in this directory are applied to the `/go` submodule before building th Microsoft build of Go.
 This is done automatically by the build tools provided in `/eng`.
 
 We use [`git-go-patch`](https://github.com/microsoft/go-infra/tree/main/cmd/git-go-patch) to maintain these patch files.
