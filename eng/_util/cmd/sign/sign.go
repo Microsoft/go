@@ -20,7 +20,7 @@ import (
 )
 
 const description = `
-This command signs build artifacts using MicroBuild. It is used in the Microsoft Go build pipeline.
+This command signs build artifacts using MicroBuild. It is used in the Microsoft build of Go build pipeline.
 Use '-n' to test the command locally.
 
 Signs in multiple passes. Some steps only apply to certain types of archives:

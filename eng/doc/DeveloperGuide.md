@@ -1,6 +1,6 @@
 # Developer Guide
 
-This document is a guide for developers who want to contribute to the Microsoft Go repository.
+This document is a guide for developers who want to contribute to the Microsoft build of Go repository.
 It explains how to build the repository, how to work with the Go submodule, and how to use the different tools that help maintain the repository.
 
 This guide is primarily intended for developers working for the Go team at Microsoft, but it can also be useful for external contributors.
@@ -15,7 +15,7 @@ For details, visit https://cla.opensource.microsoft.com.
 ### Install a Go toolchain
 
 A preexisting Go toolchain is required to bootstrap the build process.
-You can use your system's package manager to install Go, download Go from the [official Go website](https://golang.org/dl/), or download a prebuilt version of Microsoft Go itself.
+You can use your system's package manager to install Go, download Go from the [official Go website](https://golang.org/dl/), or download a prebuilt version of the Microsoft build Go itself.
 
 The only requirement is that the Go version is high enough for the bootstrap process.
 If you attempt to build Go while using a bootstrap Go with a version that is too low, the bootstrap process will fail and ask you to install a newer version.
@@ -23,13 +23,13 @@ If you attempt to build Go while using a bootstrap Go with a version that is too
 > [!NOTE]
 > The in-support versions of Go found on the [official Go website](https://golang.org/dl/) are always high enough to bootstrap the development branch.
 > This is because:
-> * The [last two major versions of Go are supported by the Go project](https://go.dev/s/release#release-maintenance). (Microsoft Go has the same policy.)
+> * The [last two major versions of Go are supported by the Go project](https://go.dev/s/release#release-maintenance). (the Microsoft build of Go has the same policy.)
 > * Go N can always be bootstrapped by [both N-1 and N-2](https://tip.golang.org/doc/install/source#go14).
 
 > [!NOTE]
-> This repository's `eng/run.ps1` PowerShell script is able to download a correct bootstrapping Go version automatically before building Microsoft Go from source.
-> We recommend that Microsoft Go team members be familiar with this script because it is used by Microsoft Go CI.
-> However, it isn't necessary to use the script for most work on the Microsoft Go patches.
+> This repository's `eng/run.ps1` PowerShell script is able to download a correct bootstrapping Go version automatically before building the Microsoft build of Go from source.
+> We recommend that Microsoft developers team members be familiar with this script because it is used by our CI.
+> However, it isn't necessary to use the script for most work on the Microsoft build of Go patches.
 > See the [`eng` Readme](/eng/README.md) for more information about `eng/run.ps1`.
 
 ### Install git and the git-go-patch command

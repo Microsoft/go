@@ -94,7 +94,7 @@ stages:
             - name: MS_GO_UTIL_ALLOW_ONLY_MINIMAL_DEPS
               value: '1'
 
-          # On darwin (macOS) we haven't released a Microsoft Go toolchain.
+          # On darwin (macOS) we haven't released a Microsoft build Go toolchain.
           - ${{ if eq(parameters.builder.os, 'darwin') }}:
             - name: MS_USE_PATH_GO
               value: '1'

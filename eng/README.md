@@ -64,12 +64,12 @@ complete, to match the content of the official binary releases of Go.
 
 ## Patch files
 
-The Microsoft Go repository uses patch files to store changes to the `go`
+The Microsoft build of Go repository uses patch files to store changes to the `go`
 submodule. The patch files are found in [`/patches`](/patches).
 
 We created [the `git-go-patch` tool][git-go-patch] to develop and maintain the
-patch files. We wrote this tool specifically for the Microsoft Go project. It's
-a Go program that can be invoked as `git go-patch` after it's installed. See
+patch files. We wrote this tool specifically for the Microsoft for Go developers project.
+It's a Go program that can be invoked as `git go-patch` after it's installed. See
 [the `git-go-patch` readme][git-go-patch] for more information.
 
 We also have some utilities in this repository to apply patches without
@@ -79,7 +79,7 @@ installing `git-go-patch`:
   patches.
   * Pass `-commits` to apply each patch as a separate commit.
 * `pwsh eng/run.ps1 build -refresh` refreshes the submodule and applies patches
-  and then goes on to build Microsoft Go.
+  and then goes on to build the Microsoft build of Go.
 
 The patch files are ordinary Git patches and can also be applied manually
 without any custom tooling. Git commands like [`git

@@ -1,13 +1,13 @@
 # FIPS 140-2 User Guide
 
-This document is a user guide for the Microsoft Go crypto package running on FIPS 140-2 compatibility mode (hereafter referred to as FIPS). It is intended as a technical reference for developers using, and system administrators installing, the Go toolset, and for use in risk assessment reviews by security auditors. This is not a replacement for the Go crypto documentation, rather it is a collection of notes and more detailed explanations in the context of FIPS compatibility.
+This document is a user guide for the Microsoft build of Go crypto package running on FIPS 140-2 compatibility mode (hereafter referred to as FIPS). It is intended as a technical reference for developers using, and system administrators installing, the Go toolset, and for use in risk assessment reviews by security auditors. This is not a replacement for the Go crypto documentation, rather it is a collection of notes and more detailed explanations in the context of FIPS compatibility.
 
 The Go crypto documentation is available online at https://pkg.go.dev/crypto.
 
 <!-- The following table of contents is maintained using https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one -->
 
 - [FIPS 140-2 User Guide](#fips-140-2-user-guide)
-  - [The Microsoft Go crypto backends](#the-microsoft-go-crypto-backends)
+  - [The Microsoft build of Go crypto backends](#the-microsoft-build-of-go-crypto-backends)
   - [Using Go crypto APIs](#using-go-crypto-apis)
     - [crypto/aes](#cryptoaes)
       - [func NewCipher](#func-newcipher)
@@ -95,11 +95,11 @@ The Go crypto documentation is available online at https://pkg.go.dev/crypto.
     - [crypto/subtle](#cryptosubtle)
     - [crypto/tls](#cryptotls)
 
-## The Microsoft Go crypto backends
+## The Microsoft build of Go crypto backends
 
 The OpenSSL backend uses [golang-fips/openssl].
 The CNG backend uses [go-crypto-winnative].
-For more general information about the backends, such as how to enable them, see the [Microsoft Go FIPS README](./README.md).
+For more general information about the backends, such as how to enable them, see the [Microsoft build of Go FIPS README](./README.md).
 
 [golang-fips/openssl]: https://github.com/golang-fips/openssl
 [go-crypto-winnative]: https://github.com/microsoft/go-crypto-winnative
@@ -1697,7 +1697,7 @@ Package tls partially implements TLS 1.2, as specified in RFC 5246, and TLS 1.3,
 
 Package tls will automatically use FIPS compliant primitives implemented in other crypto packages.
 
-Since Go 1.22, the Microsoft Go runtime automatically enforces that tls only uses FIPS-approved settings when running in FIPS mode.
+Since Go 1.22, the Microsoft build of Go runtime automatically enforces that tls only uses FIPS-approved settings when running in FIPS mode.
 Prior to Go 1.22, a program using tls must import the `crypto/tls/fipsonly` package to be compliant with these restrictions.
 
 When using TLS in FIPS-only mode the TLS handshake has the following restrictions:

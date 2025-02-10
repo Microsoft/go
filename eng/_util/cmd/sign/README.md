@@ -1,4 +1,4 @@
-# `sign` and the Microsoft Go signing infrastructure
+# `sign` and the Microsoft build of Go signing infrastructure
 
 Most of the logic for signing (extracting files, repackaging, creating checksums) is implemented by this `sign` command.
 
