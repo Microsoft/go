@@ -3,7 +3,17 @@
 
   <!-- Minimal info for '.csproj' to work. -->
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <!--
+      We only have a single NuGet feed, and that feed doesn't have any targeting
+      packs (Microsoft.NETCore.App.Ref, Microsoft.WindowsDesktop.App.Ref, and
+      Microsoft.AspNetCore.App.Ref). To avoid downloading any targeting packs,
+      we need the Target Framework to match the .NET SDK exactly. The SDK may be
+      upgraded without our knowledge, so a hard-coded version is fragile. Use
+      BundledNETCoreAppTargetFrameworkVersion to be flexible.
+
+      We aren't actually building an app anyway, we just need the RM package.
+    -->
+    <TargetFramework>net$(BundledNETCoreAppTargetFrameworkVersion)</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
