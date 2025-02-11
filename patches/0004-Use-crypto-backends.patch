@@ -43,7 +43,7 @@ Subject: [PATCH] Use crypto backends
  src/crypto/internal/fips140test/check_test.go |   8 +-
  src/crypto/md5/md5.go                         |  10 +
  src/crypto/md5/md5_test.go                    |  16 ++
- src/crypto/pbkdf2/pbkdf2.go                   |   4 +
+ src/crypto/pbkdf2/pbkdf2.go                   |   7 +
  src/crypto/pbkdf2/pbkdf2_test.go              |   6 +-
  src/crypto/purego_test.go                     |   2 +-
  src/crypto/rand/rand.go                       |   2 +-
@@ -85,7 +85,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 81 files changed, 1135 insertions(+), 112 deletions(-)
+ 81 files changed, 1138 insertions(+), 112 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -1337,7 +1337,7 @@ index 437d9b9d4c0e0d..50728df60ea7ec 100644
  			continue
  		}
 diff --git a/src/crypto/pbkdf2/pbkdf2.go b/src/crypto/pbkdf2/pbkdf2.go
-index dd5fc33f2120c3..2616736a21b2f5 100644
+index dd5fc33f2120c3..7ce0da53887a40 100644
 --- a/src/crypto/pbkdf2/pbkdf2.go
 +++ b/src/crypto/pbkdf2/pbkdf2.go
 @@ -11,6 +11,7 @@
@@ -1348,11 +1348,14 @@ index dd5fc33f2120c3..2616736a21b2f5 100644
  	"crypto/internal/fips140/pbkdf2"
  	"crypto/internal/fips140hash"
  	"crypto/internal/fips140only"
-@@ -50,5 +51,8 @@ func Key[Hash hash.Hash](h func() Hash, password string, salt []byte, iter, keyL
+@@ -50,5 +51,11 @@ func Key[Hash hash.Hash](h func() Hash, password string, salt []byte, iter, keyL
  			return nil, errors.New("crypto/pbkdf2: use of hash functions other than SHA-2 or SHA-3 is not allowed in FIPS 140-only mode")
  		}
  	}
 +	if boring.Enabled && boring.SupportsPBKDF2() {
++		if keyLength <= 0 {
++			return nil, errors.New("pkbdf2: keyLength must be larger than 0")
++		}
 +		return boring.PBKDF2([]byte(password), salt, iter, keyLength, fh)
 +	}
  	return pbkdf2.Key(fh, password, salt, iter, keyLength)
