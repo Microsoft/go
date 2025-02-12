@@ -48,7 +48,7 @@ stages:
           - name: GoBinariesDir
             value: $(Pipeline.Workspace)/Binaries Signed
           - name: NetCorePublishingScripts
-            value: $(Build.SourcesDirectory)/eng/release-studio/bin/Debug/net7.0/MsGoPublishingScripts
+            value: $(Build.SourcesDirectory)/eng/release-studio/bin/MsGoPublishingScripts
 
           # This is read directly by release studio scripts through env.
           - name: RMExecutionEnvironment
@@ -70,6 +70,7 @@ stages:
               projects: '$(Build.SourcesDirectory)/eng/release-studio/ReleaseStudio.csproj'
               custom: build
               arguments: >-
+                /p:NetCorePublishingScripts=$(NetCorePublishingScripts)
                 /bl:eng/release-studio/Build.binlog
                 /v:n
 
