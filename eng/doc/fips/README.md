@@ -7,44 +7,54 @@ This directory contains documentation about FIPS and the FIPS implementation in 
 
 ## Background
 
-FIPS 140 is a U.S. government computer security standard used to approve cryptographic modules. FIPS compliance may come up when working with U.S. government and other regulated industries.
+FIPS 140 is a U.S. government computer security standard used to approve cryptographic modules. FIPS compliance and specifically FIPS 140-3 certification may come up when working with U.S. government and other regulated industries.
 
 ### Go FIPS compliance
 
-The Go `crypto` package is not FIPS certified, and the Go team has stated that it won't be, e.g. in [golang/go/issues/21734](https://github.com/golang/go/issues/21734#issuecomment-326980213) Adam Langley says:
+The upstream plan to support building FIPS compliant Go apps is described in [FIPS 140-3 Compliance](https://go.dev/doc/security/fips140) and [crypto: obtain a FIPS 140-3 validation (golang/go#69536)](https://github.com/golang/go/issues/69536).
+Go 1.24 delivered some major steps in this plan: the crypto module itself (written in Go and Go assembly), the concept of FIPS mode in the Go runtime, and new toolset settings.
 
-> The status of FIPS 140 for Go itself remains "no plans, basically zero chance".
+Prior to Go 1.24, Google maintained the [goexperiment](https://pkg.go.dev/internal/goexperiment) `boringcrypto`, that uses cgo and BoringSSL to implement various crypto primitives.
+As BoringSSL is FIPS 140 certified, an application built using this flag is more likely to be FIPS 140 compliant, yet Google does not provide any liability about the suitability of this code in relation to the FIPS 140 standard.
 
-On the other hand, Google maintains the [goexperiment](https://pkg.go.dev/internal/goexperiment) `boringcrypto`, that uses cgo and BoringSSL to implement various crypto primitives. As BoringSSL is FIPS 140 certified, an application built using this flag is more likely to be FIPS 140 compliant, yet Google does not provide any liability about the suitability of this code in relation to the FIPS 140 standard.
-
-In addition to that, the boringcrypto flag also provides a mechanism to restrict all TLS configuration to FIPS-compliant settings. The effect is triggered by importing the fipsonly package anywhere in a program, as in:
+In addition to that, the `boringcrypto` flag also provides a mechanism to restrict all TLS configuration to FIPS-compliant settings.
+The effect is triggered by importing the fipsonly package anywhere in a program, as in:
 
 ```go
   import _ "crypto/tls/fipsonly"
 ```
 
+In Go 1.24, the TLS FIPS-compliant mode is controlled by the Go runtime's FIPS mode.
+
 ## Microsoft build of Go FIPS compliance
 
-The Microsoft build of Go modifies the Go runtime to implement several crypto primitives using cgo to call into a platform-provided cryptographic library rather than use the standard Go crypto implementations. This allows Go programs to use a platform-provided FIPS 140 certified crypto library.
+The Microsoft build of Go modifies the Go runtime to call into a platform-provided cryptographic library to implement crypto primitives rather than use the standard Go crypto implementations.
+Depending on the platform, this is done using cgo or syscalls.
+This allows Go programs to use a platform-provided FIPS 140 certified crypto library.
 
 On Linux, the fork uses [OpenSSL](https://www.openssl.org/) through the [golang-fips/openssl] module in Go 1.21+ and the [go-crypto-openssl] module in earlier versions. On Windows, [CNG](https://docs.microsoft.com/en-us/windows/win32/seccng/about-cng), using [go-crypto-winnative]. Since 1.24, on macOS, [CommonCrypto](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/Common%20Crypto.3cc.html) and [CryptoKit](https://developer.apple.com/documentation/cryptokit) using [go-crypto-darwin]. Similar to BoringSSL, certain OpenSSL, CNG and CommonCrypto/CryptoKit versions are FIPS 140 certified.
 
-It is important to note that an application built with Microsoft's Go toolchain and running in FIPS compatible mode is not FIPS compliant _per-se_. It is the responsibility of the application development team to use FIPS-compliant crypto primitives and workflows. The modified crypto runtime will fall back to Go standard library crypto if it cannot provide a FIPS-compliant implementation, e.g. when hashing a message using `crypto/md5` hashes or when using an AES-GCM cipher with a non-standard nonce size.
+> [!IMPORTANT]
+> An application built with Microsoft's Go toolchain and running in FIPS compatible mode is not FIPS compliant _per-se_.
+> It is the responsibility of the application development team to use FIPS-compliant crypto primitives and workflows.
+>
+> For compatibility reasons, the modified crypto runtime will fall back to Go standard library crypto if it cannot provide a FIPS-compliant implementation, e.g. when hashing a message using `crypto/md5` hashes or when using an AES-GCM cipher with a non-standard nonce size.
 
 ## Configuration overview
 
-The Microsoft build of Go fork provides several ways to configure the crypto backend and its behavior. These are described in the following sections in detail.
+The Microsoft build of Go provides several ways to configure the crypto backend and its behavior.
+These are described in the following sections in detail.
 
 - Build-time configuration (`go build`):
   - [`GOEXPERIMENT=<backend>crypto` environment variable](#usage-build)
   - [`goexperiment.<backend>crypto` build tag](#usage-build)
   - [`requirefips` build tag](#build-option-to-require-fips-mode)
-  - [`GOFIPS140=latest` environment variable](#build-option-to-require-fips-mode)
+  - [`GOFIPS140=latest` environment variable](#build-option-to-require-fips-mode) (go1.24+)
   - [`GOEXPERIMENT` `allowcryptofallback`](#build-option-to-use-go-crypto-if-the-backend-compatibility-check-fails)
   - [`import _ "crypto/tls/fipsonly"` source change](#tls-with-fips-compliant-settings)
 - Runtime configuration:
   - [`GOFIPS` environment variable](#usage-runtime)
-  - [`GODEBUG=fips140` setting](#usage-runtime)
+  - [`GODEBUG=fips140` setting](#usage-runtime) (go1.24+)
   - (OpenSSL backend) [`GO_OPENSSL_VERSION_OVERRIDE` environment variable](#runtime-openssl-version-override)
   - (OpenSSL backend) [`/proc/sys/crypto/fips_enabled` file containing `1`](#linux-fips-mode-openssl)
   - (CNG backend) [Windows registry `HKLM\SYSTEM\CurrentControlSet\Control\Lsa\FipsAlgorithmPolicy` dword value `Enabled` set to `1`](#windows-fips-mode-cng)
@@ -56,9 +66,7 @@ There are typically two goals that lead to this document. Creating a FIPS compli
 > [!NOTE]
 > This section assumes the use of the Microsoft build of Go 1.24 or later.
 >
-> 1.24 introduces `GODEBUG=fips140=on` as a preferred way to enable FIPS mode. See also [the Go 1.24 changelog](#go-124-feb-2025).
->
-> 1.21 introduces `systemcrypto`, `requirefips`, and a build-time compatibility check for the selected crypto backend. The Usage sections go into more detail about the differences between 1.19/1.20 and 1.21 in context. See also [the Go 1.21 changelog](#go-121-aug-2023).
+> 1.24 introduces `GODEBUG=fips140=on` as the preferred way to enable FIPS mode. See also [the Go 1.24 changelog](#go-124-feb-2025).
 
 | Build-time config | Runtime config | Internal Microsoft crypto policy | FIPS behavior |
 | --- | --- | --- | --- |
@@ -68,10 +76,7 @@ There are typically two goals that lead to this document. Creating a FIPS compli
 | `GOEXPERIMENT=systemcrypto` | `GO_OPENSSL_VERSION_OVERRIDE=1.1.1k-fips` | Compliant | Can be used to create a compliant app. If the app is built for Linux, `systemcrypto` chooses `opensslcrypto`, and the environment variable causes it to load `libcrypto.so.1.1.1k-fips` instead of using the automatic search behavior. This environment variable has no effect with `cngcrypto`. |
 | `GOEXPERIMENT=systemcrypto` and `-tags=requirefips` | Default | Compliant | Can be used to create a compliant app. The behavior is the same as `GODEBUG=fips140=on` and `GOFIPS=1`, but no runtime configuration is necessary. See [the `requirefips` section](#build-option-to-require-fips-mode) for more information on when this "locked-in" approach may be useful rather than the flexible approach. |
 
-Other notes for common configurations:
-
-- Prior to Go 1.22, if the app uses TLS, `import _ "crypto/tls/fipsonly"` is also necessary for FIPS compliance. See [TLS with FIPS-compliant settings](#tls-with-fips-compliant-settings)
-- A Docker image is available that includes suitable build-time config in the environment. See [Dockerfile base image](#dockerfile-base-image)
+A [Docker base image](#dockerfile-base-image) is available that includes suitable build-time config in the environment.
 
 Some configurations are invalid and intentionally result in a build error or runtime panic:
 
@@ -91,7 +96,7 @@ The `GOEXPERIMENT` environment variable is used at build time to select a crypto
 - `opensslcrypto` selects OpenSSL, for Linux
 - `cngcrypto` selects CNG, for Windows
 - Since 1.24, `darwincrypto` selects CommonCrypto & CryptoKit for macOS
-- `boringcrypto` selects the upstream BoringCrypto backend, which is **not supported nor compliant**
+- `boringcrypto` selects the upstream BoringCrypto backend, which is **not supported and not compliant with internal Microsoft policy**
 - If no option is selected, Go standard library cryptography is used.
 
 The options are exclusive and must not be enabled at the same time as one another.
@@ -105,52 +110,43 @@ The options are exclusive and must not be enabled at the same time as one anothe
 | macOS (since 1.24) | `darwincrypto` | CommonCrypto & CryptoKit |
 | macOS (prior to 1.24) | N/A, build error | N/A |
 
-The crypto backend selection must match the target platform. In a cross-build scenario, such as using Linux to build an app that will run on Windows, `GOOS=windows GOEXPERIMENT=systemcrypto` will correctly select `cngcrypto`. Prior to Go 1.21, the selection must be made manually: `GOOS=windows GOEXPERIMENT=cngcrypto`.
-
-Setting the `goexperiment.<option>` build tag can be used as an alternative to setting the `GOEXPERIMENT` environment variable.
-
-> [!NOTE]
-> For details about combining multiple `GOEXPERIMENT`s and using build tags to customize your build, see [Usage: GOEXPERIMENTs and backend build tags](#usage-goexperiments-and-backend-build-tags).
-
-If a crypto backend is selected but isn't supported, the build fails. For example, attempting to use the OpenSSL backend without cgo enabled results in a build error.
-
-> [!NOTE]
-> Prior to Go 1.21, instead of failing, the build automatically uses the Go standard library crypto implementation. This behavior can cause accidental or unclear fallback to Go crypto, silently breaking compliance with the internal Microsoft crypto policy.
->
-> In 1.21, this behavior was changed. Fallback is now opt-in with the `GOEXPERIMENT` `allowcryptofallback`. This option is primarily intended for internal use during the Microsoft build of Go build and should be avoided in general use. See [`allowcryptofallback`](#build-option-to-allow-go-standard-library-crypto-fallback) for more information.
-
+The crypto backend selection must match the target platform. In a cross-build scenario, such as using Linux to build an app that will run on Windows, `GOOS=windows GOEXPERIMENT=systemcrypto` will correctly select `cngcrypto`.
 
 The Microsoft build of Go must be used for these `GOEXPERIMENT` values to work. See setup instructions in [the distribution section of the microsoft/go readme][microsoft-go-download].
 
 > [!NOTE]
 > "Experiment" doesn't indicate the FIPS features are experimental. The original intent of `GOEXPERIMENT` is to use it to enable experimental features in the Go runtime and toolchain, but we and Google are now using `GOEXPERIMENT` for this FIPS-related feature because the mechanism itself perfectly fits our needs.
 
+Setting the `goexperiment.<option>` build tag can be used as an alternative to setting the `GOEXPERIMENT` environment variable.
+
+> [!NOTE]
+> For details about combining multiple `GOEXPERIMENT`s and using build tags to customize your build, see [Usage: GOEXPERIMENTs and backend build tags](#usage-goexperiments-and-backend-build-tags).
+
+If a crypto backend is selected but isn't supported, the build fails.
+For example, attempting to use the OpenSSL backend without cgo enabled results in a build error.
+It's possible to dismiss the build error by using [the `allowcryptofallback` experiment](#build-option-to-use-go-crypto-if-the-backend-compatibility-check-fails), but this is dangerous.
+
+
 The next sections describe how to select a crypto backend in some common scenarios.
 
 ### Dockerfile base image
 
-Since Go 1.21, you can swap your Dockerfile's base image to the special Microsoft build of Go images marked with `-fips-`. These images include `env GOEXPERIMENT=systemcrypto` and are otherwise the same as the non`-fips-` images. These exist for convenience. See [the microsoft/go-images documentation][microsoft-go-images] for more information about available images and how to use them.
-
-> [!NOTE]
-> Prior to Go 1.21, `-fips-` images do exist, but they are only available for Linux and include `env GOEXPERIMENT=opensslcrypto`. For this reason, these images can't easily be used to build Windows binaries on a Linux host.
+If you use a Dockerfile, you can swap its base image to the special Microsoft build of Go images marked with `-fips-`.
+These images include `env GOEXPERIMENT=systemcrypto` and are otherwise the same as the non`-fips-` images.
+They are provided for convenience.
+See [the microsoft/go-images documentation][microsoft-go-images] for more information about available images and how to use them.
 
 ### Dockerfile env instruction
 
-If you don't use the standard Go base images (e.g. your Dockerfile downloads the Microsoft build of Go manually), use an `env` instruction before the build instruction in your Dockerfile:
+If you don't use the standard Go base images (e.g. your Dockerfile downloads the Microsoft build of Go manually), you can use an `env` instruction before the build instruction in your Dockerfile:
 
 ```dockerfile
 env GOEXPERIMENT=systemcrypto
 ```
 
-> [!NOTE]
-> Prior to Go 1.21, `systemcrypto` doesn't exist and `opensslcrypto` or `cngcrypto` must be used depending on the target platform.
-
 ### Modify the build command
 
 Another approach that generally works for any build system is to modify the build command or build script. This section lists some helpful snippets to select a backend.
-
-> [!NOTE]
-> Prior to Go 1.21, `systemcrypto` doesn't exist and `opensslcrypto` or `cngcrypto` must be used depending on the target platform.
 
 #### Linux/macOS shell (bash) - Set `GOEXPERIMENT` environment variable
 
@@ -203,13 +199,25 @@ Another approach that generally works for any build system is to modify the buil
 
 A program built with `systemcrypto` always uses the system-provided cryptography library for supported crypto APIs. This is the case for `opensslcrypto` (always using OpenSSL), `cngcrypto` (always using CNG) and `darwincrypto` (always using CommonCrypto/CryptoKit). If the platform's crypto library can't be found or loaded, the Go program panics during initialization.
 
-The following sections describe how to enable FIPS mode and the effect of the `GODEBUG=fips140` and `GOFIPS=1` settings on each supported platform.
+The following sections describe how to enable FIPS mode and the effect of the `GODEBUG=fips140=on` and `GOFIPS=1` settings on each supported platform.
 
 > [!NOTE]
-> Since Go 1.24, setting `GOFIPS=1` is equivalent to setting `GODEBUG=fips140=on`. The latter is the recommended way to enable FIPS mode. Support for the `GOFIPS` environment variable will be removed in Go 1.25.
+> Since Go 1.24, setting `GOFIPS=1` is equivalent to setting `GODEBUG=fips140=on`.
+> The latter is the recommended way to enable FIPS mode.
+> If `GODEBUG=fips140=[...]` is set to `on` or `only`, `GOFIPS` has no effect.
+>
+> Support for the `GOFIPS` environment variable will be removed in Go 1.25.
 
 > [!NOTE]
 > The options described in this section have no effect at build time, only runtime. When the Go program starts up, it examines its environment variables and other platform-specific configurations. This is normally the desired behavior. See [`requirefips`](#build-option-to-require-fips-mode) for info about an optional build tag that may affect FIPS mode.
+
+Since Go 1.24, the Go runtime has an independent FIPS mode, and it may be important to distinguish its FIPS mode from the system or crypto engine's FIPS mode.
+The most familiar difference is that it changes TLS stack behavior.
+The [Go Runtime FIPS mode](#go-runtime-fips-mode) section describes this in more detail.
+
+Go 1.24 also introduces `GODEBUG=fips140=only`.
+It acts as `GODEBUG=fips140=on`, but also makes a best effort to panic if a non-FIPS 140-3 compliant algorithm is used.
+This setting is partially supported in Go 1.24.
 
 ### Linux FIPS mode (OpenSSL)
 
@@ -235,6 +243,13 @@ For more information about the standard OpenSSL FIPS behavior, see https://www.o
 >
 > Since Go 1.24, the Go runtime no longer makes any attempt to modify OpenSSL FIPS mode.
 
+> [!NOTE]
+> Prior to Go 1.24, it was possible to test FIPS mode app behavior on a non-FIPS system by setting `GOFIPS=1`.
+> This is no longer possible in 1.24, but some mechanisms are provided by OpenSSL and distros to help run this type of test.
+>
+> For OpenSSL 3, see [`OPENSSL_CONF`](https://docs.openssl.org/3.0/man5/config/) to change to a FIPS crypto provider.
+> For Azure Linux, see [`OPENSSL_FORCE_FIPS_MODE=1`](https://github.com/microsoft/azurelinux/blob/bfd36df1487511735dbd5fade66b0b613c89b46a/SPECS/openssl/0009-Add-Kernel-FIPS-mode-flag-support.patch#L34).
+
 ### Windows FIPS mode (CNG)
 
 To enable FIPS mode on Windows, [enable the Windows FIPS policy](https://docs.microsoft.com/en-us/windows/security/threat-protection/fips-140-validation#step-3-enable-the-fips-security-policy).
@@ -252,6 +267,32 @@ This means that setting `GOFIPS=1` or `GODEBUG=fips140=on` will never cause a pa
 They are still necessary to instruct Go to run in FIPS mode, as there is no system-provided parameter to do so.
 
 Prior to 1.24, CommonCrypto/CryptoKit is not used by the Microsoft build of Go.
+
+### Go Runtime FIPS mode
+
+Since Go 1.24, the Go runtime has a FIPS mode.
+It is enabled by `GODEBUG=fips140=on` (or any equivalent).
+It can be checked by calling [crypto/fips140.Enabled](https://pkg.go.dev/crypto/fips140#Enabled).
+
+This mode has many effects described in [FIPS 140-3 Compliance](https://go.dev/doc/security/fips140).
+One notable effect is that the Go runtime TLS stack will only use FIPS-compliant settings.
+
+> [!NOTE]
+> Prior to Go 1.24, the Microsoft build of Go automatically applies FIPS compliance changes to the Go runtime (including TLS behavior) when FIPS mode is detected, but it doesn't use a documented mechanism.
+
+The mechanisms in the Mirosoft Build of Go for Linux and Windows automatically enable Go runtime FIPS mode when necessary, based on the system-wide FIPS mode.
+For example, if a Linux system is in FIPS mode, the fork enables OpenSSL FIPS mode and the Go runtime FIPS mode.
+If a Windows system is in FIPS mode, CNG is already in FIPS mode, and the fork enables the Go runtime FIPS mode.
+
+> [!WARNING]
+> On macOS, there is no such thing as system-wide FIPS mode.
+> That is: there is no universal way to configure a macOS system to indicate that all programs that run on that system should follow FIPS requirements.
+> As a result, the Microsoft build of Go has no reliable indicator that the Go runtime FIPS mode should be enabled.
+>
+> For compatibility reasons, the Microsoft build of Go defaults to not enabling FIPS settings.
+> For example, FIPS settings may prevent an application from connecting to a server that doesn't support FIPS-compliant TLS.
+>
+> To make the TLS stack use FIPS-compliant settings on macOS, `GODEBUG=fips140=on` (or an equivalent) must be set explicitly.
 
 ## Usage: Extra configuration options
 
@@ -342,15 +383,13 @@ For example, `go build -tags=goexperiment.systemcrypto` command will enable the 
 
 Normally this is not necessary, but a shared package may need to change its implementation when compiled with a crypto backend rather than the ordinary Go backend. For example, the library may need to remove use of cryptographic algorithms that would not be permitted by FIPS, in a way that will still allow the library to function. This is done using [build constraints](https://pkg.go.dev/go/build#hdr-Build_Constraints), also known as build tags.
 
-Since Go 1.21:
 - `//go:build goexperiment.systemcrypto` conditionally includes the source file if *any* crypto backend is enabled.
 - `//go:build !goexperiment.systemcrypto` includes the file if *no* crypto backend is enabled.
 
-> [!NOTE]
-> Prior to the introduction of the systemcrypto alias in Go 1.21, the constraint is:  
-  `//go:build goexperiment.opensslcrypto && goexperiment.cngcrypto && goexperiment.boringcrypto`.
-
-The `goexperiment.systemcrypto` tag's behavior is implemented in a patch to the build system. It is not available in builds of upstream Go. The constraint `//go:build !goexperiment.systemcrypto` won't cause a build to fail with upstream Go, but it is always satisfied even if the BoringCrypto backend is enabled.
+The `goexperiment.systemcrypto` tag's behavior is implemented in a patch to the build system in the Microsoft build of Go.
+It is not available in builds of upstream Go.
+The constraint `//go:build !goexperiment.systemcrypto` won't cause a build to fail with upstream Go, but it is always satisfied even if the BoringCrypto backend is enabled.
+The constraint also doesn't interact with the FIPS features introduced in Go 1.24.
 
 ## Features
 
@@ -396,13 +435,12 @@ This feature does not require any additional configuration, but it only works wi
 
 The Go TLS stack will automatically use crypto primitives from the selected crypto backend. Yet, this isn't enough for FIPS compliance: the FIPS 140 standard places additional restrictions on TLS communications, mainly on which cyphers and signers are allowed. Note that this can reduce compatibility with old devices that do not support modern cryptography techniques such as TLS 1.2.
 
-Since Go 1.22, the Microsoft build of Go runtime automatically enforces that `crypto/tls` and `crypto/x509` only use FIPS-compliant settings when running in FIPS mode. This differs from upstream's BoringCrypto backend, which requires you to import `crypto/tls/fipsonly` to apply the FIPS-mandated restrictions. The Microsoft build of Go crypto backends do this automatically to reduce the source code changes necessary to produce a FIPS-compliant Go application, and to make it easier to use the same binary in both FIPS and non-FIPS environments.
+The Microsoft build of Go automatically enforces that `crypto/tls` and `crypto/x509` only use FIPS-compliant settings when running in FIPS mode.
+This differs from upstream's BoringCrypto backend, which requires you to import `crypto/tls/fipsonly` to apply the FIPS-mandated restrictions.
+The Microsoft build of Go does this automatically to reduce the source code changes necessary to produce a FIPS-compliant Go application, and to make it easier to use the same binary in both FIPS and non-FIPS environments.
 
-Prior to Go 1.22, a program using the Go TLS stack must import the `crypto/tls/fipsonly` package to be compliant with these restrictions. The configuration is done by an `init()` function, so only importing it is necessary:
-
-```go
-  import _ "crypto/tls/fipsonly"
-```
+> [!NOTE]
+> The new upstream Go 1.24 approach ([FIPS 140-3 Compliance](https://go.dev/doc/security/fips140)) also improves upon the BoringCrypto backend by automatically enforcing FIPS-compliant settings in the Go TLS stack when Go is running in the newly introduced FIPS mode.
 
 ## Acknowledgements
 
@@ -421,6 +459,8 @@ A program running in FIPS mode can claim it is using a FIPS-certified cryptograp
 This list of major changes is intended for quick reference and for access to historical information about versions that are no longer supported. The behavior of all in-support versions are documented in the sections above with notes for version-specific differences where necessary.
 
 ### Go 1.24 (Feb 2025)
+
+See the [Microsoft build of Go 1.24 FIPS changes](https://devblogs.microsoft.com/go/go-1-24-fips-update/) blog post for a summary of the Feb 2025 changes.
 
 - Introduces macOS crypto backend `darwincrypto`.
 - Support `GODEBUG=fips140=on` as an alias for `GOFIPS=1`.
