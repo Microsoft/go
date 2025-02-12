@@ -14,10 +14,27 @@
       We aren't actually building an app anyway, we just need the RM package.
     -->
     <TargetFramework>net$(BundledNETCoreAppTargetFrameworkVersion)</TargetFramework>
+
+    <!-- Default value for simple local repro. -->
+    <MsGoPublishingScripts>$(MSBuildThisFileDirectory)bin\MsGoPublishingScripts</MsGoPublishingScripts>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="DevDiv.RM.MS.Go.Publishing" Version="20240703.4.0" />
   </ItemGroup>
+
+  <!--
+    The scripts end up in a dir with Debug/Release and TargetFramework in the
+    path, which we don't want to rely on. So, copy them to a known place too.
+    Use the ScriptFilesToCopy items gathered by MsGoPublishingScriptsCopy.
+  -->
+  <Target
+    Name="CopyPublishingScriptsToStableLocation"
+    AfterTargets="MsGoPublishingScriptsCopy">
+
+    <Copy
+      SourceFiles="@(ScriptFilesToCopy)"
+      DestinationFolder="$([MSBuild]::NormalizeDirectory('$(MsGoPublishingScripts)', '%(RecursiveDir)'))" />
+  </Target>
 
 </Project>
