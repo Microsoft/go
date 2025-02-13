@@ -23,9 +23,11 @@ This command updates the table in ` + docPath + ` and data in ` + jsonPath + `.
 
 var supported = []version{
 	{
-		Number:       "1.23",
+		Number:       "1.24",
 		LatestStable: true,
 		Platforms: map[string]struct{}{
+			"darwin-amd64":  {},
+			"darwin-arm64":  {},
 			"linux-amd64":   {},
 			"linux-arm64":   {},
 			"linux-armv6l":  {},
@@ -35,8 +37,7 @@ var supported = []version{
 		},
 	},
 	{
-		Number:         "1.22",
-		PreviousStable: true,
+		Number: "1.23",
 		Platforms: map[string]struct{}{
 			"linux-amd64":   {},
 			"linux-arm64":   {},
@@ -60,7 +61,7 @@ type version struct {
 	Platforms      map[string]struct{}
 }
 
-var linuxFiles = []goFileType{
+var linuxLikeFiles = []goFileType{
 	{
 		Kind:      supportdata.Archive,
 		Name:      "Binaries (tar.gz)",
@@ -281,12 +282,18 @@ func platformPrettyName(p string) string {
 	if pretty, ok := platformPrettyNames[p]; ok {
 		return pretty
 	}
+	if strings.HasPrefix(p, "darwin-") {
+		p = p + " (macOS)"
+	}
 	return p
 }
 
 func fileTypes(platform string) []goFileType {
+	if strings.HasPrefix(platform, "darwin-") {
+		return linuxLikeFiles
+	}
 	if strings.HasPrefix(platform, "linux-") {
-		return linuxFiles
+		return linuxLikeFiles
 	}
 	if strings.HasPrefix(platform, "windows-") {
 		return windowsFiles
