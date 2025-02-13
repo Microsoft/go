@@ -43,8 +43,8 @@ Subject: [PATCH] Use crypto backends
  src/crypto/internal/fips140test/check_test.go |   8 +-
  src/crypto/md5/md5.go                         |  10 +
  src/crypto/md5/md5_test.go                    |  16 ++
- src/crypto/pbkdf2/pbkdf2.go                   |   4 +
- src/crypto/pbkdf2/pbkdf2_test.go              |   2 +-
+ src/crypto/pbkdf2/pbkdf2.go                   |   7 +
+ src/crypto/pbkdf2/pbkdf2_test.go              |   6 +-
  src/crypto/purego_test.go                     |   2 +-
  src/crypto/rand/rand.go                       |   2 +-
  src/crypto/rc4/rc4.go                         |  18 ++
@@ -85,7 +85,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 81 files changed, 1131 insertions(+), 112 deletions(-)
+ 81 files changed, 1138 insertions(+), 112 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -135,10 +135,10 @@ index 1f467647f56143..4d770d7fc239e2 100644
  	// No need to enable PGO for toolchain2.
  	goInstall(toolenv(), goBootstrap, append([]string{"-pgo=off"}, toolchain...)...)
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 0c992118f4287b..d224514552fd63 100644
+index 005e1da86a1dc2..7536a83a124740 100644
 --- a/src/cmd/dist/test.go
 +++ b/src/cmd/dist/test.go
-@@ -714,7 +714,7 @@ func (t *tester) registerTests() {
+@@ -710,7 +710,7 @@ func (t *tester) registerTests() {
  	})
  
  	// Check that all crypto packages compile (and test correctly, in longmode) with fips.
@@ -147,7 +147,7 @@ index 0c992118f4287b..d224514552fd63 100644
  		// Test standard crypto packages with fips140=on.
  		t.registerTest("GODEBUG=fips140=on go test crypto/...", &goTest{
  			variant: "gofips140",
-@@ -1161,6 +1161,11 @@ func (t *tester) internalLink() bool {
+@@ -1165,6 +1165,11 @@ func (t *tester) internalLink() bool {
  	if goos == "windows" && goarch == "arm64" {
  		return false
  	}
@@ -159,7 +159,7 @@ index 0c992118f4287b..d224514552fd63 100644
  	// Internally linking cgo is incomplete on some architectures.
  	// https://golang.org/issue/10373
  	// https://golang.org/issue/14449
-@@ -1324,12 +1329,11 @@ func (t *tester) registerCgoTests(heading string) {
+@@ -1328,12 +1333,11 @@ func (t *tester) registerCgoTests(heading string) {
  			// a C linker warning on Linux.
  			// in function `bio_ip_and_port_to_socket_and_addr':
  			// warning: Using 'getaddrinfo' in statically linked applications requires at runtime the shared libraries from the glibc version used for linking
@@ -284,7 +284,7 @@ index 2d8f964f3594c6..a587e1abde57c9 100644
  	"crypto/internal/boring/syso",
  	"crypto/x509",
 diff --git a/src/cmd/link/internal/ld/main.go b/src/cmd/link/internal/ld/main.go
-index 7614b6d194facf..f0f53ab2bab047 100644
+index 377dcd6c856fa6..1744ff2ca38973 100644
 --- a/src/cmd/link/internal/ld/main.go
 +++ b/src/cmd/link/internal/ld/main.go
 @@ -44,6 +44,7 @@ import (
@@ -295,7 +295,7 @@ index 7614b6d194facf..f0f53ab2bab047 100644
  	"strconv"
  	"strings"
  )
-@@ -185,7 +186,16 @@ func Main(arch *sys.Arch, theArch Arch) {
+@@ -186,7 +187,16 @@ func Main(arch *sys.Arch, theArch Arch) {
  
  	buildVersion := buildcfg.Version
  	if goexperiment := buildcfg.Experiment.String(); goexperiment != "" {
@@ -314,7 +314,7 @@ index 7614b6d194facf..f0f53ab2bab047 100644
  	addstrdata1(ctxt, "runtime.buildVersion="+buildVersion)
  
 diff --git a/src/crypto/aes/aes.go b/src/crypto/aes/aes.go
-index 5bc2d13d673e0a..b803c77be62a66 100644
+index 22ea8819ed239a..1e2cba08c1c760 100644
 --- a/src/crypto/aes/aes.go
 +++ b/src/crypto/aes/aes.go
 @@ -15,7 +15,7 @@ package aes
@@ -730,7 +730,7 @@ index acef8298943c2b..ca6171cf775117 100644
  	"errors"
 diff --git a/src/crypto/ecdsa/badlinkname.go b/src/crypto/ecdsa/badlinkname.go
 new file mode 100644
-index 00000000000000..1dc05d09b2062d
+index 00000000000000..168efdb820c85b
 --- /dev/null
 +++ b/src/crypto/ecdsa/badlinkname.go
 @@ -0,0 +1,19 @@
@@ -1146,7 +1146,7 @@ index 6b02522866d57f..37e67ec184af5d 100644
  }
  
 diff --git a/src/crypto/hkdf/hkdf_test.go b/src/crypto/hkdf/hkdf_test.go
-index 201b440289bb2d..4ed4960ff35b66 100644
+index 57d90f88e93e75..4069ab057a2525 100644
 --- a/src/crypto/hkdf/hkdf_test.go
 +++ b/src/crypto/hkdf/hkdf_test.go
 @@ -6,7 +6,7 @@ package hkdf
@@ -1337,7 +1337,7 @@ index 437d9b9d4c0e0d..50728df60ea7ec 100644
  			continue
  		}
 diff --git a/src/crypto/pbkdf2/pbkdf2.go b/src/crypto/pbkdf2/pbkdf2.go
-index 271d2b03312ef0..ff76299fbe4782 100644
+index dd5fc33f2120c3..7ce0da53887a40 100644
 --- a/src/crypto/pbkdf2/pbkdf2.go
 +++ b/src/crypto/pbkdf2/pbkdf2.go
 @@ -11,6 +11,7 @@
@@ -1348,20 +1348,23 @@ index 271d2b03312ef0..ff76299fbe4782 100644
  	"crypto/internal/fips140/pbkdf2"
  	"crypto/internal/fips140hash"
  	"crypto/internal/fips140only"
-@@ -47,5 +48,8 @@ func Key[Hash hash.Hash](h func() Hash, password string, salt []byte, iter, keyL
+@@ -50,5 +51,11 @@ func Key[Hash hash.Hash](h func() Hash, password string, salt []byte, iter, keyL
  			return nil, errors.New("crypto/pbkdf2: use of hash functions other than SHA-2 or SHA-3 is not allowed in FIPS 140-only mode")
  		}
  	}
 +	if boring.Enabled && boring.SupportsPBKDF2() {
++		if keyLength <= 0 {
++			return nil, errors.New("pkbdf2: keyLength must be larger than 0")
++		}
 +		return boring.PBKDF2([]byte(password), salt, iter, keyLength, fh)
 +	}
  	return pbkdf2.Key(fh, password, salt, iter, keyLength)
  }
 diff --git a/src/crypto/pbkdf2/pbkdf2_test.go b/src/crypto/pbkdf2/pbkdf2_test.go
-index 03980c7e54d3be..4968a666fad4e5 100644
+index eb0ed14e243c6b..cd7223c89eeae5 100644
 --- a/src/crypto/pbkdf2/pbkdf2_test.go
 +++ b/src/crypto/pbkdf2/pbkdf2_test.go
-@@ -6,7 +6,7 @@ package pbkdf2_test
+@@ -6,12 +6,13 @@ package pbkdf2_test
  
  import (
  	"bytes"
@@ -1370,6 +1373,22 @@ index 03980c7e54d3be..4968a666fad4e5 100644
  	"crypto/internal/fips140"
  	"crypto/pbkdf2"
  	"crypto/sha1"
+ 	"crypto/sha256"
+ 	"hash"
++	"internal/goexperiment"
+ 	"testing"
+ )
+ 
+@@ -223,6 +224,9 @@ func TestPBKDF2ServiceIndicator(t *testing.T) {
+ }
+ 
+ func TestMaxKeyLength(t *testing.T) {
++	if goexperiment.SystemCrypto {
++		t.Skip("Some backends don't support keys longer than 32 bytes")
++	}
+ 	// This error cannot be triggered on platforms where int is 31 bits (i.e.
+ 	// 32-bit platforms), since the max value for keyLength is 1<<31-1 and
+ 	// 1<<31-1 * hLen will always be less than 1<<32-1 * hLen.
 diff --git a/src/crypto/purego_test.go b/src/crypto/purego_test.go
 index 62be347e0c6822..d284b5cf7814a6 100644
 --- a/src/crypto/purego_test.go
@@ -2200,7 +2219,7 @@ index 7c75977ad3ffb2..b9db95ca7b9d5a 100644
  
  	if err := hs.processClientHello(); err != nil {
 diff --git a/src/crypto/tls/handshake_server_tls13.go b/src/crypto/tls/handshake_server_tls13.go
-index 76fff6974e7403..3ef8b56e5c7898 100644
+index b6d455cd397e31..c8f1c4ad43fdc3 100644
 --- a/src/crypto/tls/handshake_server_tls13.go
 +++ b/src/crypto/tls/handshake_server_tls13.go
 @@ -8,13 +8,14 @@ import (
@@ -2295,7 +2314,7 @@ index 24d78d60cf5b64..0b87185683ab8b 100644
  }
 diff --git a/src/crypto/tls/internal/tls13/doc.go b/src/crypto/tls/internal/tls13/doc.go
 new file mode 100644
-index 00000000000000..1adf3098356307
+index 00000000000000..acfa551001af9c
 --- /dev/null
 +++ b/src/crypto/tls/internal/tls13/doc.go
 @@ -0,0 +1,18 @@
@@ -2588,10 +2607,10 @@ index e7369542a73270..ff52175e4ac636 100644
  	}
  }
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index e4e07843c8ce55..87e92a5d6d1ee9 100644
+index f9c403aba45f5c..c956d394776ea0 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -510,7 +510,7 @@ var depsRules = `
+@@ -520,7 +520,7 @@ var depsRules = `
  	< crypto/internal/backend/internal/opensslsetup
  	< crypto/internal/backend/fips140;
  
@@ -2600,7 +2619,7 @@ index e4e07843c8ce55..87e92a5d6d1ee9 100644
  
  	crypto, hash !< FIPS;
  
-@@ -551,6 +551,7 @@ var depsRules = `
+@@ -565,6 +565,7 @@ var depsRules = `
  	  crypto/pbkdf2,
  	  crypto/ecdh,
  	  crypto/mlkem
@@ -2608,7 +2627,7 @@ index e4e07843c8ce55..87e92a5d6d1ee9 100644
  	< CRYPTO;
  
  	CGO, fmt, net !< CRYPTO;
-@@ -576,7 +577,7 @@ var depsRules = `
+@@ -594,7 +595,7 @@ var depsRules = `
  
  	# TLS, Prince of Dependencies.
  
