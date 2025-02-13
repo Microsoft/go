@@ -283,7 +283,7 @@ func platformPrettyName(p string) string {
 		return pretty
 	}
 	if strings.HasPrefix(p, "darwin-") {
-		p = p + " (macOS)"
+		p = p + " (macOS) **Preview**<sup>2</sup>"
 	}
 	return p
 }
