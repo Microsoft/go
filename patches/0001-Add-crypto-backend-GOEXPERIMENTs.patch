@@ -11,9 +11,9 @@ information about the behavior.
 Includes new tests in "build_test.go" and "buildbackend_test.go" to help
 maintain this feature. For more information, see the test files.
 ---
- src/cmd/go/internal/modindex/build.go         | 57 +++++++++++++
+ src/cmd/go/internal/modindex/build.go         | 58 ++++++++++++-
  src/cmd/go/internal/modindex/build_test.go    | 73 ++++++++++++++++
- src/go/build/build.go                         | 57 +++++++++++++
+ src/go/build/build.go                         | 58 ++++++++++++-
  src/go/build/buildbackend_test.go             | 84 +++++++++++++++++++
  .../testdata/backendtags_openssl/main.go      |  3 +
  .../testdata/backendtags_openssl/openssl.go   |  3 +
@@ -28,7 +28,7 @@ maintain this feature. For more information, see the test files.
  .../goexperiment/exp_systemcrypto_off.go      |  8 ++
  .../goexperiment/exp_systemcrypto_on.go       |  8 ++
  src/internal/goexperiment/flags.go            | 18 ++++
- 17 files changed, 365 insertions(+)
+ 17 files changed, 363 insertions(+), 4 deletions(-)
  create mode 100644 src/cmd/go/internal/modindex/build_test.go
  create mode 100644 src/go/build/buildbackend_test.go
  create mode 100644 src/go/build/testdata/backendtags_openssl/main.go
@@ -45,10 +45,10 @@ maintain this feature. For more information, see the test files.
  create mode 100644 src/internal/goexperiment/exp_systemcrypto_on.go
 
 diff --git a/src/cmd/go/internal/modindex/build.go b/src/cmd/go/internal/modindex/build.go
-index b4dacb0f523a8d..4315c288d10cb3 100644
+index d7e09fed25f43a..10614d17e62453 100644
 --- a/src/cmd/go/internal/modindex/build.go
 +++ b/src/cmd/go/internal/modindex/build.go
-@@ -886,13 +886,70 @@ func (ctxt *Context) matchTag(name string, allTags map[string]bool) bool {
+@@ -887,9 +887,63 @@ func (ctxt *Context) matchTag(name string, allTags map[string]bool) bool {
  		name = "goexperiment.boringcrypto" // boringcrypto is an old name for goexperiment.boringcrypto
  	}
  
@@ -79,6 +79,9 @@ index b4dacb0f523a8d..4315c288d10cb3 100644
 +			(ctxt.GOOS == "windows" && name == cng) ||
 +			(ctxt.GOOS == "darwin" && name == darwin)
 +	satisfiedBy := func(tag string) bool {
++		if name == tag {
++			return true
++		}
 +		if satisfiedByAnyBackend {
 +			switch tag {
 +			case openssl, cng, darwin, boring:
@@ -104,21 +107,13 @@ index b4dacb0f523a8d..4315c288d10cb3 100644
 +	}
 +
  	// other tags
- 	for _, tag := range ctxt.BuildTags {
-+		if satisfiedBy(tag) {
-+			return true
-+		}
- 		if tag == name {
- 			return true
- 		}
- 	}
- 	for _, tag := range ctxt.ToolTags {
-+		if satisfiedBy(tag) {
-+			return true
-+		}
- 		if tag == name {
- 			return true
- 		}
+-	return slices.Contains(ctxt.BuildTags, name) || slices.Contains(ctxt.ToolTags, name) ||
+-		slices.Contains(ctxt.ReleaseTags, name)
++	return slices.ContainsFunc(ctxt.BuildTags, satisfiedBy) || slices.ContainsFunc(ctxt.ToolTags, satisfiedBy) ||
++		slices.ContainsFunc(ctxt.ReleaseTags, satisfiedBy)
+ }
+ 
+ // goodOSArchFile returns false if the name contains a $GOOS or $GOARCH
 diff --git a/src/cmd/go/internal/modindex/build_test.go b/src/cmd/go/internal/modindex/build_test.go
 new file mode 100644
 index 00000000000000..1756c5d027fee0
@@ -199,10 +194,10 @@ index 00000000000000..1756c5d027fee0
 +	}
 +}
 diff --git a/src/go/build/build.go b/src/go/build/build.go
-index 9ffffda08a99b1..78fd536fa6a6d1 100644
+index 0e5c7e512d794c..21da6ac79e606e 100644
 --- a/src/go/build/build.go
 +++ b/src/go/build/build.go
-@@ -1984,13 +1984,70 @@ func (ctxt *Context) matchTag(name string, allTags map[string]bool) bool {
+@@ -1984,9 +1984,63 @@ func (ctxt *Context) matchTag(name string, allTags map[string]bool) bool {
  		name = "goexperiment.boringcrypto" // boringcrypto is an old name for goexperiment.boringcrypto
  	}
  
@@ -233,6 +228,9 @@ index 9ffffda08a99b1..78fd536fa6a6d1 100644
 +			(ctxt.GOOS == "windows" && name == cng) ||
 +			(ctxt.GOOS == "darwin" && name == darwin)
 +	satisfiedBy := func(tag string) bool {
++		if name == tag {
++			return true
++		}
 +		if satisfiedByAnyBackend {
 +			switch tag {
 +			case openssl, cng, darwin, boring:
@@ -258,21 +256,13 @@ index 9ffffda08a99b1..78fd536fa6a6d1 100644
 +	}
 +
  	// other tags
- 	for _, tag := range ctxt.BuildTags {
-+		if satisfiedBy(tag) {
-+			return true
-+		}
- 		if tag == name {
- 			return true
- 		}
- 	}
- 	for _, tag := range ctxt.ToolTags {
-+		if satisfiedBy(tag) {
-+			return true
-+		}
- 		if tag == name {
- 			return true
- 		}
+-	return slices.Contains(ctxt.BuildTags, name) || slices.Contains(ctxt.ToolTags, name) ||
+-		slices.Contains(ctxt.ReleaseTags, name)
++	return slices.ContainsFunc(ctxt.BuildTags, satisfiedBy) || slices.ContainsFunc(ctxt.ToolTags, satisfiedBy) ||
++		slices.ContainsFunc(ctxt.ReleaseTags, satisfiedBy)
+ }
+ 
+ // goodOSArchFile returns false if the name contains a $GOOS or $GOARCH
 diff --git a/src/go/build/buildbackend_test.go b/src/go/build/buildbackend_test.go
 new file mode 100644
 index 00000000000000..aa3c5f1007ed79
@@ -512,7 +502,7 @@ index 00000000000000..fcd4cb9da0d162
 +const SystemCrypto = true
 +const SystemCryptoInt = 1
 diff --git a/src/internal/goexperiment/flags.go b/src/internal/goexperiment/flags.go
-index 31b3d0315b64f8..e6c9b7d5e62dc0 100644
+index dff5255e000992..4d0fbdffd44957 100644
 --- a/src/internal/goexperiment/flags.go
 +++ b/src/internal/goexperiment/flags.go
 @@ -59,6 +59,24 @@ type Flags struct {
