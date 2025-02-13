@@ -133,7 +133,6 @@ stages:
               displayName: Cleanup
 
             - template: ../steps/checkout-unix-task.yml
-            - template: ../steps/init-pwsh-task.yml
 
           - pwsh: |
               New-Item eng/artifacts/bin -ItemType Directory -ErrorAction Ignore
