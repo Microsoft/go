@@ -37,7 +37,8 @@ var supported = []version{
 		},
 	},
 	{
-		Number: "1.23",
+		Number:         "1.23",
+		PreviousStable: true,
 		Platforms: map[string]struct{}{
 			"linux-amd64":   {},
 			"linux-arm64":   {},
