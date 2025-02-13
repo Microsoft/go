@@ -86,6 +86,7 @@
   {
     "version": "go1.23",
     "stable": true,
+    "previousStable": true,
     "files": [
       {
         "filename": "go1.23.src.tar.gz",
