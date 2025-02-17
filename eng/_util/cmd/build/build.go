@@ -208,29 +208,30 @@ func build(o *options) (err error) {
 			}...,
 		)
 
-	if o.JUnitOutFile != "" {
-    testCommandLine = append(testCommandLine, "-json")
-    f, err := os.Create(o.JUnitOutFile)
-    if err != nil {
-      return err
-    }
-    conv := json2junit.NewConverter(f)
-    defer func() {
-      if closeErr := conv.Close(); err == nil {
-        err = closeErr
-      }
-      if closeErr := f.Close(); err == nil {
-        err = closeErr
-      }
-    }()
-    if err := buildutil.RunCmdMultiWriter(testCommandLine, conv, buildutil.NewStripTestJSONWriter(os.Stdout)); err != nil {
-      return err
-    }
-  } else {
-    if err := buildutil.RunCmdMultiWriter(testCommandLine, os.Stdout); err != nil {
-      return err
-    }
-  }
+		if o.JUnitOutFile != "" {
+			testCommandLine = append(testCommandLine, "-json")
+			f, err := os.Create(o.JUnitOutFile)
+			if err != nil {
+				return err
+			}
+			conv := json2junit.NewConverter(f)
+			defer func() {
+				if closeErr := conv.Close(); err == nil {
+					err = closeErr
+				}
+				if closeErr := f.Close(); err == nil {
+					err = closeErr
+				}
+			}()
+			if err := buildutil.RunCmdMultiWriter(testCommandLine, conv, buildutil.NewStripTestJSONWriter(os.Stdout)); err != nil {
+				return err
+			}
+		} else {
+			if err := buildutil.RunCmdMultiWriter(testCommandLine, os.Stdout); err != nil {
+				return err
+			}
+		}
+	}
 
 	goRootDir := filepath.Join(rootDir, "go")
 	if o.CreatePDB {
