@@ -275,8 +275,7 @@ stages:
                       -builder '${{ parameters.builder.os }}-${{ parameters.builder.arch }}-${{ parameters.builder.config }}' `
                       $(if ('${{ parameters.builder.experiment }}') { '-experiment'; '${{ parameters.builder.experiment }}' }) `
                       $(if ('${{ parameters.builder.fips }}') { '-fipsmode' }) `
-                      -json `
-                      -testout '$(Build.SourcesDirectory)/eng/artifacts/TestResults.json'
+                      -junitout '$(Build.SourcesDirectory)/eng/artifacts/TestResults.xml'
                 ${{ if eq(length(parameters.retryAttempts), 1) }}:
                   displayName: Test
                 ${{ else }}:
@@ -290,15 +289,6 @@ stages:
                 ${{ elseif eq(parameters.builder.broken, true) }}:
                   # Don't fail the job if we are at the last retry and the builder is marked as broken.
                   continueOnError: true
-
-            - pwsh: |
-                go run github.com/jstemmer/go-junit-report/v2 `
-                  -parser gojson `
-                  -in '$(Build.SourcesDirectory)/eng/artifacts/TestResults.json' `
-                  -out '$(Build.SourcesDirectory)/eng/artifacts/TestResults.xml'
-              workingDirectory: '$(Build.SourcesDirectory)/eng/_util' # This is the module where the go-junit-reporter version is defined.
-              displayName: Convert JSON to JUnit
-              condition: succeededOrFailed()
 
             - task: PublishTestResults@2
               displayName: Publish test results

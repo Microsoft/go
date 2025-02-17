@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/microsoft/go-infra/json2junit"
 	"github.com/microsoft/go/_util/buildutil"
 )
 
@@ -39,8 +40,7 @@ func main() {
 	var builder = flag.String("builder", "", "[Required] Specify a builder to run. Note, this may be destructive!")
 	var experiment = flag.String("experiment", "", "Include this string in GOEXPERIMENT.")
 	var fipsMode = flag.Bool("fipsmode", false, "Run the Go tests in FIPS mode.")
-	var json = flag.Bool("json", false, "Runs tests with -json flag to emit verbose results in JSON format. For use in CI.")
-	var testOutFile = flag.String("testout", "", "Write the tets output to this path if this builder runs tests.")
+	var junitOutFile = flag.String("junitout", "", "Write the test output to this path as a JUnit file if this builder runs tests.")
 	var build = flag.Bool("build", false, "Run the build.")
 	var test = flag.Bool("test", false, "Run the tests.")
 
@@ -134,11 +134,8 @@ func main() {
 		// validate the run.ps1 script with "build" tool works to build and test Go. It runs a
 		// subset of the "test" builder's tests, but it uses the dev workflow.
 		testCmdline := append(buildCmdline, "-skipbuild", "-test")
-		if *json {
-			testCmdline = append(testCmdline, "-json")
-		}
-		if *testOutFile != "" {
-			testCmdline = append(testCmdline, "-testout", *testOutFile)
+		if *junitOutFile != "" {
+			testCmdline = append(testCmdline, "-junitout", *junitOutFile)
 		}
 		if err := run(testCmdline...); err != nil {
 			log.Fatal(err)
@@ -200,14 +197,12 @@ func main() {
 			)
 		}
 
-		if *json {
-			cmdline = append(cmdline, "-json")
-		}
+		cmdline = append(cmdline, "-json")
 
 		if *dryRun {
 			fmt.Printf("---- Dry run. Would have run test command: %v\n", cmdline)
 		} else {
-			f, err := os.Create(*testOutFile)
+			f, err := os.Create(*junitOutFile)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -216,7 +211,7 @@ func main() {
 					log.Fatal(err)
 				}
 			}()
-			err = buildutil.RunCmdMultiWriter(cmdline, f, buildutil.NewStripTestJSONWriter(os.Stdout))
+			err = buildutil.RunCmdMultiWriter(cmdline, json2junit.NewConverter(f), buildutil.NewStripTestJSONWriter(os.Stdout))
 			// If we got an ExitError, the error message was already printed by the command. We just
 			// need to exit with the same exit code.
 			if exitErr, ok := err.(*exec.ExitError); ok {
