@@ -208,41 +208,29 @@ func build(o *options) (err error) {
 			}...,
 		)
 
-		// "src/run.bat" doesn't pass arguments through to "dist test" like "src/run.bash" does.
-		// This prevents "-json" from working properly: in "src/run.bat -json", "-json" is a no-op.
-		// So, use "dist test" directly, here. Some environment variables may be subtly different,
-		// but it appears to work fine for dev scenarios. https://github.com/microsoft/go/issues/109
-		if runtime.GOOS == "windows" {
-			testCommandLine = []string{
-				filepath.Join("..", "bin", "go"+executableExtension),
-				"tool", "dist", "test",
-			}
-		}
-
-		if o.JUnitOutFile != "" {
-			testCommandLine = append(testCommandLine, "-json")
-			f, err := os.Create(o.JUnitOutFile)
-			if err != nil {
-				return err
-			}
-			conv := json2junit.NewConverter(f)
-			defer func() {
-				if closeErr := conv.Close(); err == nil {
-					err = closeErr
-				}
-				if closeErr := f.Close(); err == nil {
-					err = closeErr
-				}
-			}()
-			if err := buildutil.RunCmdMultiWriter(testCommandLine, conv, buildutil.NewStripTestJSONWriter(os.Stdout)); err != nil {
-				return err
-			}
-		} else {
-			if err := buildutil.RunCmdMultiWriter(testCommandLine, os.Stdout); err != nil {
-				return err
-			}
-		}
-	}
+	if o.JUnitOutFile != "" {
+    testCommandLine = append(testCommandLine, "-json")
+    f, err := os.Create(o.JUnitOutFile)
+    if err != nil {
+      return err
+    }
+    conv := json2junit.NewConverter(f)
+    defer func() {
+      if closeErr := conv.Close(); err == nil {
+        err = closeErr
+      }
+      if closeErr := f.Close(); err == nil {
+        err = closeErr
+      }
+    }()
+    if err := buildutil.RunCmdMultiWriter(testCommandLine, conv, buildutil.NewStripTestJSONWriter(os.Stdout)); err != nil {
+      return err
+    }
+  } else {
+    if err := buildutil.RunCmdMultiWriter(testCommandLine, os.Stdout); err != nil {
+      return err
+    }
+  }
 
 	goRootDir := filepath.Join(rootDir, "go")
 	if o.CreatePDB {
