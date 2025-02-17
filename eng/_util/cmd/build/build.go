@@ -219,7 +219,6 @@ func build(o *options) (err error) {
 			}
 		}
 
-		// "-json": Get test results as lines of JSON.
 		if o.JUnitOutFile != "" {
 			testCommandLine = append(testCommandLine, "-json")
 			f, err := os.Create(o.JUnitOutFile)
