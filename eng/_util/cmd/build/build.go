@@ -209,17 +209,6 @@ func build(o *options) error {
 			}...,
 		)
 
-		// "src/run.bat" doesn't pass arguments through to "dist test" like "src/run.bash" does.
-		// This prevents "-json" from working properly: in "src/run.bat -json", "-json" is a no-op.
-		// So, use "dist test" directly, here. Some environment variables may be subtly different,
-		// but it appears to work fine for dev scenarios. https://github.com/microsoft/go/issues/109
-		if runtime.GOOS == "windows" {
-			testCommandLine = []string{
-				filepath.Join("..", "bin", "go"+executableExtension),
-				"tool", "dist", "test",
-			}
-		}
-
 		// "-json": Get test results as lines of JSON.
 		if o.JSON {
 			testCommandLine = append(testCommandLine, "-json")
