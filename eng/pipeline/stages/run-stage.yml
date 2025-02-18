@@ -274,7 +274,8 @@ stages:
                     pwsh eng/run.ps1 run-builder -test `
                       -builder '${{ parameters.builder.os }}-${{ parameters.builder.arch }}-${{ parameters.builder.config }}' `
                       $(if ('${{ parameters.builder.experiment }}') { '-experiment'; '${{ parameters.builder.experiment }}' }) `
-                      $(if ('${{ parameters.builder.fips }}') { '-fipsmode' })
+                      $(if ('${{ parameters.builder.fips }}') { '-fipsmode' }) `
+                      -junitout '$(Build.SourcesDirectory)/eng/artifacts/TestResults.xml'
                 ${{ if eq(length(parameters.retryAttempts), 1) }}:
                   displayName: Test
                 ${{ else }}:
@@ -288,6 +289,17 @@ stages:
                 ${{ elseif eq(parameters.builder.broken, true) }}:
                   # Don't fail the job if we are at the last retry and the builder is marked as broken.
                   continueOnError: true
+
+            - task: PublishTestResults@2
+              displayName: Publish test results
+              condition: succeededOrFailed()
+              inputs:
+                testResultsFormat: JUnit
+                testResultsFiles: $(Build.SourcesDirectory)/eng/artifacts/TestResults.xml
+                testRunTitle: $(System.JobDisplayName)
+                buildPlatform: ${{ parameters.builder.arch }}
+                buildConfiguration: ${{ parameters.builder.config }}
+                publishRunAttachments: true
 
           # - ${{ if eq(parameters.builder.config, 'buildandpack' ) }}:
           #   - ${{ if ne(parameters.releaseVersion, 'nil') }}:
