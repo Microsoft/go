@@ -40,7 +40,9 @@ Subject: [PATCH] Use crypto backends
  src/crypto/hmac/hmac_test.go                  |   2 +-
  src/crypto/internal/cryptotest/allocations.go |   2 +-
  .../internal/cryptotest/implementations.go    |   2 +-
- src/crypto/internal/fips140test/check_test.go |   8 +-
+ src/crypto/internal/fips140test/acvp_test.go  |   6 +
+ src/crypto/internal/fips140test/check_test.go |  16 ++
+ src/crypto/internal/fips140test/fips_test.go  |   2 +-
  src/crypto/md5/md5.go                         |  10 +
  src/crypto/md5/md5_test.go                    |  16 ++
  src/crypto/pbkdf2/pbkdf2.go                   |   7 +
@@ -85,7 +87,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 81 files changed, 1138 insertions(+), 112 deletions(-)
+ 83 files changed, 1154 insertions(+), 112 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -111,10 +113,10 @@ index f0e3575637c62a..9eab3b4e66e60b 100644
  package main
  
 diff --git a/src/cmd/dist/build.go b/src/cmd/dist/build.go
-index 1f467647f56143..4d770d7fc239e2 100644
+index 4fcc508f8ed48e..eb5ef7df6eaca1 100644
 --- a/src/cmd/dist/build.go
 +++ b/src/cmd/dist/build.go
-@@ -1543,6 +1543,19 @@ func cmdbootstrap() {
+@@ -1534,6 +1534,19 @@ func cmdbootstrap() {
  	xprintf("Building Go toolchain2 using go_bootstrap and Go toolchain1.\n")
  	os.Setenv("CC", compilerEnvLookup("CC", defaultcc, goos, goarch))
  	// Now that cmd/go is in charge of the build process, enable GOEXPERIMENT.
@@ -135,7 +137,7 @@ index 1f467647f56143..4d770d7fc239e2 100644
  	// No need to enable PGO for toolchain2.
  	goInstall(toolenv(), goBootstrap, append([]string{"-pgo=off"}, toolchain...)...)
 diff --git a/src/cmd/dist/test.go b/src/cmd/dist/test.go
-index 005e1da86a1dc2..7536a83a124740 100644
+index b137c7db7990bd..73c39e8f4e5eda 100644
 --- a/src/cmd/dist/test.go
 +++ b/src/cmd/dist/test.go
 @@ -710,7 +710,7 @@ func (t *tester) registerTests() {
@@ -145,7 +147,7 @@ index 005e1da86a1dc2..7536a83a124740 100644
 -	if t.fipsSupported() {
 +	if false { // Disable these tests, they don't work if CNG/OpenSSL FIPS mode is not enabled. We already have dedicated builders for this.
  		// Test standard crypto packages with fips140=on.
- 		t.registerTest("GODEBUG=fips140=on go test crypto/...", &goTest{
+ 		t.registerTest("GOFIPS140=latest go test crypto/...", &goTest{
  			variant: "gofips140",
 @@ -1165,6 +1165,11 @@ func (t *tester) internalLink() bool {
  	if goos == "windows" && goarch == "arm64" {
@@ -272,7 +274,7 @@ index b2d4ad7cb0e7f6..2859879041ff8f 100644
  			*mode = BuildModePIE
  		default:
 diff --git a/src/cmd/link/internal/ld/lib.go b/src/cmd/link/internal/ld/lib.go
-index 2d8f964f3594c6..a587e1abde57c9 100644
+index b114ca2a3d4115..0be0f3d218b09b 100644
 --- a/src/cmd/link/internal/ld/lib.go
 +++ b/src/cmd/link/internal/ld/lib.go
 @@ -1172,6 +1172,7 @@ var hostobj []Hostobj
@@ -1081,7 +1083,7 @@ index 00000000000000..77b69a3be88183
 +	panic("boringcrypto: not available")
 +}
 diff --git a/src/crypto/fips140/fips140.go b/src/crypto/fips140/fips140.go
-index 41d0d170cf9fc8..b6b413532d8104 100644
+index 1c4036d5e74735..05266dea864aa3 100644
 --- a/src/crypto/fips140/fips140.go
 +++ b/src/crypto/fips140/fips140.go
 @@ -5,6 +5,7 @@
@@ -1210,29 +1212,52 @@ index 3fa730459050f6..1f28f12a6e7b4f 100644
  	"crypto/internal/impl"
  	"internal/goos"
  	"internal/testenv"
+diff --git a/src/crypto/internal/fips140test/acvp_test.go b/src/crypto/internal/fips140test/acvp_test.go
+index ddb234bab655e1..75cfc0440b8837 100644
+--- a/src/crypto/internal/fips140test/acvp_test.go
++++ b/src/crypto/internal/fips140test/acvp_test.go
+@@ -22,6 +22,8 @@ import (
+ 	"bufio"
+ 	"bytes"
+ 	"crypto/elliptic"
++	boring "crypto/internal/backend"
++	bfips140 "crypto/internal/backend/fips140"
+ 	"crypto/internal/cryptotest"
+ 	"crypto/internal/fips140"
+ 	"crypto/internal/fips140/aes"
+@@ -2072,6 +2074,10 @@ func cmdKtsIfcResponderAft(h func() fips140.Hash) command {
+ func TestACVP(t *testing.T) {
+ 	testenv.SkipIfShortAndSlow(t)
+ 
++	if boring.Enabled && !bfips140.Enabled() {
++		t.Skipf("skipping: FIPS is not enabled")
++	}
++
+ 	const (
+ 		bsslModule    = "boringssl.googlesource.com/boringssl.git"
+ 		bsslVersion   = "v0.0.0-20250207174145-0bb19f6126cb"
 diff --git a/src/crypto/internal/fips140test/check_test.go b/src/crypto/internal/fips140test/check_test.go
-index 6b0cd3f39e1695..aa586ed30454a2 100644
+index c014fff2a6d80d..be2df5988694ef 100644
 --- a/src/crypto/internal/fips140test/check_test.go
 +++ b/src/crypto/internal/fips140test/check_test.go
-@@ -5,6 +5,8 @@
- package fipstest
+@@ -6,6 +6,8 @@ package fipstest
  
  import (
+ 	"bytes"
 +	boring "crypto/internal/backend"
 +	bfips140 "crypto/internal/backend/fips140"
  	"crypto/internal/fips140"
  	. "crypto/internal/fips140/check"
  	"crypto/internal/fips140/check/checktest"
-@@ -18,7 +20,7 @@ import (
- 	"unsafe"
- )
+@@ -31,10 +33,18 @@ func TestIntegrityCheck(t *testing.T) {
+ 		t.Fatalf("GODEBUG=fips140=on but verification did not run")
+ 	}
  
--const enableFIPSTest = true
-+const enableFIPSTest = boring.Enabled
- 
- func TestFIPSCheckVerify(t *testing.T) {
- 	if Verified {
-@@ -38,6 +40,10 @@ func TestFIPSCheckVerify(t *testing.T) {
++	if !boring.Enabled {
++		t.Skip("skipping: boring not enabled")
++	}
++
+ 	if err := fips140.Supported(); err != nil {
  		t.Skipf("skipping: %v", err)
  	}
  
@@ -1240,9 +1265,42 @@ index 6b0cd3f39e1695..aa586ed30454a2 100644
 +		t.Skipf("skipping: FIPS is not enabled")
 +	}
 +
- 	cmd := testenv.Command(t, os.Args[0], "-test.v", "-test.run=TestFIPSCheck")
+ 	cmd := testenv.Command(t, os.Args[0], "-test.v", "-test.run=TestIntegrityCheck")
  	cmd.Env = append(cmd.Environ(), "GODEBUG=fips140=on")
  	out, err := cmd.CombinedOutput()
+@@ -47,6 +57,9 @@ func TestIntegrityCheck(t *testing.T) {
+ func TestIntegrityCheckFailure(t *testing.T) {
+ 	moduleStatus(t)
+ 	testenv.MustHaveExec(t)
++	if !boring.Enabled {
++		t.Skip("skipping: boring not enabled")
++	}
+ 	if err := fips140.Supported(); err != nil {
+ 		t.Skipf("skipping: %v", err)
+ 	}
+@@ -90,6 +103,9 @@ func TestIntegrityCheckFailure(t *testing.T) {
+ }
+ 
+ func TestIntegrityCheckInfo(t *testing.T) {
++	if !boring.Enabled {
++		t.Skip("skipping: boring not enabled")
++	}
+ 	if err := fips140.Supported(); err != nil {
+ 		t.Skipf("skipping: %v", err)
+ 	}
+diff --git a/src/crypto/internal/fips140test/fips_test.go b/src/crypto/internal/fips140test/fips_test.go
+index 81ccd0cf7fdd1d..34fdd6f5aed6cd 100644
+--- a/src/crypto/internal/fips140test/fips_test.go
++++ b/src/crypto/internal/fips140test/fips_test.go
+@@ -15,7 +15,7 @@ package fipstest
+ 
+ import (
+ 	"bytes"
+-	"crypto/internal/boring"
++	boring "crypto/internal/backend"
+ 	"crypto/internal/fips140"
+ 	"crypto/internal/fips140/aes"
+ 	"crypto/internal/fips140/aes/gcm"
 diff --git a/src/crypto/md5/md5.go b/src/crypto/md5/md5.go
 index a0384e175f31bd..f7aa6da36f02de 100644
 --- a/src/crypto/md5/md5.go
@@ -1803,7 +1861,7 @@ index 95bb4becd2ff8c..73991434dabaf1 100644
  	"crypto/internal/fips140/rsa"
  	"crypto/internal/fips140only"
 diff --git a/src/crypto/rsa/rsa_test.go b/src/crypto/rsa/rsa_test.go
-index 73b0c3749eedb2..1a712a0e1c5d95 100644
+index 795439d1c13df0..cc497755a2de28 100644
 --- a/src/crypto/rsa/rsa_test.go
 +++ b/src/crypto/rsa/rsa_test.go
 @@ -8,7 +8,7 @@ import (
@@ -1815,7 +1873,7 @@ index 73b0c3749eedb2..1a712a0e1c5d95 100644
  	"crypto/internal/cryptotest"
  	"crypto/rand"
  	. "crypto/rsa"
-@@ -146,6 +146,11 @@ func testKeyBasics(t *testing.T, priv *PrivateKey) {
+@@ -149,6 +149,11 @@ func testKeyBasics(t *testing.T, priv *PrivateKey) {
  	if priv.D.Cmp(priv.N) > 0 {
  		t.Errorf("private exponent too large")
  	}
@@ -1827,7 +1885,7 @@ index 73b0c3749eedb2..1a712a0e1c5d95 100644
  
  	msg := []byte("hi!")
  	enc, err := EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
-@@ -226,6 +231,11 @@ func testEverything(t *testing.T, priv *PrivateKey) {
+@@ -229,6 +234,11 @@ func testEverything(t *testing.T, priv *PrivateKey) {
  	if err := priv.Validate(); err != nil {
  		t.Errorf("Validate() failed: %s", err)
  	}
@@ -1839,7 +1897,7 @@ index 73b0c3749eedb2..1a712a0e1c5d95 100644
  
  	msg := []byte("test")
  	enc, err := EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
-@@ -853,6 +863,9 @@ func TestDecryptOAEP(t *testing.T) {
+@@ -927,6 +937,9 @@ func TestDecryptOAEP(t *testing.T) {
  }
  
  func Test2DecryptOAEP(t *testing.T) {
@@ -2607,7 +2665,7 @@ index e7369542a73270..ff52175e4ac636 100644
  	}
  }
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index f9c403aba45f5c..c956d394776ea0 100644
+index 1889403cac91e0..01609e5e6a9d62 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
 @@ -520,7 +520,7 @@ var depsRules = `
