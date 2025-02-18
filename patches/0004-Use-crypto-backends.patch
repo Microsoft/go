@@ -40,7 +40,9 @@ Subject: [PATCH] Use crypto backends
  src/crypto/hmac/hmac_test.go                  |   2 +-
  src/crypto/internal/cryptotest/allocations.go |   2 +-
  .../internal/cryptotest/implementations.go    |   2 +-
+ src/crypto/internal/fips140test/acvp_test.go  |   6 +
  src/crypto/internal/fips140test/check_test.go |  16 ++
+ src/crypto/internal/fips140test/fips_test.go  |   2 +-
  src/crypto/md5/md5.go                         |  10 +
  src/crypto/md5/md5_test.go                    |  16 ++
  src/crypto/pbkdf2/pbkdf2.go                   |   7 +
@@ -85,7 +87,7 @@ Subject: [PATCH] Use crypto backends
  src/net/smtp/smtp_test.go                     |  72 ++++---
  src/os/exec/exec_test.go                      |   9 +
  src/runtime/pprof/vminfo_darwin_test.go       |   6 +
- 81 files changed, 1147 insertions(+), 111 deletions(-)
+ 83 files changed, 1154 insertions(+), 112 deletions(-)
  create mode 100644 src/crypto/dsa/boring.go
  create mode 100644 src/crypto/dsa/notboring.go
  create mode 100644 src/crypto/ecdsa/badlinkname.go
@@ -1210,6 +1212,30 @@ index 3fa730459050f6..1f28f12a6e7b4f 100644
  	"crypto/internal/impl"
  	"internal/goos"
  	"internal/testenv"
+diff --git a/src/crypto/internal/fips140test/acvp_test.go b/src/crypto/internal/fips140test/acvp_test.go
+index ddb234bab655e1..75cfc0440b8837 100644
+--- a/src/crypto/internal/fips140test/acvp_test.go
++++ b/src/crypto/internal/fips140test/acvp_test.go
+@@ -22,6 +22,8 @@ import (
+ 	"bufio"
+ 	"bytes"
+ 	"crypto/elliptic"
++	boring "crypto/internal/backend"
++	bfips140 "crypto/internal/backend/fips140"
+ 	"crypto/internal/cryptotest"
+ 	"crypto/internal/fips140"
+ 	"crypto/internal/fips140/aes"
+@@ -2072,6 +2074,10 @@ func cmdKtsIfcResponderAft(h func() fips140.Hash) command {
+ func TestACVP(t *testing.T) {
+ 	testenv.SkipIfShortAndSlow(t)
+ 
++	if boring.Enabled && !bfips140.Enabled() {
++		t.Skipf("skipping: FIPS is not enabled")
++	}
++
+ 	const (
+ 		bsslModule    = "boringssl.googlesource.com/boringssl.git"
+ 		bsslVersion   = "v0.0.0-20250207174145-0bb19f6126cb"
 diff --git a/src/crypto/internal/fips140test/check_test.go b/src/crypto/internal/fips140test/check_test.go
 index c014fff2a6d80d..be2df5988694ef 100644
 --- a/src/crypto/internal/fips140test/check_test.go
@@ -1262,6 +1288,19 @@ index c014fff2a6d80d..be2df5988694ef 100644
  	if err := fips140.Supported(); err != nil {
  		t.Skipf("skipping: %v", err)
  	}
+diff --git a/src/crypto/internal/fips140test/fips_test.go b/src/crypto/internal/fips140test/fips_test.go
+index 81ccd0cf7fdd1d..34fdd6f5aed6cd 100644
+--- a/src/crypto/internal/fips140test/fips_test.go
++++ b/src/crypto/internal/fips140test/fips_test.go
+@@ -15,7 +15,7 @@ package fipstest
+ 
+ import (
+ 	"bytes"
+-	"crypto/internal/boring"
++	boring "crypto/internal/backend"
+ 	"crypto/internal/fips140"
+ 	"crypto/internal/fips140/aes"
+ 	"crypto/internal/fips140/aes/gcm"
 diff --git a/src/crypto/md5/md5.go b/src/crypto/md5/md5.go
 index a0384e175f31bd..f7aa6da36f02de 100644
 --- a/src/crypto/md5/md5.go
