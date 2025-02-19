@@ -223,7 +223,7 @@ func build(o *options) (err error) {
 					err = closeErr
 				}
 			}()
-			if err := buildutil.RunCmdMultiWriter(testCommandLine, conv, buildutil.NewStripTestJSONWriter(os.Stdout)); err != nil {
+			if err := buildutil.RunCmdMultiWriter(testCommandLine, conv, os.Stdout); err != nil {
 				return err
 			}
 		} else {

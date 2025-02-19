@@ -5,8 +5,6 @@
 package buildutil
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -123,39 +121,6 @@ func UnassignGOROOT() error {
 		}
 	}
 	return nil
-}
-
-// NewStripTestJSONWriter strips all individual test results and output entries from a JSON stream.
-// Only the overall package test results are written to the underlying writer.
-func NewStripTestJSONWriter(w io.Writer) io.Writer {
-	pr, pw := io.Pipe()
-	go func() {
-		type test struct {
-			Action  string
-			Package string
-			Test    string
-		}
-		sc := bufio.NewScanner(pr)
-		for sc.Scan() {
-			var t test
-			err := json.Unmarshal(sc.Bytes(), &t)
-			if err == nil && (t.Test != "" || t.Action == "output") {
-				// Omit the test result.
-				continue
-			}
-			_, err = w.Write(append(sc.Bytes(), '\n'))
-			if err != nil {
-				pw.CloseWithError(err)
-				return
-			}
-		}
-		if err := sc.Err(); err != nil {
-			pw.CloseWithError(err)
-			return
-		}
-		pw.Close()
-	}()
-	return pw
 }
 
 // RunCmdMultiWriter runs a command and outputs the stdout to multiple [io.Writer].

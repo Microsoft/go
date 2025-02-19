@@ -215,7 +215,7 @@ func main() {
 					log.Fatal(err)
 				}
 			}()
-			err = buildutil.RunCmdMultiWriter(cmdline, conv, buildutil.NewStripTestJSONWriter(os.Stdout))
+			err = buildutil.RunCmdMultiWriter(cmdline, conv, os.Stdout)
 			// If we got an ExitError, the error message was already printed by the command. We just
 			// need to exit with the same exit code.
 			if exitErr, ok := err.(*exec.ExitError); ok {
