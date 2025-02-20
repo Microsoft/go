@@ -2672,10 +2672,10 @@ index 00000000000000..5e4b436554d44d
 +// from complaining about the missing body
 +// (because the implementation might be here).
 diff --git a/src/go/build/deps_test.go b/src/go/build/deps_test.go
-index 72e56b5da8e582..45ceb3e2b4ce11 100644
+index 065ddf6ab67c9a..1889403cac91e0 100644
 --- a/src/go/build/deps_test.go
 +++ b/src/go/build/deps_test.go
-@@ -511,6 +511,11 @@ var depsRules = `
+@@ -515,6 +515,11 @@ var depsRules = `
  	< github.com/microsoft/go-crypto-winnative/internal/bcrypt
  	< github.com/microsoft/go-crypto-winnative/cng;
  
@@ -2687,7 +2687,7 @@ index 72e56b5da8e582..45ceb3e2b4ce11 100644
  	FIPS, internal/godebug < crypto/fips140;
  
  	crypto, hash !< FIPS;
-@@ -521,16 +526,28 @@ var depsRules = `
+@@ -525,16 +530,28 @@ var depsRules = `
  	NONE < crypto/internal/boring/sig, crypto/internal/boring/syso;
  	sync/atomic < crypto/internal/boring/bcache;
  
@@ -2718,7 +2718,7 @@ index 72e56b5da8e582..45ceb3e2b4ce11 100644
  	< crypto/boring
  	< crypto/aes,
  	  crypto/des,
-@@ -554,8 +571,12 @@ var depsRules = `
+@@ -558,8 +575,12 @@ var depsRules = `
  	math/big, github.com/microsoft/go-crypto-darwin/xcrypto < github.com/microsoft/go-crypto-darwin/bbig;
  	math/big, github.com/microsoft/go-crypto-winnative/cng < github.com/microsoft/go-crypto-winnative/cng/bbig;
  
@@ -2763,7 +2763,7 @@ index 00000000000000..8d0c3fde9ab5e8
 +const AllowCryptoFallback = true
 +const AllowCryptoFallbackInt = 1
 diff --git a/src/internal/goexperiment/flags.go b/src/internal/goexperiment/flags.go
-index e6c9b7d5e62dc0..65d339be7dde32 100644
+index 4d0fbdffd44957..12ff4499f3be50 100644
 --- a/src/internal/goexperiment/flags.go
 +++ b/src/internal/goexperiment/flags.go
 @@ -78,6 +78,14 @@ type Flags struct {
@@ -3085,13 +3085,13 @@ index 00000000000000..95be7ad8d38cae
 +	`
 +}
 diff --git a/src/runtime/runtime_boring.go b/src/runtime/runtime_boring.go
-index 5a98b20253181c..9042f2c2795e19 100644
+index 831ee67afc952d..d2f00d57c10286 100644
 --- a/src/runtime/runtime_boring.go
 +++ b/src/runtime/runtime_boring.go
-@@ -17,3 +17,8 @@ func boring_runtime_arg0() string {
- 
- //go:linkname fipstls_runtime_arg0 crypto/internal/boring/fipstls.runtime_arg0
- func fipstls_runtime_arg0() string { return boring_runtime_arg0() }
+@@ -14,3 +14,8 @@ func boring_runtime_arg0() string {
+ 	}
+ 	return argslice[0]
+ }
 +
 +//go:linkname crypto_backend_runtime_arg0 crypto/internal/backend.runtime_arg0
 +func crypto_backend_runtime_arg0() string {
